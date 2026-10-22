@@ -59,7 +59,8 @@
       + '@keyframes tb-beat{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}'
       + '@keyframes tb-up{to{opacity:1;transform:none}}@keyframes tb-fade{to{opacity:1}}'
       + '@keyframes tb-twinkle{0%,100%{opacity:0;transform:translateY(0) scale(.6)}50%{opacity:.85;transform:translateY(-10px) scale(1)}}'
-      + '@media (prefers-reduced-motion:reduce){.duo-tribute *{animation:none!important;transition:none!important}.tb-copy>*,.tb-go,.tb-skip{opacity:1;transform:none}.tb-letter,.tb-ring{display:none}.tb-stars u{opacity:.5}}'
+      + '@media (prefers-reduced-motion:reduce){.duo-tribute:not(.tb-motion) *{animation:none!important;transition:none!important}.duo-tribute:not(.tb-motion) .tb-copy>*,.duo-tribute:not(.tb-motion) .tb-go,.duo-tribute:not(.tb-motion) .tb-skip,.duo-tribute:not(.tb-motion) .tb-replay{opacity:1;transform:none}.duo-tribute:not(.tb-motion) .tb-letter,.duo-tribute:not(.tb-motion) .tb-ring{display:none}.duo-tribute:not(.tb-motion) .tb-stars u{opacity:.5}}'
+      + '.tb-replay{position:absolute;left:18px;top:14px;max-width:calc(100% - 140px);text-align:left;font:inherit;font-size:13px;color:#ffd9c8;background:#ffffff10;border:1px solid #ffac8f66;border-radius:999px;padding:7px 16px;cursor:pointer;opacity:1}.tb-replay:hover{background:#ffffff1c}.tb-replay:focus-visible{outline:2px solid #fff;outline-offset:3px}'
       + '@media (max-height:560px){.tb-scene{height:50%}.tb-copy{height:50%}.tb-heart b{font-size:130px}}';
   }
 
@@ -97,7 +98,7 @@
     const skip = el('button', 'tb-skip', 'Pular'); skip.type = 'button';
 
     dlg.append(stars, scene, copy, skip);
-    return { dlg, world, go, skip };
+    return { dlg, world, go, skip, copy };
   }
 
   // Mostra a cena. onClose roda quando a pessoa continua/pula/aperta Esc. Retorna false se já foi vista (e force não foi pedido).
@@ -107,7 +108,9 @@
     if (!opts.force && hasSeen(win)) return false;
     const doc = win.document;
     const style = doc.createElement('style'); style.textContent = css(); doc.head.append(style);
-    const { dlg, world, go, skip } = build(doc);
+    const { dlg, world, go, skip, copy } = build(doc);
+    const reduced = !!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (opts.motion) dlg.classList.add('tb-motion');
     let done = false;
     const finish = () => {
       if (done) return; done = true;
@@ -117,6 +120,13 @@
       opts.onClose?.();
     };
     go.addEventListener('click', finish); skip.addEventListener('click', finish);
+    // O sistema pede menos animação: a cena aparece parada, e a pessoa pode escolher ver a animação mesmo assim.
+    if (reduced && !opts.motion) {
+      const replay = doc.createElement('button'); replay.type = 'button'; replay.className = 'tb-replay';
+      replay.textContent = '▶ Ver a animação (seu sistema está com animações reduzidas)';
+      replay.addEventListener('click', () => { finish(); show({ ...opts, force: true, motion: true, win }); });
+      dlg.append(replay);
+    }
     dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(); });
     // Parallax: a cena inclina levemente com o mouse
     dlg.addEventListener('mousemove', (e) => {
@@ -125,7 +135,7 @@
       world.style.setProperty('--rx', ((e.clientY / h - 0.5) * -16).toFixed(1) + 'deg');
     });
     doc.body.append(dlg);
-    dlg.showModal();
+    dlg.showModal(); dlg.scrollTop = 0;
     win.setTimeout(() => { try { go.focus({ preventScroll: true }); } catch { /* sem foco */ } }, 6700);
     return true;
   }

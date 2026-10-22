@@ -54,3 +54,10 @@ test('a homenagem abre com um clique em Sobre e créditos e nunca aparece sozinh
   assert.doesNotMatch(src, /DuoTribute\?\.show\(\{ onClose/, 'nada de homenagem automática na abertura');
   assert.equal((src.match(/DuoTribute\?\.show\(/g) || []).length, 1, 'só o botão chama a homenagem');
 });
+
+test('homenagem 3D: com "reduzir movimento" a cena aparece parada, mas há um botão para ver a animação mesmo assim', () => {
+  const src = readFileSync(new URL('../server/tribute.js', import.meta.url), 'utf8');
+  assert.match(src, /prefers-reduced-motion:reduce\)\{\.duo-tribute:not\(\.tb-motion\)/, 'a regra de movimento reduzido não vale depois que a pessoa pede a animação');
+  assert.match(src, /Ver a animação/);
+  assert.match(src, /motion: true/);
+});
