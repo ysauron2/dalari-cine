@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; background: transparent; font-family: system-ui, sans-serif; }
+    body { display: grid; place-items: center; }
+    button { width: 148px; height: 42px; border: 1px solid #ffffff32; border-radius: 999px; background: #171b29ec; color: #fff; box-shadow: 0 6px 22px #0009; cursor: pointer; font-size: 13px; font-weight: 700; letter-spacing: .01em; transition: background .18s, transform .18s, box-shadow .18s; }
+    button:hover { background: #282d40; transform: translateY(-1px); box-shadow: 0 8px 24px #000b; }
+    button:active { transform: scale(.97); }
+    button:focus-visible { outline: 2px solid #ffaf91; outline-offset: 2px; }
+    .mark { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 7px; border-radius: 7px; background: #ff9d7e; color: #1b1520; }
+  </style>
+</head>
+<body>
+  <button id="toggle" type="button" aria-label="Abrir sala do Dalari Cine"><span class="mark">D</span><span id="label">Abrir sala</span></button>
+  <script>
+    const button = document.getElementById('toggle');
+    const label = document.getElementById('label');
+    button.addEventListener('click', () => window.duoPanel.toggle());
+    window.duoPanel.onState(open => {
+      label.textContent = open ? 'Fechar sala' : 'Abrir sala';
+      button.setAttribute('aria-label', open ? 'Fechar sala do Dalari Cine' : 'Abrir sala do Dalari Cine');
+    });
+  </script>
+</body>
+</html>

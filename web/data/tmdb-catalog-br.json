@@ -1,0 +1,1322 @@
+[
+  {
+    "id": "tmdb:movie:1236045",
+    "tmdbId": 1236045,
+    "mediaType": "movie",
+    "title": "Sobrevivência",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Thriller",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/62vtHEyzKhFRuEOLLiQfPi60mSs.jpg",
+    "description": "O filho de um candidato a prefeito de Los Angeles é sequestrado. Agora, ele e a esposa tentam conseguir o dinheiro do resgate e tomam decisões arriscadas.",
+    "tags": [
+      "thriller",
+      "drama"
+    ],
+    "tmdbRating": 7.2,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/movie/1236045",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/1236045/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:1389172",
+    "tmdbId": 1389172,
+    "mediaType": "movie",
+    "title": "Notícias em Perigo",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/72ETmrsQGk8guVo1GV8Sf7EygOe.jpg",
+    "description": "Parineeti Chopra e Deven Bhojani estrelam este suspense policial em que um protesto local leva dois repórteres a investigar a fundo um esquema de mineração ilegal.",
+    "tags": [
+      "crime",
+      "thriller"
+    ],
+    "tmdbRating": null,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/movie/1389172",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/1389172/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:1184918",
+    "tmdbId": 1184918,
+    "mediaType": "movie",
+    "title": "Robô Selvagem",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Família",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/gAHNIZKG8fmK7njOTpMmLKJXiag.jpg",
+    "description": "Um robô – unidade ROZZUM 7134, abreviadamente “Roz” – naufraga em uma ilha desabitada e deve aprender a se adaptar ao ambiente hostil, gradualmente construindo relacionamentos com os animais da ilha e se tornando o pai adotivo de um filhote de ganso órfão.",
+    "tags": [
+      "família",
+      "animação",
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 8.3,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2024",
+    "tmdbUrl": "https://www.themoviedb.org/movie/1184918",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/1184918/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:122917",
+    "tmdbId": 122917,
+    "mediaType": "movie",
+    "title": "O Hobbit: A Batalha dos Cinco Exércitos",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Ação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/wRKwrfQ7p0ttrb09G3mcOSyN1pk.jpg",
+    "description": "O dragão Smaug lança sua fúria ardente contra a Cidade do Lago que fica próxima da montanha de Erebor. Bard consegue derrotá-lo, mas, rapidamente, sem a ameaça do dragão, inicia-se uma batalha pelo controle de Erebor e sua riqueza. Os anões, liderados por Thorin, adentram a montanha e estão dispostos a impedir a entrada de elfos, anões e orcs. Bilbo Bolseiro e Gandalf tentam impedir a guerra.",
+    "tags": [
+      "ação",
+      "aventura",
+      "fantasia"
+    ],
+    "tmdbRating": 7.3,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2014",
+    "tmdbUrl": "https://www.themoviedb.org/movie/122917",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/122917/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:129",
+    "tmdbId": 129,
+    "mediaType": "movie",
+    "title": "A Viagem de Chihiro",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Animação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/hhoKhsyJ3hFaxEm5pMdZRiTu2lJ.jpg",
+    "description": "Chihiro e seus pais estão se mudando para uma cidade diferente. A caminho da nova casa, o pai decide pegar um atalho. Eles se deparam com uma mesa repleta de comida, embora ninguém esteja por perto. Chihiro sente o perigo, mas seus pais começam a comer. Quando anoitece, eles se transformam em porcos. Agora, apenas Chihiro pode salvá-los.",
+    "tags": [
+      "animação",
+      "família",
+      "fantasia"
+    ],
+    "tmdbRating": 8.5,
+    "warmth": 3,
+    "adventure": 2,
+    "year": "2003",
+    "tmdbUrl": "https://www.themoviedb.org/movie/129",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/129/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:687163",
+    "tmdbId": 687163,
+    "mediaType": "movie",
+    "title": "Devoradores de Estrelas",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Ficção científica",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/2i8uru7rlbHKaoIbC2V4FZLT7uW.jpg",
+    "description": "O professor de ciências Ryland Grace acorda em uma espaçonave a anos-luz de casa, sem nenhuma lembrança de quem é ou como chegou ali. À medida que sua memória retorna, ele começa a descobrir sua missão: resolver o enigma de uma substância misteriosa que está fazendo o Sol morrer. Ele precisará recorrer ao seu conhecimento científico e a ideias nada convencionais para salvar tudo na Terra da extinção… mas uma amizade inesperada pode significar que ele não terá que fazer isso sozinho.",
+    "tags": [
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 8.6,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/movie/687163",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/687163/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:57800",
+    "tmdbId": 57800,
+    "mediaType": "movie",
+    "title": "A Era do Gelo 4",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Animação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/dWiHLqARtyAAOy0nLvXIxRYkfNA.jpg",
+    "description": "Sempre em busca de sua cobiçada noz, o esquilo Scrat provoca, sem querer, a separação dos continentes. A situação causa mudanças no terreno de vários locais, entre eles onde os amigos Manny, Diego e Sid estão alojados. Um terremoto faz com que o trio fique preso em um iceberg.",
+    "tags": [
+      "animação",
+      "comédia",
+      "aventura",
+      "família"
+    ],
+    "tmdbRating": 6.4,
+    "warmth": 4,
+    "adventure": 4,
+    "year": "2012",
+    "tmdbUrl": "https://www.themoviedb.org/movie/57800",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/57800/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:1032863",
+    "tmdbId": 1032863,
+    "mediaType": "movie",
+    "title": "A Hipótese do Amor",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Romance",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/9TQyjZ9PHCiPR8eylF8dulUFreu.jpg",
+    "description": "Olive é uma brilhante candidata ao doutorado focada em seu futuro no meio acadêmico. Mas quando ela percebe que sua melhor amiga Ahn se apaixonou por seu crush Jeremy, Olive impulsivamente beija o intimidador professor Adam Carlsen para provar que ela superou a paixonite. O que começa como um ato desesperado de amizade se transforma em um relacionamento falso com regras, limites e um acordo mutuamente benéfico. Quando o arranjo deles começa a confundir as linhas entre encenação e realidade, Oliv",
+    "tags": [
+      "romance",
+      "comédia"
+    ],
+    "tmdbRating": 8,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/movie/1032863",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/1032863/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:157336",
+    "tmdbId": 157336,
+    "mediaType": "movie",
+    "title": "Interestelar",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Aventura",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/tR1XVa5bxgdh2bRw2u0DzrgkO2l.jpg",
+    "description": "As reservas naturais da Terra estão chegando ao fim e um grupo de astronautas recebe a missão de verificar possíveis planetas para receberem a população mundial, possibilitando a continuação da espécie. Cooper é chamado para liderar o grupo e aceita a missão sabendo que pode nunca mais ver os filhos. Ao lado de Brand, Jenkins e Doyle, ele seguirá em busca de um novo lar.",
+    "tags": [
+      "aventura",
+      "drama",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.5,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2014",
+    "tmdbUrl": "https://www.themoviedb.org/movie/157336",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/157336/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:1233413",
+    "tmdbId": 1233413,
+    "mediaType": "movie",
+    "title": "Pecadores",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Terror",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/v0Ljeti537c6cNKweuEN0iaU3x4.jpg",
+    "description": "Dispostos a deixar suas vidas conturbadas para trás, irmãos gêmeos retornam à sua cidade natal para recomeçar suas vidas do zero, quando descobrem que um mal ainda maior está à espera deles para recebê-los de volta.",
+    "tags": [
+      "terror",
+      "ação",
+      "thriller"
+    ],
+    "tmdbRating": 7.5,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2025",
+    "tmdbUrl": "https://www.themoviedb.org/movie/1233413",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/1233413/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:3933",
+    "tmdbId": 3933,
+    "mediaType": "movie",
+    "title": "A Noiva Cadáver",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Romance",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/nT7W8LfhzVybfFsnQJ4qQfqn5KX.jpg",
+    "description": "As famílias de Victor e Victoria estão arranjando seu casamento. Nervoso com a cerimônia, Victor vai sozinho à floresta para ensaiar seus votos. No entanto, o que ele pensava ser um tronco de árvore na verdade é o braço esquelético de Emily, uma noiva que foi assassinada depois de fugir com seu amor. Convencida que Victor acabara de lhe pedir a mão em casamento, Emily o leva para o mundo dos mortos, mas ele precisa retornar rapidamente antes que Victoria se case com o malvado Lorde Barkis.",
+    "tags": [
+      "romance",
+      "fantasia",
+      "animação"
+    ],
+    "tmdbRating": 7.6,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "2005",
+    "tmdbUrl": "https://www.themoviedb.org/movie/3933",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/3933/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:98",
+    "tmdbId": 98,
+    "mediaType": "movie",
+    "title": "Gladiador",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Ação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/4DUClyGA6OqjXv6yC0Imf6THGfp.jpg",
+    "description": "Nos dias finais do reinado de Marcus Aurelius, o imperador desperta a ira de seu filho Commodus ao tornar pública sua predileção em deixar o trono para Maximus, o comandante do exército romano. Sedento pelo poder, Commodus mata seu pai, assume a coroa e ordena a morte de Maximus, que consegue fugir antes de ser pego e passa a se esconder sob a identidade de um escravo e gladiador do Império Romano.",
+    "tags": [
+      "ação",
+      "drama",
+      "aventura"
+    ],
+    "tmdbRating": 8.2,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2000",
+    "tmdbUrl": "https://www.themoviedb.org/movie/98",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/98/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:786892",
+    "tmdbId": 786892,
+    "mediaType": "movie",
+    "title": "Furiosa: Uma Saga Mad Max",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Ação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/7qOSKoOAPgemYhBwbJgBWcCxPWZ.jpg",
+    "description": "Quando o mundo entra em colapso, a jovem Furiosa é sequestrada do Green Place das Muitas Mães e cai nas mãos da horda de motoqueiros liderada pelo Senhor da Guerra Dementus. Vagando pelo deserto condenado, eles encontram a Cidadela controlada por Immortan Joe. Enquanto os dois tiranos lutam por poder e controle, Furiosa terá que sobreviver a muitos desafios para encontrar e trilhar o caminho de volta para casa.",
+    "tags": [
+      "ação",
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 7.4,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2024",
+    "tmdbUrl": "https://www.themoviedb.org/movie/786892",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/786892/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:205596",
+    "tmdbId": 205596,
+    "mediaType": "movie",
+    "title": "O Jogo da Imitação",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "História",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/pNa7vGKv04X2jnKifxLCTHPmWUT.jpg",
+    "description": "Em 1939, a recém-criada agência de inteligência britânica MI6 recruta Alan Turing, um aluno da Universidade de Cambridge, para entender códigos nazistas, incluindo o \"Enigma\", que criptógrafos acreditavam ser inquebrável. A equipe de Turing, incluindo Joan Clarke, analisa as mensagens de \"Enigma\", enquanto ele constrói uma máquina para decifrá-las.",
+    "tags": [
+      "história",
+      "drama",
+      "thriller",
+      "guerra"
+    ],
+    "tmdbRating": 8,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2015",
+    "tmdbUrl": "https://www.themoviedb.org/movie/205596",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/205596/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:755898",
+    "tmdbId": 755898,
+    "mediaType": "movie",
+    "title": "A Guerra dos Mundos",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Ficção científica",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/yY5CbfXBxsPvYi0TzmaCP7uunnn.jpg",
+    "description": "Will Radford é um renomado analista de cibersegurança do Departamento de Segurança Interna dos Estados Unidos, encarregado de rastrear possíveis ameaças à segurança nacional por meio de um programa de vigilância em massa. No entanto, um ataque inesperado por uma entidade desconhecida o leva a suspeitar que o governo esteja escondendo algo dele… e do restante do mundo.",
+    "tags": [
+      "ficção científica",
+      "thriller"
+    ],
+    "tmdbRating": 4,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2025",
+    "tmdbUrl": "https://www.themoviedb.org/movie/755898",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/755898/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:967941",
+    "tmdbId": 967941,
+    "mediaType": "movie",
+    "title": "Wicked: Parte II",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Fantasia",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/8VUn52P2qFepxG8b5W8pjS7DzCT.jpg",
+    "description": "Elphaba, agora demonizada como a Bruxa Má do Oeste, vive no exílio, escondida na floresta de Oz, e tenta desesperadamente expor a verdade que conhece sobre o Mágico. Enquanto isso, Glinda se tornou o glamouroso símbolo da bondade para todo o reino de Oz e desfruta das vantagens da fama e da popularidade. Quando uma multidão enfurecida se ergue contra a Bruxa Má, Glinda e Elphaba vão precisar se unir uma última vez.",
+    "tags": [
+      "fantasia",
+      "aventura",
+      "romance"
+    ],
+    "tmdbRating": 6.6,
+    "warmth": 4,
+    "adventure": 4,
+    "year": "2025",
+    "tmdbUrl": "https://www.themoviedb.org/movie/967941",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/967941/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:8355",
+    "tmdbId": 8355,
+    "mediaType": "movie",
+    "title": "A Era do Gelo 3",
+    "kind": "Filme",
+    "service": "Netflix",
+    "genre": "Animação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/kaXQMlurbJ6n5u33TRePTXWxPHY.jpg",
+    "description": "Depois que Sid rouba alguns ovos de dinossauro, Manny, Diego e o resto de seus amigos pré-históricos entram em um mundo misterioso e subterrâneo para resgatar Sid. Durante o curso da sua missão, o grupo encontra muitas criaturas grandes e pequenas, incluindo os carnívoros famintos e implacáveis, caçando o dinossauro chamado Buck.",
+    "tags": [
+      "animação",
+      "comédia",
+      "família",
+      "aventura"
+    ],
+    "tmdbRating": 6.8,
+    "warmth": 4,
+    "adventure": 4,
+    "year": "2009",
+    "tmdbUrl": "https://www.themoviedb.org/movie/8355",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/8355/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:movie:549509",
+    "tmdbId": 549509,
+    "mediaType": "movie",
+    "title": "O Brutalista",
+    "kind": "Filme",
+    "service": "Prime Video",
+    "genre": "Drama",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/52iVP3AtNtpjFiBxlOYCUPXhr47.jpg",
+    "description": "Fugindo da Europa pós-guerra, um arquiteto visionário chega à América para reconstruir sua vida, carreira e casamento. Sozinho em um novo país estranho, ele se estabelece na Pensilvânia, onde um rico e proeminente industrial reconhece seu talento.",
+    "tags": [
+      "drama"
+    ],
+    "tmdbRating": 6.9,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2025",
+    "tmdbUrl": "https://www.themoviedb.org/movie/549509",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/movie/549509/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:2734",
+    "tmdbId": 2734,
+    "mediaType": "tv",
+    "title": "Lei & Ordem: Unidade de Vítimas Especiais",
+    "kind": "Série",
+    "service": "Netflix +1",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/nYkYmNFfKydgrcO45oNjOnW0FDJ.jpg",
+    "description": "Detetives que fazem parte da Unidade de Vítimas Especiais da polícia de Nova York investigam crimes de natureza sexual, como estupros, em que a vítima sobrevive, e auxilia as autoridades na investigação.",
+    "tags": [
+      "crime",
+      "drama",
+      "mistério"
+    ],
+    "tmdbRating": 8,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "1999",
+    "tmdbUrl": "https://www.themoviedb.org/tv/2734",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/2734/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:108978",
+    "tmdbId": 108978,
+    "mediaType": "tv",
+    "title": "Reacher",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Action & Adventure",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/f1VCQIG2iCyOookdgOzwtUpwWC0.jpg",
+    "description": "Quando o policial militar aposentado Jack Reacher é preso por um assassinato que não cometeu, ele se vê no meio de uma trama mortal cheia de policiais corruptos, empresários obscuros e políticos conspiradores. Só com sua inteligência, ele precisa descobrir o que está havendo em Margrave, Geórgia.",
+    "tags": [
+      "aventura",
+      "crime"
+    ],
+    "tmdbRating": 8.1,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2022",
+    "tmdbUrl": "https://www.themoviedb.org/tv/108978",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/108978/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:2316",
+    "tmdbId": 2316,
+    "mediaType": "tv",
+    "title": "The Office",
+    "kind": "Série",
+    "service": "Netflix +1",
+    "genre": "Comédia",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/50DVZEgPwGokQf4o0KHZGQMJqDD.jpg",
+    "description": "Michael Scott é o egocêntrico, insensível e incompetente gerente regional de uma subsidiária da Dunder Mifflin Paper Company. Michael acredita ser o cara mais engraçado do escritório, uma fonte de sabedoria para negócios e o melhor amigo de seus funcionários. Ele nem desconfia que a sua equipe o tolera apenas pelo fato dele assinar o contracheque deles. Sem saber o que os seus funcionários pensam a seu respeito, Michael acaba sempre alternando decisões absurdas ou patéticas, mas sempre hilárias.",
+    "tags": [
+      "comédia"
+    ],
+    "tmdbRating": 8.6,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "2005",
+    "tmdbUrl": "https://www.themoviedb.org/tv/2316",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/2316/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:549",
+    "tmdbId": 549,
+    "mediaType": "tv",
+    "title": "Lei & Ordem",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/3NYN6Paxb2FzIfR9sQEyH1HG1Vw.jpg",
+    "description": "O drama mostra o processo complicado de determinar a culpa ou a inocência, quando vidas estão em jogo. Muitas vezes inspirado pelas notícias mais recentes, o enredo destaca dilemas éticos e pessoais.",
+    "tags": [
+      "crime",
+      "drama"
+    ],
+    "tmdbRating": 7.3,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "1990",
+    "tmdbUrl": "https://www.themoviedb.org/tv/549",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/549/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:4614",
+    "tmdbId": 4614,
+    "mediaType": "tv",
+    "title": "NCIS: Investigação Naval",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/abjNx4jqvaJn5UvsuLaBVRVndyJ.jpg",
+    "description": "Sob o exemplar comando de Leroy Jethro Gibbs, uma equipe de agentes especiais investiga crimes relacionados com a Marinha dos Estados Unidos.",
+    "tags": [
+      "crime",
+      "drama",
+      "aventura"
+    ],
+    "tmdbRating": 7.6,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2003",
+    "tmdbUrl": "https://www.themoviedb.org/tv/4614",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/4614/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:5920",
+    "tmdbId": 5920,
+    "mediaType": "tv",
+    "title": "O Mentalista",
+    "kind": "Série",
+    "service": "Netflix +1",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/bJ0SNoD0DchXo5nH3N81ABIe3H.jpg",
+    "description": "Patrick Jane é famoso por sua habilidade de alta percepção de tudo que está ao seu redor. Ele já quase foi uma celebridade, alegando ser médium vidente, mas agora admite que fingia ter poderes paranormais. Com sua grande habilidade de observação, Patrick trabalha como consultor independente para as autoridades da Califórnia, resolvendo um número considerável de crimes complicados.",
+    "tags": [
+      "crime",
+      "drama",
+      "mistério"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2008",
+    "tmdbUrl": "https://www.themoviedb.org/tv/5920",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/5920/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:288673",
+    "tmdbId": 288673,
+    "mediaType": "tv",
+    "title": "Carrie, a Estranha",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Mistério",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/pgi67D7ERtedbywBHXY9Tj2vk2L.jpg",
+    "description": "Após a morte abrupta e inesperada de seu pai arremessá-la no ecossistema implacável de um colégio público, Carrie é forçada a lidar com um escândalo de cyberbullying que destrói sua comunidade, a pressão implacável e a crueldade casual da era das redes sociais, e o despertar de misteriosos poderes telecinéticos que surgem com a chegada de sua adolescência.",
+    "tags": [
+      "mistério",
+      "drama",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/tv/288673",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/288673/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:79744",
+    "tmdbId": 79744,
+    "mediaType": "tv",
+    "title": "O Novato",
+    "kind": "Série",
+    "service": "Netflix +1",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/yCPGrd6fzbftuaH97OUS6tUdE4B.jpg",
+    "description": "John Nolan, um homem de 40 anos, deixa para trás sua vida confortável em uma cidade pequena para viver seu sonho de ser um agente policial no Departamento de Polícia de Los Angeles. Como o novato mais velho, ele enfrenta a descrença de seus colegas.",
+    "tags": [
+      "crime",
+      "drama",
+      "comédia"
+    ],
+    "tmdbRating": 8.5,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "2018",
+    "tmdbUrl": "https://www.themoviedb.org/tv/79744",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/79744/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:1622",
+    "tmdbId": 1622,
+    "mediaType": "tv",
+    "title": "Sobrenatural",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Drama",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/ovFzkkKknAo2SbM2DfOabxRvzmy.jpg",
+    "description": "Os irmãos Dean e Sam vasculham o país em busca de atividades paranormais, brigando com demônios, fantasmas e monstros no caminho.",
+    "tags": [
+      "drama",
+      "mistério",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.3,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "2005",
+    "tmdbUrl": "https://www.themoviedb.org/tv/1622",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/1622/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:15226",
+    "tmdbId": 15226,
+    "mediaType": "tv",
+    "title": "C.I.D",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Action & Adventure",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/3UymnlLfLMKxG8OcFhSnAlnhQfZ.jpg",
+    "description": "Uma equipe de homens e mulheres que trabalha no Departamento de Investigação Criminal está disposta a arriscar tudo para solucionar os crimes mais desafiadores de Mumbai.",
+    "tags": [
+      "aventura",
+      "crime",
+      "drama",
+      "mistério"
+    ],
+    "tmdbRating": 5.8,
+    "warmth": 2,
+    "adventure": 4,
+    "year": "1998",
+    "tmdbUrl": "https://www.themoviedb.org/tv/15226",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/15226/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:60625",
+    "tmdbId": 60625,
+    "mediaType": "tv",
+    "title": "Rick e Morty",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Animação",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/5qfd0e2uMbVInX3YdeFbDsfxi1t.jpg",
+    "description": "O brilhante cientista beberrão Rick sequestra Morty, seu neto aborrescente, para viver loucuras em outros mundos e dimensões alternativas.",
+    "tags": [
+      "animação",
+      "comédia",
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 8.7,
+    "warmth": 4,
+    "adventure": 4,
+    "year": "2013",
+    "tmdbUrl": "https://www.themoviedb.org/tv/60625",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/60625/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:1396",
+    "tmdbId": 1396,
+    "mediaType": "tv",
+    "title": "Breaking Bad",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Drama",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/hGwm9Cj3CdbJIqQWNExQqiYmCd4.jpg",
+    "description": "Ao saber que tem câncer, um professor passa a fabricar metanfetamina pelo futuro da família, mudando o destino de todos.",
+    "tags": [
+      "drama",
+      "crime"
+    ],
+    "tmdbRating": 9,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2008",
+    "tmdbUrl": "https://www.themoviedb.org/tv/1396",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/1396/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:44006",
+    "tmdbId": 44006,
+    "mediaType": "tv",
+    "title": "Chicago Fire: Heróis Contra o Fogo",
+    "kind": "Série",
+    "service": "Prime Video",
+    "genre": "Drama",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/iD8lx0VgmpCZMhycI0Xw72wCuRS.jpg",
+    "description": "Acompanhe o dia-a-dia intenso e os dramas dos oficiais do Departamento de Bombeiros de Chicago e paramédicos do Quartel 51. A equipe composta por bombeiros, equipe de resgate e paramédicos, irá passar por situações tensas e delicadas, arriscando suas próprias vidas para salvar pessoas em perigo, além de ter que lidar com os conflitos pessoais e os desafios que surgem por conta das diferenças entre os companheiros de equipe.",
+    "tags": [
+      "drama"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2012",
+    "tmdbUrl": "https://www.themoviedb.org/tv/44006",
+    "watchProviders": [
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/44006/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:4656",
+    "tmdbId": 4656,
+    "mediaType": "tv",
+    "title": "Raw",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Reality",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/fstEe6RsyNyPUnMwNcL20iNl0nE.jpg",
+    "description": "Esta série pioneira da WWE destaca mais de trinta anos de lutas inesquecíveis, momentos marcantes e episódios cheios de grandes estrelas.",
+    "tags": [
+      "reality"
+    ],
+    "tmdbRating": 6.8,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "1993",
+    "tmdbUrl": "https://www.themoviedb.org/tv/4656",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/4656/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:1911",
+    "tmdbId": 1911,
+    "mediaType": "tv",
+    "title": "Bones",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Crime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/rElaRnNez2dXBCMv1THHdVcroFY.jpg",
+    "description": "A Dra. Temperance Brennan é uma antropóloga forense altamente qualificada que trabalha no Instituto Jeffersonian e escreve romances. Ela possui um talento impressionante para enxergar pistas em ossos de vítimas, e por isso a polícia a chama para ajudar em investigações quando os restos mortais estão tão decompostos, queimados ou destruídos que métodos de identificação padrão são inúteis. Temperance frequentemente trabalha em parceria com o agente especial Seeley Booth, ex-atirador de elite do ex",
+    "tags": [
+      "crime",
+      "drama"
+    ],
+    "tmdbRating": 8.2,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2005",
+    "tmdbUrl": "https://www.themoviedb.org/tv/1911",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/1911/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:1408",
+    "tmdbId": 1408,
+    "mediaType": "tv",
+    "title": "Dr. House",
+    "kind": "Série",
+    "service": "Netflix +1",
+    "genre": "Drama",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/hsH0RgSIFW7oGTri5cGEw1VpfUA.jpg",
+    "description": "O Dr. Gregory House é um médico genial, mas misantropo e viciado em analgésicos, que lidera uma equipe de diagnóstico em um hospital de Nova Jersey. Com um cinismo implacável e métodos pouco ortodoxos, ele trata os casos médicos mais raros e misteriosos como quebra-cabeças complexos, desafiando todos ao seu redor para chegar à verdade.",
+    "tags": [
+      "drama"
+    ],
+    "tmdbRating": 8.6,
+    "warmth": 2,
+    "adventure": 2,
+    "year": "2004",
+    "tmdbUrl": "https://www.themoviedb.org/tv/1408",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/1408/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:502",
+    "tmdbId": 502,
+    "mediaType": "tv",
+    "title": "Vila Sésamo",
+    "kind": "Série",
+    "service": "Netflix",
+    "genre": "Kids",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/efyqi8KvJcYrnFA9cDOL3Ph9bxs.jpg",
+    "description": "Em uma rua especial no centro da cidade, os habitantes, humanos e bonecos, ensinam temas pré-escolares com comédia, desenhos animados, jogos e canções.",
+    "tags": [
+      "kids",
+      "comédia"
+    ],
+    "tmdbRating": 7.1,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "1969",
+    "tmdbUrl": "https://www.themoviedb.org/tv/502",
+    "watchProviders": [
+      "Netflix"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/502/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:60572",
+    "tmdbId": 60572,
+    "mediaType": "tv",
+    "title": "Pokémon",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/ck1nfqYxMkiGvBVztIuM6b7fHoC.jpg",
+    "description": "Explore o mundo de Pokémon com Ash Ketchum e seu parceiro Pikachu enquanto eles fazem novos amigos, encontram Pokémon poderosos e buscam o objetivo supremo de Ash: Tornar-se um Mestre Pokémon!",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "1997",
+    "tmdbUrl": "https://www.themoviedb.org/tv/60572",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/60572/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:46260",
+    "tmdbId": 46260,
+    "mediaType": "tv",
+    "title": "Naruto",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/9ptbVZpKNy5NY9D4zq4KGiYWRQY.jpg",
+    "description": "Momentos antes do nascimento de Naruto Uzumaki, um enorme demônio conhecido como o Kyuubi, a Raposa de Nove Caudas, atacou o vilarejo da folha oculta Konoha, causando destruição. Para pôr fim à devastação de Kyuubi, o líder da aldeia, o quarto Hokage, sacrificou sua vida e selou o monstruoso animal dentro do recém-nascido Naruto. Agora, Naruto é um ninja hiperativo e cabeça dura que ainda vivem em Konoha. Evitado pelos demais habitantes por causa da Kyuubi dentro dele, Naruto se esforça para enc",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2002",
+    "tmdbUrl": "https://www.themoviedb.org/tv/46260",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/46260/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:94664",
+    "tmdbId": 94664,
+    "mediaType": "tv",
+    "title": "Mushoku Tensei: Jobless Reincarnation",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/tn2mxPYSSUPHgfcAe5SCga1DO0i.jpg",
+    "description": "Quando um fracassado de 34 anos é atropelado por um ônibus, sua história não acaba. Reencarnado em um novo mundo como criança, Rudy aproveitará cada oportunidade para viver a vida que sempre quis. Com novos amigos, habilidades mágicas e coragem para fazer tudo o que sempre sonhou, ele embarca em uma aventura épica – com toda a sua experiência do passado intacta!",
+    "tags": [
+      "anime",
+      "aventura",
+      "animação",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2021",
+    "tmdbUrl": "https://www.themoviedb.org/tv/94664",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/94664/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:95479",
+    "tmdbId": 95479,
+    "mediaType": "tv",
+    "title": "Jujutsu Kaisen",
+    "kind": "Anime",
+    "service": "Netflix +2",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/8R1mMSC1gX1cg5ed7ns49JOEqw3.jpg",
+    "description": "Sofrimento, arrependimento, vergonha: os sentimentos negativos dos humanos tornam-se Maldições, causando terríveis acidentes que podem levar até mesmo à morte. E pra piorar, Maldições só podem ser exorcizadas por outras Maldições. Certo dia, para salvar amigos que estavam sendo atacados por Maldições, Yuji Itadori engole o dedo do Ryomen-Sukuna, absorvendo sua Maldição. Ele então decide se matricular no Colégio Técnico de Feitiçaria de Tóquio, uma organização que combate as Maldições... e assim ",
+    "tags": [
+      "anime",
+      "animação",
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 8.6,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2020",
+    "tmdbUrl": "https://www.themoviedb.org/tv/95479",
+    "watchProviders": [
+      "Netflix",
+      "Prime Video",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/95479/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:12971",
+    "tmdbId": 12971,
+    "mediaType": "tv",
+    "title": "Dragon Ball Z",
+    "kind": "Anime",
+    "service": "Crunchyroll",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/kbkuYkaFsDwL6cyMgnBf77LczEo.jpg",
+    "description": "Cinco anos após vencer o Torneio Mundial de Artes Marciais, Goku vive uma vida tranquila com sua esposa e seu filho. No entanto, essa situação muda com a chegada de um inimigo misterioso chamado Raditz, que se apresenta como o irmão de Goku, há muito desaparecido. Ele revela que Goku é descendente da raça Saiyajin — outrora poderosa, mas agora praticamente extinta —, cujo planeta natal foi aniquilado. Quando foi enviado à Terra ainda bebê, o único objetivo de Goku era conquistar e destruir o pla",
+    "tags": [
+      "anime",
+      "animação",
+      "ficção científica",
+      "aventura"
+    ],
+    "tmdbRating": 8.4,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "1989",
+    "tmdbUrl": "https://www.themoviedb.org/tv/12971",
+    "watchProviders": [
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/12971/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:220542",
+    "tmdbId": 220542,
+    "mediaType": "tv",
+    "title": "Diários de uma Apotecária",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/t8fC3K3XnwE6Iso6b1bi5Fdo93n.jpg",
+    "description": "Maomao levava uma vida tranquila ao lado de seu pai, um boticário renomado. No entanto, sua vida muda da noite pro dia quando ela é vendida como uma simples serva no palácio do imperador. Incapaz de se adaptar à vida na realeza, Maomao decide tomar medidas drásticas quando os herdeiros imperiais adoecem, embarcando numa missão para encontrar a cura. Sua audácia chama a atenção de Jinshi, um belo funcionário do palácio que decide apoiá-la. Agora, Maomao se envolve em intrigas médicas enquanto sua",
+    "tags": [
+      "anime",
+      "animação",
+      "drama",
+      "mistério"
+    ],
+    "tmdbRating": 8.7,
+    "warmth": 3,
+    "adventure": 2,
+    "year": "2023",
+    "tmdbUrl": "https://www.themoviedb.org/tv/220542",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/220542/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:65942",
+    "tmdbId": 65942,
+    "mediaType": "tv",
+    "title": "Re:Zero - Começando uma Vida em Outro Mundo",
+    "kind": "Anime",
+    "service": "Crunchyroll",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/ccG0ZfXOQ0834bIus4SwZrXtkyM.jpg",
+    "description": "Natsuki Subaru, um adolescente comum, conhece uma linda garota de cabelos prateados vinda de outro mundo. Subaru quer ficar ao lado dela, mas o fardo que ela carrega é maior do que Subaru pode imaginar. Eles enfrentam o feroz ataque de monstros, traições, violência irracional... e, por fim, a morte. Subaru promete derrotar qualquer inimigo, qualquer destino, tudo para protegê-la. E assim, o pobre garoto sem poder algum obtém o \"Retorno da Morte\", uma habilidade única que permite ao usuário volta",
+    "tags": [
+      "anime",
+      "animação",
+      "mistério",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.1,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2016",
+    "tmdbUrl": "https://www.themoviedb.org/tv/65942",
+    "watchProviders": [
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/65942/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:312359",
+    "tmdbId": 312359,
+    "mediaType": "tv",
+    "title": "Dragon Ball Super: Beerus",
+    "kind": "Anime",
+    "service": "Crunchyroll",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/w5ai45092PIlV1Vbt7kswry2C03.jpg",
+    "description": "Quando Beerus, o Deus da Destruição, desperta em busca de um rival à altura, Goku e seus amigos enfrentam uma batalha épica para impedi-lo de destruir a Terra.",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 9.8,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2026",
+    "tmdbUrl": "https://www.themoviedb.org/tv/312359",
+    "watchProviders": [
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/312359/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:45790",
+    "tmdbId": 45790,
+    "mediaType": "tv",
+    "title": "JoJo's Bizarre Adventure",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/2Sc0veFPh9CcHMtNqMyiQqIW9ZF.jpg",
+    "description": "A saga que se inicia na Inglaterra do século XIX, contando a rivalidade entre Jonathan Joestar, um jovem aristocrata, e Dio Brando, um garoto plebeu que foi acolhido pelo pai de Jonathan quando tornou-se órfão. Insatisfeito com sua posição social, a ambição insaciável e o desejo de dominação de Dio o levam a estudar os poderes sobrenaturais de uma antiga máscara asteca de pedra presente na mansão dos Joestar - um artefato que mudará para sempre o destino de Dio e das futuras gerações dos Joestar",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.5,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2012",
+    "tmdbUrl": "https://www.themoviedb.org/tv/45790",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/45790/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:30983",
+    "tmdbId": 30983,
+    "mediaType": "tv",
+    "title": "Detetive Conan",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/gW14n6xxONXrya8CIDhRe5Ada7U.jpg",
+    "description": "Transformado em criança por uma substância misteriosa, o detetive adolescente Conan ajuda na solução de crimes complexos enquanto persegue os vilões que o envenenaram.",
+    "tags": [
+      "anime",
+      "animação",
+      "crime",
+      "mistério",
+      "comédia"
+    ],
+    "tmdbRating": 8,
+    "warmth": 4,
+    "adventure": 2,
+    "year": "1996",
+    "tmdbUrl": "https://www.themoviedb.org/tv/30983",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/30983/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:45247",
+    "tmdbId": 45247,
+    "mediaType": "tv",
+    "title": "Chihayafuru",
+    "kind": "Anime",
+    "service": "Crunchyroll",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/w1oIhPunv4HIMPvMW8SJB04RNTS.jpg",
+    "description": "Chihaya Ayase sonha que sua irmã mais velha seja a melhor modelo do Japão, mas seu colega de classe Arata Wataya lhe ensina que devemos ter nossos próprios sonhos. Arata almeja se tornar o melhor jogador de karuta, o que choca Chihaya. Junto com seu amigo Taichi Mashima, ele entra neste mundo e logo descobre seu talento inato. Após a formatura do fundamental, cada um segue seu próprio caminho. Agora no ensino médio, Chihaya continua convencida de que o karuta pode uni-los novamente. Será este o ",
+    "tags": [
+      "anime",
+      "animação",
+      "drama"
+    ],
+    "tmdbRating": 7.6,
+    "warmth": 3,
+    "adventure": 2,
+    "year": "2011",
+    "tmdbUrl": "https://www.themoviedb.org/tv/45247",
+    "watchProviders": [
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/45247/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:209867",
+    "tmdbId": 209867,
+    "mediaType": "tv",
+    "title": "Frieren e a Jornada para o Além",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/qykTIEJQF8cunKD0CKOqab15wns.jpg",
+    "description": "Após uma missão de 10 anos ao lado do herói Himmel e seu grupo, a poderosa maga Frieren derrotou o Rei Demônio e trouxe paz ao reino. Como uma elfa, Frieren tem uma vida de mais de mil anos pela frente. Ela promete retornar para seus amigos e, assim, parte em uma jornada solitária. 50 anos se passam quando Frieren finalmente volta para visitar Himmel e os outros. Embora ela não tenha envelhecido nada, seus amigos têm pouco tempo de vida restante. É então que Frieren testemunha a morte de Himmel,",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "drama",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.8,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2023",
+    "tmdbUrl": "https://www.themoviedb.org/tv/209867",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/209867/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:37854",
+    "tmdbId": 37854,
+    "mediaType": "tv",
+    "title": "One Piece",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/9ltisibeD4gzqjM1AzmQwCdyirQ.jpg",
+    "description": "Houve um homem que conquistou tudo aquilo que o mundo tinha a oferecer, o lendário Rei dos Piratas, Gold Roger. Capturado e condenado à execução pelo Governo Mundial, suas últimas palavras lançaram legiões aos mares. \"Meu tesouro? Se quiserem, podem pegá-lo. Procurem-no! Ele contém tudo que este mundo pode oferecer!\". Foi a revelação do maior tesouro, o One Piece, cobiçado por homens de todo o mundo, sonhando com fama e riqueza imensuráveis... Assim começou a Grande Era dos Piratas!",
+    "tags": [
+      "anime",
+      "aventura",
+      "comédia",
+      "animação"
+    ],
+    "tmdbRating": 8.8,
+    "warmth": 4,
+    "adventure": 4,
+    "year": "1999",
+    "tmdbUrl": "https://www.themoviedb.org/tv/37854",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/37854/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:46298",
+    "tmdbId": 46298,
+    "mediaType": "tv",
+    "title": "Hunter x Hunter",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/9WxfAQquTun9ATkV6iAeFHMkqxv.jpg",
+    "description": "Monstros amedrontadores, criaturas exóticas, riquezas vastas, tesouros misteriosos, terras vis e terras inexploradas... Gon parte em uma aventura para se tornar um caçador profissional que arrisca a própria vida em busca do desconhecido. Pelo caminho, ele conhece outros participantes da Prova dos Caçadores: Kurapika, Leorio e Killua. Será Gon capaz de vencer os grandes desafios da Prova de Caçadores e se tornar o melhor do mundo? Esta jornada selvagem e épica está prestes a começar!!",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.7,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2011",
+    "tmdbUrl": "https://www.themoviedb.org/tv/46298",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/46298/watch?locale=BR"
+  },
+  {
+    "id": "tmdb:tv:31910",
+    "tmdbId": 31910,
+    "mediaType": "tv",
+    "title": "Naruto Shippuden",
+    "kind": "Anime",
+    "service": "Netflix +1",
+    "genre": "Anime",
+    "minutes": null,
+    "image": "https://image.tmdb.org/t/p/w342/nRJmByfK9XdtOY73VArcN8KpKVs.jpg",
+    "description": "Naruto Shippuden ocorre 2 anos e meio após Naruto ter deixado a vila para treinar com Jiraiya. Após seu retorno, Naruto descobre que seus amigos  shinobi's o superaram na classificação, e ele caiu para trás. No  entanto, com apenas 6 meses para resgatar Sasuke, Naruto tem de  enfrentar inimigos ainda mais perigosos. O plano da Akatsuki se revela  lentamente e os perigos surgem mais do que nunca!",
+    "tags": [
+      "anime",
+      "animação",
+      "aventura",
+      "ficção científica"
+    ],
+    "tmdbRating": 8.5,
+    "warmth": 3,
+    "adventure": 4,
+    "year": "2007",
+    "tmdbUrl": "https://www.themoviedb.org/tv/31910",
+    "watchProviders": [
+      "Netflix",
+      "Crunchyroll"
+    ],
+    "watchUrl": "https://www.themoviedb.org/tv/31910/watch?locale=BR"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "duotela-embedded-netflix-spike",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Experimento isolado de Netflix dentro da janela Dalari Cine; reprodução real ainda não validada",
+  "main": "main.cjs",
+  "scripts": {
+    "install:runtime": "node scripts/install-runtime.cjs",
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "check": "node --check main.cjs && node --check src/url-policy.cjs && node --check src/runtime-paths.cjs && node --check src/layout.cjs && node --check src/toolbar-preload.cjs && node --check src/duotela-preload.cjs && node --check src/netflix-preload.cjs && node --check src/updater.cjs"
+  },
+  "devDependencies": {
+    "electron": "https://codeload.github.com/castlabs/electron-releases/tar.gz/refs/tags/v44.5.1%2Bwvcus"
+  }
+}

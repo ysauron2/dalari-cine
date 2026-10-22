@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dalari Cine · Teste de player integrado</title>
+<style>
+  :root{font-family:Inter,system-ui,sans-serif;color:#f7f2f5;background:#10131d}
+  *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:38px 30px;background:radial-gradient(circle at 10% 0,#322537,#10131d 48%)}
+  .brand{display:flex;align-items:center;gap:11px;font-size:24px;font-weight:800;letter-spacing:-.05em}.mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;color:#2a1720;background:linear-gradient(135deg,#ffbe91,#ed789e)}
+  .eyebrow{color:#f7aa91;text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800;margin-top:58px}
+  h1{font-size:clamp(29px,4vw,44px);line-height:1.03;letter-spacing:-.06em;margin:13px 0 18px}p,li{color:#b9bdca;font-size:13px;line-height:1.65}ol{padding-left:20px}li{margin:8px 0}.card{margin-top:30px;padding:17px;border:1px solid #3e4052;border-radius:18px;background:#212330}.card strong{font-size:13px}.card p{margin-bottom:0;font-size:12px}code{color:#ffbb97;overflow-wrap:anywhere}
+</style>
+<div class="brand"><span class="mark">▶</span>Dalari Cine</div>
+<div class="eyebrow">Experimento isolado</div>
+<h1>Um app.<br>Duas áreas.<br>Um teste real.</h1>
+<p>A Netflix está à direita, dentro desta janela. Esta tela apenas testa se um título protegido consegue tocar aqui; ainda não sincroniza a sala.</p>
+<ol>
+  <li>Entre na Netflix você mesmo, se desejar testar.</li>
+  <li>Abra um título disponível na sua conta e tente reproduzir por 2 a 3 minutos.</li>
+  <li>Anote o resultado e o código de erro, caso apareça. Não registre senha nem cookies.</li>
+</ol>
+<div class="card"><strong>Quer ver a sala real aqui?</strong><p>Inicie o servidor Dalari Cine e abra este experimento com <code>DUOTELA_URL=http://127.0.0.1:8787/</code>. O vídeo continuará isolado da sala até a reprodução real ser validada.</p></div>
+</html>

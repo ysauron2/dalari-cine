@@ -1,0 +1,11 @@
+# Cloudflare Worker das estatísticas anônimas do Dalari Cine. Passo a passo em README.md.
+name = "dalari-stats"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dalari-stats"
+database_id = "600153dd-bd08-42e2-936b-40af0f816591"
+
+# Segredo (não vai neste arquivo):  npx wrangler secret put PANEL_PASSWORD

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: toldo listrado e duas xícaras ao vento">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb37a"/><stop offset=".6" stop-color="#e5718f"/><stop offset="1" stop-color="#3a2b4d"/></linearGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/><circle cx="740" cy="150" r="78" fill="#ffe0b0" opacity=".9"/>
+<path d="M0 400 Q240 340 480 400 T960 390 V540 H0Z" fill="#2a2140"/>
+<g transform="translate(200 160)"><path d="M0 60 L60 0 H420 L480 60Z" fill="#fff3e0"/><path d="M60 0 H120 L100 60 H0Z M180 0 H240 L240 60 H160Z M300 0 H360 L380 60 H300Z" fill="#e5586f"/><rect x="30" y="60" width="420" height="14" fill="#2a2140" opacity=".5"/></g>
+<g fill="#fff3e0"><path d="M360 330 h90 v50 q0 36 -45 36 t-45 -36z"/><path d="M510 330 h90 v50 q0 36 -45 36 t-45 -36z"/></g>
+<g fill="none" stroke="#fff3e0" stroke-width="7" stroke-linecap="round"><path d="M444 339 q30 0 30 24 t-30 24"/><path d="M594 339 q30 0 30 24 t-30 24"/></g>
+<g fill="none" stroke="#ffe0b0" stroke-width="5" stroke-linecap="round" opacity=".8"><path d="M400 300 q-14 -22 0 -40 t0 -40"/><path d="M555 300 q14 -22 0 -40 t0 -40"/></g>
+</svg>

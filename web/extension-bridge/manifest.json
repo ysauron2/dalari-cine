@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Dalari Cine - ponte Netflix (teste local)",
+  "version": "0.1.0",
+  "description": "Teste local. Sincroniza play, pause e seek da aba Netflix com a sala Dalari Cine aberta neste navegador. Não lê login, cookies nem conteúdo protegido.",
+  "minimum_chrome_version": "116",
+  "permissions": [],
+  "background": { "service_worker": "src/background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.netflix.com/watch/*"],
+      "js": ["src/bridge-protocol.js", "src/vendor/video-controller.js", "src/vendor/netflix-room-sync-core.js", "src/netflix-content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+      "js": ["src/bridge-protocol.js", "src/room-content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

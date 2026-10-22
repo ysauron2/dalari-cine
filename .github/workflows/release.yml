@@ -1,0 +1,167 @@
+name: Instaladores Dalari Cine
+
+# Roda ao publicar uma tag (git tag v0.1.0 && git push origin v0.1.0) ou manualmente (Actions > Run workflow).
+# Gera instalador Windows (.exe) e pacotes macOS (.dmg, Apple Silicon e Intel) e anexa à Release da tag.
+# Assinatura VMP (necessária para a Netflix): defina os secrets EVS_ACCOUNT_NAME e EVS_PASSWD (veja README.md).
+# Sem eles o build continua, sem VMP: tudo funciona menos a Netflix (erro E100).
+# Atualização automática: segredo UPDATE_SIGNING_KEY (veja app/README.md, "Atualização automática"). O repositório precisa ser
+# público para os apps lerem a Release sem login.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  EVS_NO_ASK: '1'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Testes da interface e do serviço da sala
+        run: node --test web/tests/*.test.mjs
+      - name: Testes do aplicativo
+        run: cd app && node --test tests/*.test.cjs
+      - name: Testes do serviço de estatísticas
+        run: cd stats-worker && node --test test/*.test.mjs
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    env:
+      EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+      EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Versão
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0-dev' }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Instalar ECS (Electron da Castlabs) e Widevine
+        run: |
+          npm ci
+          npm run install:runtime
+      - name: Montar a pasta do app
+        run: ./scripts/build-windows.ps1
+      - name: Assinar VMP (EVS)
+        if: env.EVS_ACCOUNT_NAME != ''
+        run: |
+          python -m venv .evs-venv
+          .\.evs-venv\Scripts\python.exe -m pip install castlabs-evs
+          .\.evs-venv\Scripts\python.exe -m castlabs_evs.account reauth
+          ./scripts/sign-vmp-windows.ps1 -Target dist-win/DalariCine
+      - name: Aviso sem VMP
+        if: env.EVS_ACCOUNT_NAME == ''
+        run: |
+          Write-Host "::warning::Sem secrets EVS: o instalador sai sem assinatura VMP e a Netflix não vai reproduzir."
+      - name: Criar o instalador
+        run: |
+          choco install nsis -y --no-progress
+          $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          & $makensis /V2 "/DSRC=$PWD\dist-win\DalariCine" "/DOUT=$PWD\dist-win\DalariCine-Setup-$env:VERSION-x64.exe" "/DVERSION=$env:VERSION" "/DICON=$PWD\assets\icon.ico" installer.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis falhou ($LASTEXITCODE)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: app/dist-win/DalariCine-Setup-*.exe
+
+  macos:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        # Apple Silicon e Intel: o ECS instalado precisa corresponder à arquitetura do runner.
+        # Se o GitHub renomear esses rótulos, ajuste aqui.
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    env:
+      EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+      EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Versão
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"; else echo "VERSION=0.0.0-dev" >> "$GITHUB_ENV"; fi
+      - name: Instalar ECS (Electron da Castlabs) e Widevine
+        run: |
+          npm ci
+          npm run install:runtime
+      - name: Montar o .app
+        run: ./scripts/build-macos-app.sh
+      - name: Preparar cliente EVS
+        if: env.EVS_ACCOUNT_NAME != ''
+        run: |
+          python -m venv .evs-venv
+          .evs-venv/bin/python -m pip install castlabs-evs
+          .evs-venv/bin/python -m castlabs_evs.account reauth
+      - name: Assinar (VMP + ad hoc)
+        run: |
+          if [ -z "$EVS_ACCOUNT_NAME" ]; then
+            echo "::warning::Sem secrets EVS: o pacote sai sem assinatura VMP e a Netflix não vai reproduzir."
+            export DUOTELA_SKIP_VMP=1
+          fi
+          ./scripts/sign-macos-app.sh
+      - name: Criar o .dmg
+        run: ./scripts/package-macos-dmg.sh "$VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.runner }}
+          path: app/dist-macos/*.dmg
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      # Atualização automática: latest.json (versão + SHA-256 dos instaladores) assinado com a chave privada (segredo
+      # UPDATE_SIGNING_KEY). O app só aceita atualizações cuja assinatura bata com a chave pública de app/update-config.json.
+      - name: Manifesto assinado das atualizações
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          if [ -n "$UPDATE_SIGNING_KEY" ]; then
+            node app/scripts/make-update-manifest.cjs dist "${GITHUB_REF_NAME#v}"
+          else
+            echo "::warning::Sem o segredo UPDATE_SIGNING_KEY: esta Release sai sem atualização automática."
+          fi
+      - name: Publicar a Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -la dist
+          gh release create "$GITHUB_REF_NAME" dist/* --title "Dalari Cine $GITHUB_REF_NAME" --generate-notes

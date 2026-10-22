@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Sessao a Dois (spike)</title>
+  <style>
+    body { font: 13px system-ui, sans-serif; width: 280px; margin: 10px; }
+    pre { white-space: pre-wrap; margin: 0 0 8px; min-height: 3em; font: inherit; }
+    button, input { font: inherit; margin: 0 4px 6px 0; }
+    input { width: 70px; }
+    small { color: #555; }
+  </style>
+</head>
+<body>
+  <pre id="state-text" aria-live="polite">Consultando...</pre>
+  <button id="play-button" type="button">Play</button>
+  <button id="pause-button" type="button">Pause</button>
+  <button id="refresh-button" type="button">Atualizar</button>
+  <div>
+    <input id="seek-input" type="text" inputmode="decimal" placeholder="segundos" aria-label="Segundos">
+    <button id="seek-button" type="button">Ir para</button>
+  </div>
+  <small>Spike local: controla so esta aba. Nao sincroniza com outro dispositivo.</small>
+  <script src="popup-model.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

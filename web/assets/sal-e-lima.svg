@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: limão e pitada de sal sobre uma mesa de cozinha">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d6f6a"/><stop offset="1" stop-color="#143a4a"/></linearGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/>
+<g fill="#ffffff" opacity=".07"><circle cx="150" cy="120" r="110"/><circle cx="830" cy="440" r="150"/></g>
+<rect y="380" width="960" height="160" fill="#f3d9b1"/><rect y="380" width="960" height="12" fill="#c99c64"/>
+<g transform="translate(260 250)"><ellipse cx="130" cy="110" rx="130" ry="105" fill="#ffe14d"/><ellipse cx="130" cy="110" rx="108" ry="84" fill="#fff6a8"/>
+<g stroke="#ffe14d" stroke-width="7"><path d="M130 110 V30 M130 110 L196 62 M130 110 L214 112 M130 110 L196 160 M130 110 L130 190 M130 110 L64 160 M130 110 L46 112 M130 110 L64 62"/></g><circle cx="130" cy="110" r="11" fill="#ffe14d"/></g>
+<g transform="translate(600 290)"><path d="M0 40 H130 L116 150 H14Z" fill="#e8f3f3"/><rect x="-6" y="24" width="142" height="22" rx="8" fill="#ff8f6b"/><g fill="#ffffff"><circle cx="40" cy="95" r="6"/><circle cx="70" cy="110" r="6"/><circle cx="92" cy="90" r="6"/></g></g>
+<g fill="#ffffff" opacity=".9"><circle cx="560" cy="200" r="5"/><circle cx="590" cy="170" r="4"/><circle cx="620" cy="214" r="4"/></g>
+</svg>

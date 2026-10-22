@@ -1,0 +1,9 @@
+node_modules/
+.npm-cache/
+.electron-cache/
+.runtime-profile/
+.evs-venv/
+dist-macos/
+dist-win/
+*.log
+.env

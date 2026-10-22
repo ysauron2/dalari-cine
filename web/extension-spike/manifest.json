@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Sessao a Dois - spike de controle (YouTube e Netflix)",
+  "version": "0.0.2",
+  "description": "Spike local: le o estado e controla o video do YouTube ou da Netflix (/watch/*) da aba atual. Sem rede, sem armazenamento, sem sincronizacao.",
+  "permissions": [],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
+      "js": ["src/video-controller.js", "src/content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://www.netflix.com/watch/*"],
+      "js": ["src/video-controller.js", "src/content-script.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "Sessao a Dois (spike)",
+    "default_popup": "popup/popup.html"
+  }
+}

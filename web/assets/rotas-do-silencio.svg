@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: trilha entre montanhas ao amanhecer">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ec9d8"/><stop offset=".55" stop-color="#f4d9b8"/><stop offset="1" stop-color="#f0a77c"/></linearGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/><circle cx="480" cy="250" r="90" fill="#fff4d6" opacity=".95"/>
+<path d="M0 340 L150 210 L260 300 L380 170 L520 330 L640 220 L780 320 L960 190 V540 H0Z" fill="#7d8fb3"/>
+<path d="M0 400 L180 290 L300 370 L460 260 L620 390 L780 300 L960 380 V540 H0Z" fill="#4c5f86"/>
+<path d="M0 460 L220 380 L400 450 L600 370 L800 440 L960 400 V540 H0Z" fill="#26324f"/>
+<path d="M470 540 C440 500 540 480 500 450 C470 428 540 410 515 385" fill="none" stroke="#f4d9b8" stroke-width="12" stroke-linecap="round" stroke-dasharray="2 20"/>
+<g fill="none" stroke="#fff4d6" stroke-width="3" opacity=".8"><path d="M120 110 q14 -14 28 0 q14 -14 28 0"/><path d="M780 90 q14 -14 28 0 q14 -14 28 0"/></g>
+</svg>

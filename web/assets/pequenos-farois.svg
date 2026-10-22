@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: dois pequenos faróis de brinquedo sob estrelas">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27346e"/><stop offset="1" stop-color="#7a5bb0"/></linearGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/>
+<g fill="#fff6d8"><circle cx="120" cy="90" r="4"/><circle cx="260" cy="150" r="3"/><circle cx="420" cy="70" r="4"/><circle cx="640" cy="110" r="3"/><circle cx="820" cy="70" r="5"/><circle cx="880" cy="190" r="3"/><circle cx="540" cy="190" r="3"/></g>
+<path d="M395 170 L700 90 V250Z" fill="#ffe9a8" opacity=".35"/>
+<path d="M0 410 Q200 370 400 410 T800 400 T960 410 V540 H0Z" fill="#33b1b0"/><path d="M0 460 Q240 420 480 460 T960 450 V540 H0Z" fill="#1e7f95"/>
+<g><path d="M290 410 L320 190 H380 L410 410Z" fill="#ffe9d6"/><path d="M302 330 H398 L392 280 H308Z M312 240 H388 L381 200 H319Z" fill="#ff7b7b"/><rect x="305" y="150" width="90" height="42" rx="8" fill="#ffd98a"/><path d="M296 150 H404 L350 108Z" fill="#ff7b7b"/></g>
+<g transform="translate(560 190) scale(.6)"><path d="M290 410 L320 190 H380 L410 410Z" fill="#fff0c8"/><path d="M302 330 H398 L392 280 H308Z" fill="#7fd1ae"/><rect x="305" y="150" width="90" height="42" rx="8" fill="#ffd98a"/><path d="M296 150 H404 L350 108Z" fill="#7fd1ae"/></g>
+</svg>

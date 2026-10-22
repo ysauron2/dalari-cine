@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: casa escura com janela acesa e relógio parado">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c1224"/><stop offset="1" stop-color="#2c3a5c"/></linearGradient><radialGradient id="l"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/><circle cx="780" cy="110" r="46" fill="#dfe7ff" opacity=".85"/><circle cx="800" cy="98" r="42" fill="#0c1224" opacity=".5"/>
+<circle cx="480" cy="300" r="190" fill="url(#l)" opacity=".5"/>
+<path d="M0 470 H960 V540 H0Z" fill="#080c18"/>
+<path d="M300 470 V250 L480 130 L660 250 V470Z" fill="#101830"/><path d="M270 262 L480 120 L690 262" fill="none" stroke="#080c18" stroke-width="22" stroke-linejoin="round"/>
+<rect x="420" y="330" width="80" height="140" fill="#080c18"/><rect x="340" y="290" width="60" height="70" fill="#ffd98a"/><path d="M370 290 v70 M340 325 h60" stroke="#101830" stroke-width="5"/>
+<circle cx="480" cy="230" r="40" fill="#e8e1d0"/><circle cx="480" cy="230" r="33" fill="none" stroke="#101830" stroke-width="4"/><path d="M480 230 V204 M480 230 L498 244" stroke="#101830" stroke-width="5" stroke-linecap="round"/>
+<g stroke="#080c18" stroke-width="10" stroke-linecap="round" fill="none"><path d="M120 470 v-130 M120 400 l-40 -50 M120 380 l36 -44"/><path d="M850 470 v-110 M850 410 l30 -40"/></g>
+</svg>

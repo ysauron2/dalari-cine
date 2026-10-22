@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Arte original: balão voando sobre nuvens com um mapa de constelações">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2a7a"/><stop offset=".65" stop-color="#d96aa0"/><stop offset="1" stop-color="#ffc08a"/></linearGradient></defs>
+<rect width="960" height="540" fill="url(#g)"/>
+<g fill="none" stroke="#fff3d6" stroke-width="2" opacity=".8"><path d="M110 90 L200 130 L270 70 L350 120 L420 60" stroke-dasharray="6 8"/><path d="M640 60 L720 110 L800 70 L880 130" stroke-dasharray="6 8"/></g>
+<g fill="#fff3d6"><circle cx="110" cy="90" r="5"/><circle cx="200" cy="130" r="4"/><circle cx="270" cy="70" r="5"/><circle cx="350" cy="120" r="4"/><circle cx="420" cy="60" r="5"/><circle cx="640" cy="60" r="4"/><circle cx="720" cy="110" r="5"/><circle cx="800" cy="70" r="4"/><circle cx="880" cy="130" r="5"/></g>
+<g transform="translate(400 130)"><path d="M80 0 C170 0 190 100 120 150 L40 150 C-30 100 -10 0 80 0Z" fill="#ffe3b8"/><path d="M80 0 C40 40 40 110 60 150 H100 C120 110 120 40 80 0Z" fill="#e5586f"/><path d="M40 150 L55 190 H105 L120 150Z" fill="#7a4b3a"/></g>
+<path d="M-20 440 q60 -70 150 -30 q50 -60 130 -20 q60 -40 120 10 q70 -30 100 30 q80 -50 170 0 q70 -40 130 20 q80 -20 100 50 V540 H-20Z" fill="#fff6ee"/>
+<path d="M0 480 q120 -40 240 0 t240 0 t240 0 t240 0 V540 H0Z" fill="#fde7e0"/>
+</svg>

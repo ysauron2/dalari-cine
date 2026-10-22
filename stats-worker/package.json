@@ -1,0 +1,9 @@
+{
+  "name": "dalari-stats",
+  "private": true,
+  "type": "module",
+  "description": "Estatísticas anônimas do Dalari Cine (Cloudflare Worker + D1)",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
