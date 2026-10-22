@@ -1,6 +1,40 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Cópia de segurança das configurações. Se o armazenamento do app estiver vazio (primeira abertura depois de uma limpeza ou de
+// mudar o endereço do serviço local), restaura do arquivo no perfil ANTES dos scripts da página lerem o localStorage; depois
+// envia ao processo principal toda mudança (a cada 4 s e ao fechar), inclusive remoções (apagar não ressuscita nada).
+(() => {
+  const KEY_RE = /^(duotela-|sessao-a-dois-)[A-Za-z0-9._-]{0,80}$/;
+  const snapshot = () => {
+    const out = {};
+    try {
+      for (let i = 0; i < localStorage.length && i < 400; i++) {
+        const k = localStorage.key(i);
+        if (!KEY_RE.test(k)) continue;
+        const v = localStorage.getItem(k);
+        if (typeof v === 'string' && v.length <= 200000) out[k] = v;
+      }
+    } catch { /* sem armazenamento */ }
+    return out;
+  };
+  try {
+    if (Object.keys(snapshot()).length === 0) {
+      const backup = ipcRenderer.sendSync('duotela:settings-load');
+      if (backup && typeof backup === 'object') for (const [k, v] of Object.entries(backup)) if (KEY_RE.test(k) && typeof v === 'string') localStorage.setItem(k, v);
+    }
+  } catch { /* segue sem restaurar */ }
+  let last = JSON.stringify(snapshot());
+  const save = () => {
+    const now = snapshot(), text = JSON.stringify(now);
+    if (text === last) return;
+    last = text;
+    ipcRenderer.send('duotela:settings-save', now);
+  };
+  setInterval(save, 4000);
+  addEventListener('pagehide', save);
+})();
+
 contextBridge.exposeInMainWorld('duoDesktop', Object.freeze({
   versions: Object.freeze({ electron: String(process.versions.electron || ''), chrome: String(process.versions.chrome || ''), node: String(process.versions.node || '') }),
   setPlatform: platform => {

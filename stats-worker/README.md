@@ -45,6 +45,68 @@ Abra o endereço do Worker no navegador. Ele pede uma senha: o usuário pode ser
 
 Para proteger com login em vez de senha (e-mail ou Google), você pode pôr o Worker atrás do Cloudflare Access; confira os limites do plano gratuito.
 
+## Alertas e resumo no Telegram (opcional)
+
+O Worker confere os contadores de hoje a cada 30 minutos e avisa você no Telegram se algo estiver falhando muito (pareamento, voz, qualidade ruim ou muitos erros do app), no máximo uma vez por tipo a cada 6 horas. Toda segunda-feira, às 12:00 UTC (09:00 em Brasília), manda um resumo da semana. Usa só contadores agregados: nada que identifique alguém.
+
+1. No Telegram, procure **@BotFather**, mande `/newbot`, escolha um nome e guarde o **token** que ele devolve (é como uma senha: não o publique).
+2. Abra uma conversa com o seu bot novo e mande qualquer mensagem (por exemplo "oi").
+3. Descubra o seu **chat id**: no navegador, abra `https://api.telegram.org/bot<SEU_TOKEN>/getUpdates` (troque `<SEU_TOKEN>`) e procure `"chat":{"id":` seguido de um número. Esse número é o chat id.
+4. Cadastre os dois como segredos (o valor é digitado num campo oculto):
+
+```powershell
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+```
+```powershell
+npx wrangler secret put TELEGRAM_CHAT_ID
+```
+5. Atualize o banco e publique de novo (a tabela `alerts` e o agendamento são novos):
+
+```powershell
+npx wrangler d1 execute dalari-stats --remote --file=schema.sql
+```
+```powershell
+npx wrangler deploy
+```
+6. Abra o painel e clique em **Testar Telegram**: uma mensagem de teste deve chegar no seu Telegram. Se aparecer "Telegram não configurado", falta um dos dois segredos.
+
+### Comandos: perguntar ao bot na hora
+
+Com mais um passo, você manda um comando ao seu bot e ele responde com os números do painel:
+
+| Comando | Resposta |
+| --- | --- |
+| `/agora` | quantas pessoas estão com o app aberto neste momento (últimos 5 min), em sala e em chamada, mais o resumo de hoje |
+| `/hoje` | todos os contadores de hoje (UTC) |
+| `/semana` | o resumo dos últimos 7 dias |
+| `/erros` | erros do app hoje e na semana |
+| `/ajuda` | a lista de comandos |
+
+O bot só responde ao **seu** chat (`TELEGRAM_CHAT_ID`) e só a mensagens que trazem um segredo que o Telegram repete a cada envio; qualquer outra pessoa ou chamada é ignorada.
+
+1. Crie um segredo aleatório (só letras e números) no PowerShell e copie o resultado:
+
+```powershell
+-join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | ForEach-Object { [char]$_ })
+```
+2. Cadastre-o e publique de novo:
+
+```powershell
+npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+```
+```powershell
+npx wrangler deploy
+```
+3. Diga ao Telegram para enviar as suas mensagens ao Worker (troque `<SEU_TOKEN>` e `<O_SEGREDO>`; o token aparece na tela só desta vez, no seu computador):
+
+```powershell
+curl.exe -s "https://api.telegram.org/bot<SEU_TOKEN>/setWebhook" -d "url=https://dalari-stats.dalaricine.workers.dev/v1/telegram" -d "secret_token=<O_SEGREDO>"
+```
+Deve responder `{"ok":true,"result":true,"description":"Webhook was set"}`.
+4. No Telegram, mande `/agora` para o seu bot.
+
+Regras de alerta (em `src/alerts.js`): pareamento com 40% ou mais de falhas (mínimo 5 tentativas), voz com 40% ou mais de falhas (ou 8 falhas), qualidade ruim em 40% ou mais das chamadas medidas (mínimo 5), ou 10 erros do app no dia (ou 5 do mesmo tipo). Os limites ficam no código e podem ser ajustados.
+
 ## Testar sem Cloudflare
 
 ```powershell

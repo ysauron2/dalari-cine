@@ -81,9 +81,13 @@
       }
       toast.hidden = false;
     }
+    let failReported = false;
     function apply(s) {
       if (!s) return;
       state = s;
+      // A atualização automática falhou na instalação (não na verificação): só a categoria vai para as estatísticas, se permitidas
+      if (s.status === 'error' && /^Falha ao atualizar/.test(s.message || '')) { if (!failReported) { failReported = true; try { win.DuoTelemetry?.shared?.()?.event('app_error', 'update_fail'); } catch { /* sem estatísticas */ } } }
+      else if (s.status !== 'error') failReported = false;
       win.clearTimeout(hideTimer);
       if (s.status === 'current') hideTimer = win.setTimeout(() => { if (state?.status === 'current') { state = { ...state, status: 'idle' }; render(); } }, 8000);
       render();

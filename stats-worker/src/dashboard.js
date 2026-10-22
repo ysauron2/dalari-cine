@@ -33,6 +33,7 @@ export const DASHBOARD_HTML = `<!doctype html>
     <span id="status">carregando…</span>
     <select id="days" class="btn" aria-label="Período"><option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option></select>
     <a class="btn" id="csv" href="/api/export.csv?days=30">Baixar planilha</a>
+    <button class="btn" id="tgtest" type="button">Testar Telegram</button>
   </header>
 
   <h2>Agora</h2>
@@ -67,6 +68,12 @@ export const DASHBOARD_HTML = `<!doctype html>
     <div class="panel funnel" id="connect"></div>
   </div>
   <p class="note">Qualidade em faixas, medida ~20 s após conectar: <b>boa</b> = perda &lt; 2%, jitter &lt; 30 ms, atraso &lt; 150 ms; <b>ruim</b> = perda &gt; 8%, jitter &gt; 80 ms ou atraso &gt; 400 ms. "Tempo para conectar" vai do clique em Ligar voz até a voz conectada.</p>
+
+  <h2>Erros do app</h2>
+  <div class="two">
+    <div class="panel"><table id="errors"></table></div>
+    <div class="panel"><div class="note">Só categorias fixas, contadas por dia: <b>mic_denied</b> = microfone bloqueado; <b>mic_missing</b> = sem microfone; <b>mic_busy</b> = outro app usa o microfone; <b>mic_insecure</b> = página sem permissão de microfone; <b>player_fail</b> = vídeo do YouTube não abriu; <b>room_lost</b> = a sala caiu de forma inesperada; <b>update_fail</b> = a atualização automática falhou; <b>unexpected</b> = erro inesperado no app (só a contagem, sem detalhes).</div></div>
+  </div>
 
   <h2>Horários de pico</h2>
   <div class="panel"><div class="heat" id="heat"></div><div class="note">Pessoas ativas por hora do dia e dia da semana, no <b>seu fuso horário</b> (soma do período). Mais escuro = mais gente.</div></div>
@@ -169,10 +176,17 @@ function renderMore(s) {
   funnelRows($('quality'), [['Boa', q.good || 0, 'good'], ['Média', q.fair || 0, 'fair'], ['Ruim', q.poor || 0, 'poor']], qTotal);
   const c = cnt('connect_time'), cTotal = (c['<3s'] || 0) + (c['3-10s'] || 0) + (c['>10s'] || 0);
   funnelRows($('connect'), [['Menos de 3 s', c['<3s'] || 0, 'good'], ['3 a 10 s', c['3-10s'] || 0, 'fair'], ['Mais de 10 s', c['>10s'] || 0, 'poor']], cTotal);
+  const errs = cnt('app_error'); table($('errors'), ['Erro', 'Vezes'], Object.entries(errs).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, fmt(n)]));
   heat($('heat'), s.hourly || []);
   table($('retention'), ['Semana de entrada', 'Pessoas', 'Voltou no dia seguinte', 'Voltou em 7 dias'], (s.retention || []).map((r) => [r.start, fmt(r.size), r.size ? Math.round((100 * r.d1) / r.size) + '% (' + r.d1 + ')' : '—', r.size ? Math.round((100 * r.w1) / r.size) + '% (' + r.w1 + ')' : '—']));
 }
 $('days').addEventListener('change', load);
+$('tgtest').addEventListener('click', async () => {
+  const b = $('tgtest'); b.disabled = true; const old = b.textContent; b.textContent = 'Enviando…';
+  try { const r = await fetch('/api/alert-test', { method: 'POST' }); b.textContent = r.ok ? 'Enviado ✓ (veja o Telegram)' : r.status === 409 ? 'Telegram não configurado' : 'Falhou (' + r.status + ')'; }
+  catch { b.textContent = 'Falhou (rede)'; }
+  setTimeout(() => { b.textContent = old; b.disabled = false; }, 4000);
+});
 load(); setInterval(load, 30000);
 </script>
 </body>

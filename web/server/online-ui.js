@@ -130,6 +130,13 @@
     .stage-seek:disabled{opacity:.45;cursor:not-allowed}
     .stage-after{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 24px;border:1px solid var(--line);border-radius:22px;background:var(--s1)}
     .stage-after h4{font-size:15px}.stage-after p{margin-top:4px}
+    /* cor do ambiente (vem do cartaz) e modo cinema */
+    body.room-v3-on{background-image:radial-gradient(900px 520px at 78% -8%,var(--ambient-soft),transparent 65%),radial-gradient(700px 480px at 4% 108%,var(--ambient-soft),transparent 70%);background-attachment:fixed}
+    .rv3 .stage{box-shadow:0 0 0 1px var(--ambient-soft),0 18px 90px -28px var(--ambient);transition:box-shadow 1.2s ease}
+    body.cinema-on .sidebar,body.cinema-on .topbar,body.cinema-on .rv3 > header,body.cinema-on .rv3-chips,body.cinema-on .rv3-side,body.cinema-on .stage-after,body.cinema-on .rv3-foot,body.cinema-on .mobilebar{transition:opacity 1s ease,filter 1s ease}
+    body.cinema-on:not(.cinema-wake) .sidebar,body.cinema-on:not(.cinema-wake) .topbar,body.cinema-on:not(.cinema-wake) .rv3 > header,body.cinema-on:not(.cinema-wake) .rv3-chips,body.cinema-on:not(.cinema-wake) .rv3-side,body.cinema-on:not(.cinema-wake) .stage-after,body.cinema-on:not(.cinema-wake) .rv3-foot,body.cinema-on:not(.cinema-wake) .mobilebar{opacity:.16;filter:saturate(.6)}
+    body.cinema-on:not(.cinema-wake){background-color:#04060b}
+    body.cinema-on:not(.cinema-wake) .rv3 .stage{box-shadow:0 0 0 1px var(--ambient-soft),0 24px 160px -10px var(--ambient)}
     /* quem está pronto, reações e contagem 3-2-1 */
     .session-card{display:grid;gap:10px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--s1)}
     .session-card h4{font-size:14px}
@@ -168,8 +175,11 @@
     .online-voice .voice-state.is-on{background:#1d3a31;color:var(--green)}
     .online-voice .voice-state.is-warn{background:#40302a;color:#ffd1aa}
     .online-voice .voice-note{flex-basis:100%;color:var(--mute);font-size:11px}
-    .avatar.is-speaking{box-shadow:0 0 0 2px #A6E4C6,0 0 16px #A6E4C6aa;animation:duoSpeak 1.1s ease-in-out infinite}
-    @keyframes duoSpeak{50%{box-shadow:0 0 0 3px #A6E4C6,0 0 24px #A6E4C6}}@media (prefers-reduced-motion:reduce){.avatar.is-speaking{animation:none}}
+    .avatar{transform:scale(calc(1 + var(--lvl,0)*.22));transition:transform .12s ease-out,box-shadow .12s ease-out}
+    .avatar.is-incall:not(.is-speaking){animation:duoBreathe 4.2s ease-in-out infinite}
+    @keyframes duoBreathe{50%{transform:scale(1.045);box-shadow:0 0 0 2px #ffffff14,0 0 14px #ffffff10}}
+    .avatar.is-speaking{box-shadow:0 0 0 calc(2px + var(--lvl,0)*4px) #A6E4C6,0 0 calc(12px + var(--lvl,0)*28px) #A6E4C6aa}
+    @media (prefers-reduced-motion:reduce){.avatar,.avatar.is-incall{animation:none!important;transform:none}}
     .voice-sub{margin:6px 0 0;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#FFAC8F}.voice-check{display:flex;gap:8px;align-items:center;font-size:12px;color:#d6dbe6;cursor:pointer;margin:0}
     .voice-check input{width:auto;accent-color:#FFAC8F}.voice-device input[type=range]{width:100%;padding:0;border:0;background:transparent;accent-color:#FFAC8F}
     .voice-devices{margin-top:10px;display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line)}.voice-devices p{margin:0}
@@ -284,8 +294,8 @@
     <header class="rv3-head">
       <div class="rv3-titles"><h3 id="rv3-title">Nossa sala</h3><p id="rv3-sub"></p><span class="rv3-conn" id="rv3-conn" role="status"></span></div>
       <div class="rv3-head-actions">
-        <button type="button" class="rb" id="rv3-invite-btn" data-online-act="invite-open" aria-haspopup="dialog">↗ Convidar<i class="rv3-dot" id="rv3-invite-dot" hidden></i></button>
-        <div class="rv3-menuwrap"><button type="button" class="rb rb-icon" id="rv3-menu-btn" data-online-act="menu" aria-haspopup="true" aria-expanded="false" aria-controls="rv3-menu" aria-label="Mais opções da sala">•••</button>
+        <button type="button" class="rb" id="rv3-invite-btn" data-online-act="invite-open" aria-haspopup="dialog">${window.DuoIcons.html('invite')}Convidar<i class="rv3-dot" id="rv3-invite-dot" hidden></i></button>
+        <div class="rv3-menuwrap"><button type="button" class="rb rb-icon" id="rv3-menu-btn" data-online-act="menu" aria-haspopup="true" aria-expanded="false" aria-controls="rv3-menu" aria-label="Mais opções da sala">${window.DuoIcons.html('dots')}</button>
         <div class="rv3-menu" id="rv3-menu" role="group" aria-label="Opções da sala" hidden></div></div>
       </div>
     </header>
@@ -333,8 +343,9 @@
   stageView.insertBefore(playerPanel, stageEmpty);
   const youtube = window.DuoYouTubePlayer?.create(playerPanel, {
     onAction: (id, action, seconds) => run(async () => { await client.playback(id, action, seconds); apply(client.snapshot); }),
-    onError: (error) => say(error),
+    onError: (error) => { say(error); if (Date.now() - lastPlayerFailAt > 30000) { lastPlayerFailAt = Date.now(); tel?.event('app_error', 'player_fail'); } },
   });
+  let lastPlayerFailAt = 0;
   // Ponte Netflix: a credencial da sala fica aqui; a extensão só recebe a visão mínima (título, watchId, play/pause/seek).
   const nfBridge = window.DuoNetflixBridge ? new window.DuoNetflixBridge.NetflixBridge({
     window,
@@ -343,7 +354,7 @@
   }) : null;
   let nfLink = null;
   const clock = window.DuoYouTubePlayer?.formatClock || ((v) => String(Math.floor(v || 0)));
-  const voice = window.DuoVoice ? new window.DuoVoice.VoiceCall({ onChange: () => renderVoice(), mount: panel, onSpeaking: (s) => onSpeakingChange(s) }) : null;
+  const voice = window.DuoVoice ? new window.DuoVoice.VoiceCall({ onChange: () => renderVoice(), mount: panel, onSpeaking: (s) => onSpeakingChange(s), onLevels: (l) => onVoiceLevels(l) }) : null;
   if (voice) panel.insertBefore(voice.audio, message);
   let inviteManual = false, selectInvite = false, voiceError = '', voiceDiag = '', voiceDiagTimer = null, voiceDevicesOpen = false, deviceKey = '', lastVoiceState = '';
   // Conexão direta (sem servidor de encontro): ver server/p2p-link.js. Host: oferta pendente e conexões abertas; convidado: resposta a enviar.
@@ -359,6 +370,11 @@
   let speakingNow = {}, pttCapturing = false, pttFailsafe = null, holdActive = false;
   const codeLabel = (code) => ({ Backquote: 'Crase (acento grave)', Space: 'Espaço', ControlLeft: 'Ctrl esquerdo', ControlRight: 'Ctrl direito', AltLeft: 'Alt esquerdo', AltRight: 'Alt direito', ShiftLeft: 'Shift esquerdo', ShiftRight: 'Shift direito', Tab: 'Tab', CapsLock: 'Caps Lock' }[code] || String(code).replace(/^Key/, '').replace(/^Digit/, ''));
   const tel = window.DuoTelemetry?.shared?.() || null;
+  // Erro inesperado no app: só a contagem (no máximo 3 por abertura), nunca a mensagem nem o caminho do arquivo
+  let unexpectedSent = 0;
+  const unexpected = () => { if (unexpectedSent < 3) { unexpectedSent++; tel?.event('app_error', 'unexpected'); } };
+  window.addEventListener('error', unexpected);
+  window.addEventListener('unhandledrejection', unexpected);
   if (tel) tel.getState = () => (voice?.joined && voice.state === 'connected' ? 'call' : client ? 'room' : 'idle');
   let callAt = 0, callFailedReported = false, voiceJoinAt = 0;
   // Por que o pareamento falhou, em quatro categorias fixas (nunca texto livre)
@@ -417,6 +433,10 @@
   }[e?.code] || null);
   const P2P_ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
   let hostLink = null, hostLinks = [], guestLink = null, guestLinkOpen = null, p2pAnswerDraft = '', p2pNote = '';
+  // Reconexão automática: se a conexão direta cair, Host e convidado se reencontram sozinhos (código derivado do código original)
+  const RC = window.DuoReconnect;
+  let p2pClosing = false, activeGuestLink = null, guestPair = null, guestRc = null;
+  const hostPairs = new Map(), hostRcs = new Map();     // link -> { code, room, listener }; código -> reconector
   let client = null, snapshot = null, invite = '', inviteShown = false, status = 'desconectado', busy = false, shownMatch = null, searchQuery = '', youtubeQuery = '', youtubeLink = '', youtubeResults = [], youtubeSearched = false, linkOpen = false, tab = 'search', ctxOpen = false, closeArmed = false, removeArmed = null, lastNoticeAt = 0, scrubbing = false, recents = [], uiVersion = 0, preferredPlatform = null, autoSelectInFlight = false;
   let desktopNetflixState = null;
   window.duoDesktop?.onNetflixEvent?.((event) => {
@@ -464,9 +484,15 @@
       await run(async () => { await client.startRound(mode); apply(client.snapshot); });
     },
   };
+  // Rótulos podem começar com "@icone " (ex.: "@play Reproduzir"): o ícone próprio entra antes do texto.
+  const setLabel = (n, text) => {
+    const s = window.DuoIcons?.split(text);
+    if (s?.icon) { n.replaceChildren(window.DuoIcons.node(document, s.icon)); if (s.text) n.append(document.createTextNode(s.text)); } else n.textContent = text;
+    return n;
+  };
   const make = (tag, text, attrs = {}) => {
     const n = document.createElement(tag);
-    if (text !== undefined) n.textContent = text;
+    if (text !== undefined) setLabel(n, text);
     for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
     return n;
   };
@@ -521,6 +547,46 @@
     const m = s?.status === 'active' && s.media?.provider === 'youtube' ? s.media : null;
     if (!m || recents[0]?.videoId === m.videoId) return;
     recents = [{ videoId: m.videoId, title: m.title || 'Vídeo do YouTube' }, ...recents.filter((r) => r.videoId !== m.videoId)].slice(0, 5);
+  }
+  /* ---------- avatar que respira, cor do ambiente e modo cinema ---------- */
+  const smoothLvl = {};
+  function onVoiceLevels(levels = {}) {
+    const me = client?.role;
+    for (const av of document.querySelectorAll('#people-top .avatar[data-role]')) {
+      const id = av.dataset.role === me ? 'local' : av.dataset.role;
+      const raw = Math.min(1, (Number(levels[id]) || 0) * 5);
+      smoothLvl[id] = Math.max(raw, (smoothLvl[id] || 0) * 0.72);
+      av.style.setProperty('--lvl', smoothLvl[id] < 0.02 ? '0' : smoothLvl[id].toFixed(2));
+      av.classList.toggle('is-incall', !!voice?.joined);
+    }
+  }
+  let cinemaOn = true; try { cinemaOn = localStorage.getItem('duotela-cinema') !== '0'; } catch { /* padrão ligado */ }
+  let cinemaWakeTimer = null;
+  const wake = () => { document.body.classList.add('cinema-wake'); clearTimeout(cinemaWakeTimer); cinemaWakeTimer = setTimeout(() => document.body.classList.remove('cinema-wake'), 2800); };
+  for (const ev of ['mousemove', 'keydown', 'touchstart', 'wheel']) window.addEventListener(ev, wake, { passive: true });
+  function updateCinema(s) {
+    document.body.classList.toggle('cinema-on', cinemaOn && !!client && s?.status === 'active' && !!s.media && s.playback?.state === 'playing' && !s.countdown);
+  }
+  let ambientKey = '';
+  function updateAmbient(s) {
+    const A = window.DuoAmbient;
+    if (!A) return;
+    let key = '', url = '';
+    if (s?.status === 'active' && s.media) {
+      key = s.media.titleId || s.media.videoId || s.media.watchId || 'sala';
+      const item = s.selectedMatch ? itemFor(s.selectedMatch) : null;
+      url = item?.image || (s.media.provider === 'youtube' && s.media.videoId ? `https://i.ytimg.com/vi/${s.media.videoId}/mqdefault.jpg` : '');
+    } else if (s?.status === 'active' && s.selectedMatch) {
+      key = s.selectedMatch; url = itemFor(s.selectedMatch)?.image || '';
+    }
+    if (key === ambientKey) return;
+    ambientKey = key;
+    if (!key) { document.body.style.removeProperty('--ambient'); document.body.style.removeProperty('--ambient-soft'); return; }
+    void A.colorFor(window, { url, seed: key }).then((c) => {
+      if (ambientKey !== key) return;                                   // já mudou de título
+      document.body.style.setProperty('--ambient', A.css(c));
+      document.body.style.setProperty('--ambient-soft', A.css(c, 0.2));
+    });
   }
   /* ---------- pronto, contagem 3-2-1 e reações ---------- */
   const REACTION_EMOJI = { heart: '❤️', laugh: '\u{1F602}', wow: '\u{1F62E}', clap: '\u{1F44F}', cry: '\u{1F622}', popcorn: '\u{1F37F}' };
@@ -578,25 +644,27 @@
     const s = snapshot, ids = members(), ready = s.ready || {};
     const canSync = !!s.media && !!s.playback && !s.countdown;
     const everyone = ids.length > 1 && ids.every((r) => ready[r]);
-    paint(sessionCard, [ids.map(nameFor), ids.map((r) => !!ready[r]), !!s.media, !!s.playback, !!s.countdown, client.role], (el) => {
+    paint(sessionCard, [ids.map(nameFor), ids.map((r) => !!ready[r]), !!s.media, !!s.playback, !!s.countdown, client.role, cinemaOn], (el) => {
       el.append(make('h4', 'Quem está pronto?'));
       const list = make('div', undefined, { class: 'ready-list', role: 'list' });
-      for (const r of ids) list.append(make('span', `${ready[r] ? '✓' : '○'} ${r === client.role ? 'Você' : nameFor(r)}`, { class: 'ready-chip' + (ready[r] ? ' is-on' : ''), role: 'listitem' }));
+      for (const r of ids) list.append(make('span', `${ready[r] ? '@check ' : '@circle '}${r === client.role ? 'Você' : nameFor(r)}`, { class: 'ready-chip' + (ready[r] ? ' is-on' : ''), role: 'listitem' }));
       const mine = !!ready[client.role];
       const actions = make('div', undefined, { class: 'session-actions' });
       actions.append(
-        button(mine ? '✓ Estou pronto' : 'Estou pronto', 'ready-toggle', { class: mine ? 'rb-main' : '', 'aria-pressed': String(mine) }),
-        button('▶ Sincronizar agora', 'sync-now', canSync ? { class: everyone ? 'rb-main' : '' } : { disabled: '', title: s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }));
+        button(mine ? '@check Estou pronto' : 'Estou pronto', 'ready-toggle', { class: mine ? 'rb-main' : '', 'aria-pressed': String(mine) }),
+        button('@sync Sincronizar agora', 'sync-now', canSync ? { class: everyone ? 'rb-main' : '' } : { disabled: '', title: s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }));
       const note = make('p', everyone ? 'Todos prontos! Cliquem em Sincronizar agora: todo mundo pausa no mesmo ponto, conta 3, 2, 1 e dá play junto.' : 'Marque quando estiver pronto. Se alguém ficou para trás, Sincronizar agora alinha todo mundo.', { class: 'session-note' });
       const react = make('div', undefined, { class: 'react-row', role: 'group', 'aria-label': 'Reações rápidas' });
       for (const [id, emoji] of Object.entries(REACTION_EMOJI)) react.append(make('button', emoji, { type: 'button', class: 'react-btn', 'data-online-act': 'react', 'data-emoji': id, 'aria-label': 'Reagir ' + id }));
-      el.append(list, actions, note, react);
+      const cine = make('button', cinemaOn ? '@moon Modo cinema: ligado' : '@moon Modo cinema: desligado', { type: 'button', class: 'rb', 'data-online-act': 'cinema-toggle', 'aria-pressed': String(cinemaOn), title: 'Com o vídeo tocando, o resto da tela escurece sozinho e volta quando você mexe o mouse' });
+      el.append(list, actions, note, react, cine);
     });
   }
   function apply(s) {
     if (!s) return;
     snapshot = s;
     syncEffects(s);
+    updateCinema(s); updateAmbient(s);
     window.duoDesktop?.setPlatform(s.status === 'active' ? s.platform : null);
     window.duoDesktop?.syncNetflix(s.status === 'active' && s.platform === 'netflix' ? {
       status: s.status, platform: s.platform, code: s.code, you: s.you, revision: s.revision,
@@ -625,7 +693,7 @@
     client.start({ onSnapshot: apply, onStatus: (s, detail) => {
       stats?.log('sala: ' + s + (detail ? ' (' + detail + ')' : ''));
       if (status === s && s !== 'ended') return;
-      if (s === 'ended') { disconnect(); say(`Sala encerrada: ${detail}.`); return; }
+      if (s === 'ended') { if (!['closed', 'expired', 'guest_denied', 'guest_removed', 'guest_left'].includes(detail)) tel?.event('app_error', 'room_lost'); disconnect(); say(`Sala encerrada: ${detail}.`); return; }
       status = s;
       render();
     } });
@@ -639,6 +707,7 @@
     closeP2P();
     ducker?.reset(); speakingNow = {}; pttDown(false);
     stopCountdown(); countdownId = 0; seenReactionId = null;
+    document.body.classList.remove('cinema-on'); ambientKey = ''; document.body.style.removeProperty('--ambient'); document.body.style.removeProperty('--ambient-soft'); onVoiceLevels({});
     client?.stop(); client = null; snapshot = null; invite = ''; inviteShown = false; inviteManual = false; status = 'desconectado';
     shownMatch = null; searchQuery = ''; youtubeQuery = ''; youtubeLink = ''; youtubeResults = []; youtubeSearched = false; recents = []; linkOpen = false; tab = 'search'; ctxOpen = false; closeArmed = false; preferredPlatform = null; autoSelectInFlight = false;
     if (inviteDialog.open) inviteDialog.close();
@@ -679,6 +748,15 @@
     if (guestLink) content.append(guestLinkBox());
   }
   function closeP2P() {
+    p2pClosing = true;
+    guestRc?.stop(); guestRc = null; guestPair = null; activeGuestLink = null;
+    for (const rc of hostRcs.values()) rc.stop();
+    hostRcs.clear();
+    for (const pair of hostPairs.values()) pair.listener?.stop();
+    hostPairs.clear();
+    try { closeP2PLinks(); } finally { p2pClosing = false; }
+  }
+  function closeP2PLinks() {
     if (shortHost) { shortHost.listener.stop(); shortHost.link?.close(); shortHost = null; }
     hostLink?.link.close(); hostLink = null;
     for (const l of hostLinks) l.close();
@@ -727,10 +805,10 @@
     try {
       await Promise.race([link.opened, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10 * 60 * 1000))]);
       if (guestLink?.link !== link) return;
-      const c = new DuoRoomClient({ serviceUrl: location.origin, allowInsecure: isPrivateLanHttp(), fetchImpl: link.fetch });
+      const c = new DuoRoomClient({ serviceUrl: location.origin, allowInsecure: isPrivateLanHttp(), fetchImpl: (u, i) => (activeGuestLink || link).fetch(u, i) });
       await c.joinRoom(inviteText, name);
       if (short) tel?.event('pair_joined');
-      client = c; voice?.attach(c); guestLinkOpen = link; guestLink = null;
+      client = c; voice?.attach(c); guestLinkOpen = link; activeGuestLink = link; guestLink = null;
       apply(await client.getState({ after: 0 })); connect(); say('Pedido enviado. Aguarde a aprovação do Host.');
     } catch (e) {
       if (short) tel?.event('pair_fail', e.message === 'timeout' ? 'link' : 'join');
@@ -745,7 +823,7 @@
     closeP2P();
     tel?.event('pair_try');
     const code = R.normalizeCode(text);
-    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => { if (guestLink?.link === link && (st === 'failed' || st === 'closed') && !client) { guestLink.note = 'A conexão direta não abriu. Peça um novo código ao Host.'; render(); } } });
+    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => onGuestLinkState(link, st) });
     guestLink = { link, answer: null, note: '' };
     render(); say('Procurando o Host pelo código…');
     void (async () => {
@@ -756,6 +834,7 @@
         guestLink.note = 'Host encontrado. Conectando…'; if (!client) render();
         await link.acceptAnswer(answer);
         if (!/^\d{6}$/.test(extra?.room || '')) throw new Error('A resposta do Host não identifica a sala.');
+        guestPair = { code, room: extra.room };
         await joinThroughLink(link, extra.room + '.' + 'A'.repeat(43), name, true);
       } catch (e) {
         tel?.event('pair_fail', failKind(e));
@@ -763,6 +842,87 @@
         link.close();
       }
     })();
+  }
+  // ---- reconexão automática ----
+  const delay = (ms, message) => new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
+  function onGuestLinkState(link, st) {
+    if (st !== 'failed' && st !== 'closed') return;
+    if (guestLink?.link === link && !client) { guestLink.note = 'A conexão direta não abriu. Peça um novo código ao Host.'; render(); return; }
+    if (client && activeGuestLink === link && !p2pClosing) startGuestReconnect();
+  }
+  // Convidado: a conexão com o Host caiu. Volta a procurar o Host pelo código de reencontro, sem pedir nada à pessoa.
+  function startGuestReconnect() {
+    if (!RC || !R || !P2P || !guestPair || !client || guestRc?.running) return;
+    const pair = guestPair;
+    say('A conexão com o Host caiu. Tentando reconectar sozinho…');
+    stats?.log('reconexão: convidado procurando o Host');
+    const rc = RC.createReconnector({
+      maxMs: RC.GUEST_MAX_MS,
+      shouldContinue: () => !!client && guestPair === pair && !p2pClosing,
+      attempt: async () => {
+        const rcode = await R.deriveReconnectCode(pair.code, pair.room);
+        const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => onGuestLinkState(link, st) });
+        try {
+          const offer = await link.createOffer();
+          const { answer } = await R.guestPair({ code: rcode, relay: new R.Relay({ baseUrl: relayBase() }), offer, timeoutMs: 40000 });
+          await link.acceptAnswer(answer);
+          await Promise.race([link.opened, delay(20000, 'timeout')]);
+          if (!client || guestPair !== pair || p2pClosing) { link.close(); return false; }
+          const old = activeGuestLink; activeGuestLink = link; guestLinkOpen = link;
+          old?.close();                                                    // a antiga já caiu; só libera os recursos
+          return true;
+        } catch (e) { link.close(); throw e; }
+      },
+      onState: (s) => {
+        if (s.phase === 'ok') { say('Reconectado! A sala continua de onde parou.'); stats?.log('reconexão: convidado voltou'); void client?.getState({ after: 0 }).then((snap) => apply(snap), () => {}); }
+        else if (s.phase === 'giveup') { say('Não foi possível reconectar sozinho. Saia da sala e peça um novo código ao Host.'); tel?.event('app_error', 'room_lost'); }
+      },
+    });
+    guestRc = rc;
+    void rc.run();
+  }
+  // Host: a conexão de um convidado caiu. Escuta o código de reencontro dele (o mesmo que o convidado calcula).
+  function onHostLinkLost(link) {
+    hostLinks = hostLinks.filter((l) => l !== link);
+    const pair = hostPairs.get(link);
+    hostPairs.delete(link);
+    if (pair && client && !p2pClosing) startHostReconnect(pair);
+    if (inviteDialog.open) buildInviteDialog();
+  }
+  function startHostReconnect(pair) {
+    if (!RC || !R || !P2P || !client || hostRcs.get(pair.code)?.running) return;
+    say('A conexão de um convidado caiu. Aguardando ele reconectar sozinho…');
+    stats?.log('reconexão: Host aguardando o convidado');
+    const rc = RC.createReconnector({
+      maxMs: RC.HOST_MAX_MS,
+      shouldContinue: () => !!client && !p2pClosing && hostRcs.get(pair.code) === rc,
+      attempt: async () => {
+        const rcode = await R.deriveReconnectCode(pair.code, pair.room);
+        let ice = P2P_ICE;
+        try { const list = await client.iceServers(); if (list.length) ice = list; } catch { /* usa o STUN padrão */ }
+        let newLink = null;
+        pair.seen = pair.seen || new Set();             // ofertas já atendidas: o relé repete as recentes, e uma queda seguinte não pode reaproveitar a velha
+        const listener = R.hostListen({ code: rcode, relay: new R.Relay({ baseUrl: relayBase() }), seen: pair.seen, respond: async (offerCode) => {
+          newLink = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: ice, onState: (st) => {
+            if (st === 'open') { hostLinks.push(newLink); hostPairs.set(newLink, pair); say('O convidado reconectou.'); stats?.log('reconexão: convidado voltou'); }
+            else if ((st === 'failed' || st === 'closed') && hostLinks.includes(newLink)) onHostLinkLost(newLink);
+            if (inviteDialog.open) buildInviteDialog();
+          } });
+          newLink.serve(P2P.P2PLink.localHandler(window.fetch.bind(window), location.origin));
+          const { answer } = await newLink.acceptOffer(offerCode, { room: pair.room });
+          return { answer, extra: { room: pair.room } };
+        } });
+        pair.listener = listener;
+        try {
+          await listener.result;
+          if (!newLink) return false;
+          await Promise.race([newLink.opened, delay(30000, 'timeout')]);
+        } catch (e) { listener.stop(); newLink?.close(); throw e; }
+        return true;
+      },
+    });
+    hostRcs.set(pair.code, rc);
+    void rc.run();
   }
   async function ensureInvite() {
     if (invite) return;
@@ -795,8 +955,11 @@
     state.listener = R.hostListen({ code, relay: new R.Relay({ baseUrl: relayBase() }), respond: async (offerCode) => {
       state.note = 'Convidado encontrado. Conectando…'; refresh(); tel?.event('pair_found');
       const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: ice, onState: (st) => {
-        if (st === 'open') { hostLinks.push(link); state.note = 'Conexão aberta. Aprove o pedido de entrada quando ele chegar.'; tel?.event('pair_open'); }
-        else if ((st === 'failed' || st === 'closed') && shortHost === state && !hostLinks.includes(link)) state.note = 'A conexão não abriu. Gere um novo código.';
+        if (st === 'open') { hostLinks.push(link); hostPairs.set(link, { code, room }); state.note = 'Conexão aberta. Aprove o pedido de entrada quando ele chegar.'; tel?.event('pair_open'); }
+        else if (st === 'failed' || st === 'closed') {
+          if (hostLinks.includes(link)) onHostLinkLost(link);
+          else if (shortHost === state) state.note = 'A conexão não abriu. Gere um novo código.';
+        }
         refresh();
       } });
       serveWithInvite(link, room, secret);
@@ -912,7 +1075,7 @@
   function renderChips() {
     paint($('#rv3-chips'), [snapshot.platform, client.role], (el) => {
       for (const [key, label] of Object.entries(shortPlatform)) {
-        const chip = button(key === 'youtube' ? `▶ ${label}` : label, 'platform', { 'data-platform': key, 'aria-pressed': String(snapshot.platform === key), id: `rv3-chip-${key}` });
+        const chip = button(key === 'youtube' ? `@play ${label}` : label, 'platform', { 'data-platform': key, 'aria-pressed': String(snapshot.platform === key), id: `rv3-chip-${key}` });
         if (client.role !== 'host') { chip.disabled = true; chip.title = `${nameFor('host')} escolhe a plataforma`; }
         el.append(chip);
       }
@@ -957,7 +1120,7 @@
         }
       } else {
         el.append(make('h4', 'A próxima escolha é de vocês'), make('p', platform === 'youtube' ? 'Votem nas sugestões ao lado ou abram um vídeo do YouTube.' : desktopNetflix ? 'Votem nas sugestões ao lado. Depois do match, abram o título na Netflix nesta janela.' : platform === 'netflix' ? 'Votem nas sugestões ao lado. Depois do match, cada pessoa abre o título na própria Netflix.' : `Votem nas sugestões ao lado. A integração com ${shortPlatform[platform]} está em desenvolvimento.`));
-        if (client.role === 'host' && !s.round) el.append(button('✦ Me surpreenda', 'surprise', { class: 'rb-main' }));
+        if (client.role === 'host' && !s.round) el.append(button('@sparkle Me surpreenda', 'surprise', { class: 'rb-main' }));
       }
     });
     const nfb = nfState();
@@ -972,11 +1135,11 @@
         el.append(make('span', platform ? 'Reprodução desta plataforma ainda indisponível' : 'Escolha uma plataforma para começar', { class: 'bar-text' }), button('Ver match →', 'tab-match', { class: 'rb-accent' }));
         return;
       }
-      const toggle = button('▶ Reproduzir', 'youtube-toggle', { class: 'rb-main', 'aria-pressed': 'false' });
+      const toggle = button('@play Reproduzir', 'youtube-toggle', { class: 'rb-main', 'aria-pressed': 'false' });
       const now = make('span', '--:--', { class: 'clock', 'aria-hidden': 'true' }), end = make('span', '--:--', { class: 'clock', 'aria-hidden': 'true' });
       const seek = make('input', undefined, { type: 'range', min: '0', max: '1000', step: '1', value: '0', class: 'stage-seek', id: 'rv3-seek', 'aria-label': 'Posição do vídeo', disabled: '' });
       const sync = make('span', 'Carregando…', { class: 'stage-sync', role: 'status' }); sync.hidden = true;
-      const full = button('⛶', 'fullscreen', { class: 'rb-icon', 'aria-label': 'Tela cheia' });
+      const full = button('@fullscreen', 'fullscreen', { class: 'rb-icon', 'aria-label': 'Tela cheia' });
       el.append(toggle, now, seek, end, sync, full, button('Trocar vídeo', 'tab-search', { class: 'rb-accent' }));
       barRefs = { toggle, now, end, seek, sync };
     });
@@ -988,7 +1151,7 @@
     const { toggle, now, end, seek } = barRefs;
     const playing = snapshot.playback?.state === 'playing';
     const blocked = playing && !!youtube?.needsLocalStart?.();
-    toggle.textContent = blocked ? '▶ Reproduzir aqui' : playing ? 'Ⅱ Pausar' : '▶ Reproduzir';
+    setLabel(toggle, blocked ? '@play Reproduzir aqui' : playing ? '@pause Pausar' : '@play Reproduzir');
     toggle.setAttribute('aria-pressed', String(playing && !blocked));
     toggle.setAttribute('aria-label', blocked ? 'Iniciar vídeo neste navegador' : playing ? 'Pausar para a sala' : 'Reproduzir para a sala');
     const dur = youtube?.duration() || 0, local = youtube?.currentPosition() || 0, wanted = youtube?.syncedPosition() || 0;
@@ -1022,7 +1185,7 @@
     const pv = pendingVotes();
     $('#rv3-ctx-label').textContent = wrapOpen ? 'Ocultar busca e match' : pv ? `Buscar vídeo e match (${pv} para votar)` : 'Buscar vídeo e match';
     paint($('#rv3-tabs'), [tab, pv, snapshot.platform], (el) => {
-      for (const [id, label] of [['search', snapshot.platform === 'netflix' ? 'Netflix' : 'Buscar vídeo'], ['match', '✦ Match']]) {
+      for (const [id, label] of [['search', snapshot.platform === 'netflix' ? 'Netflix' : 'Buscar vídeo'], ['match', '@sparkle Match']]) {
         const b = make('button', label, { type: 'button', role: 'tab', id: `rv3-tab-${id}`, 'data-online-act': 'tab', 'data-tab': id, 'aria-selected': String(tab === id), 'aria-controls': 'rv3-tabpanel', tabindex: tab === id ? '0' : '-1' });
         if (id === 'match' && pv) b.append(make('span', String(pv), { class: 'pill', 'aria-label': `${pv} para votar` }));
         el.append(b);
@@ -1619,7 +1782,7 @@
     if (act === 'link-toggle') { linkOpen = !linkOpen; uiVersion++; renderPanel(); panel.querySelector(linkOpen ? '#online-youtube-url' : '#rv3-link-btn')?.focus(); return; }
     if (act === 'voice-join') return void run(async () => {
       voiceError = ''; voiceJoinAt = Date.now();
-      try { await voice.join(); } catch (e) { voiceError = e.message || 'Não foi possível ligar a voz.'; renderVoice(); return; }
+      try { await voice.join(); } catch (e) { voiceError = e.message || 'Não foi possível ligar a voz.'; if (typeof e.code === 'string' && /^mic_/.test(e.code)) tel?.event('app_error', e.code); renderVoice(); return; }
       renderVoice(); apply(client.snapshot);
     });
     if (act === 'ptt-key') { pttCapturing = true; deviceKey = ''; void renderDevices(); return; }
@@ -1631,6 +1794,7 @@
     if (act === 'details') return void adapter.openTitle(b.dataset.id);
     if (act === 'surprise' || act === 'recommend') return void api.startRound(act);
     if (act === 'react') return void sendReaction(b.dataset.emoji);
+    if (act === 'cinema-toggle') { cinemaOn = !cinemaOn; try { localStorage.setItem('duotela-cinema', cinemaOn ? '1' : '0'); } catch { /* sem armazenamento */ } updateCinema(snapshot); renderSession(); return; }
     if (act === 'ready-toggle') return void run(async () => { await client.setReady(!snapshot?.ready?.[client.role]); apply(client.snapshot); });
     if (act === 'sync-now') return void run(async () => { await client.syncNow(); apply(client.snapshot); });
     if (act === 'sync-cancel') return void run(async () => { await client.cancelSync(); stopCountdown(); apply(client.snapshot); });

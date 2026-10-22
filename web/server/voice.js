@@ -45,9 +45,10 @@
   }
 
   class VoiceCall {
-    constructor({ onChange, mount, onSpeaking } = {}) {
+    constructor({ onChange, mount, onSpeaking, onLevels } = {}) {
       const prefs = loadPrefs();
       this.onSpeaking = onSpeaking || (() => {});
+      this.onLevels = onLevels || (() => {});     // volume de cada pessoa (0..1) a cada medição, para o avatar "respirar"
       this.peerVolumes = new Map();                         // id -> 0..1 (só nesta sessão)
       this.ptt = loadPtt(); this.pttHeld = false;           // falar apertando uma tecla
       this.speaking = {}; this.lastLoud = {}; this.speechTimer = null; this.polling = false;
@@ -141,9 +142,11 @@
       if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === 'undefined') {
         // Fora de localhost/127.0.0.1/https o navegador esconde o microfone (navigator.mediaDevices fica indefinido).
         const insecure = typeof isSecureContext !== 'undefined' && isSecureContext === false;
-        throw new Error(insecure
+        const insecureErr = new Error(insecure
           ? 'O navegador só libera o microfone em páginas seguras (https, localhost ou 127.0.0.1). Esta página usa um endereço http da rede local. Abra o Dalari Cine por http://127.0.0.1:PORTA no computador onde ele roda ou use a conexão direta.'
           : 'Este navegador não oferece chamada de voz aqui.');
+        insecureErr.code = insecure ? 'mic_insecure' : 'mic_missing';
+        throw insecureErr;
       }
       this.emit('permission');
       let stream;
@@ -155,7 +158,9 @@
           NotFoundError: 'Nenhum microfone foi encontrado. Conecte um e tente de novo.',
           NotReadableError: 'Não foi possível usar o microfone: outro aplicativo pode estar usando-o.',
         }[e?.name];
-        throw new Error(why || 'Permita o microfone no navegador para ligar a voz.');
+        const err = new Error(why || 'Permita o microfone no navegador para ligar a voz.');
+        err.code = { NotAllowedError: 'mic_denied', NotFoundError: 'mic_missing', NotReadableError: 'mic_busy' }[e?.name] || 'mic_denied';
+        throw err;
       }
       if (client !== this.client || client.snapshot?.status !== 'active') {
         stream.getTracks().forEach((track) => track.stop());
@@ -291,6 +296,7 @@
     }
     stopSpeechMonitor() {
       clearInterval(this.speechTimer); this.speechTimer = null;
+      this.onLevels({});
       if (Object.keys(this.speaking).length) { this.speaking = {}; this.lastLoud = {}; this.onSpeaking({}); }
     }
     async pollSpeech(now = Date.now()) {
@@ -307,6 +313,7 @@
           });
         }
         if (!this.micOn()) levels.local = 0;                          // mudo ou push-to-talk solto: não aparece como falando
+        this.onLevels({ ...levels });
         const next = { ...this.speaking };
         for (const [id, level] of Object.entries(levels)) {
           if (level >= SPEECH.on) { this.lastLoud[id] = now; next[id] = true; }

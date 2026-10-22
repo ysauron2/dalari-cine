@@ -9,3 +9,11 @@ database_name = "dalari-stats"
 database_id = "600153dd-bd08-42e2-936b-40af0f816591"
 
 # Segredo (não vai neste arquivo):  npx wrangler secret put PANEL_PASSWORD
+
+# Alertas e resumo semanal no Telegram (veja README.md, "Alertas no Telegram"). Horários em UTC.
+[triggers]
+crons = ["*/30 * * * *", "0 12 * * 1"]
+
+[vars]
+PANEL_URL = "https://dalari-stats.dalaricine.workers.dev"
+# Segredos (não vão neste arquivo):  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID e, para os comandos (/agora, /hoje...), TELEGRAM_WEBHOOK_SECRET  (npx wrangler secret put NOME)

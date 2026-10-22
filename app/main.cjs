@@ -7,6 +7,7 @@ const { spawn } = require('node:child_process');
 const { app, components, BaseWindow, WebContentsView, dialog, session, ipcMain, Menu, utilityProcess, net, shell } = require('electron');
 const { createUpdater } = require('./src/updater.cjs');
 const { isAllowedExternal } = require('./src/external-links.cjs');
+const settingsStore = require('./src/settings-store.cjs');
 const { NETFLIX_URL, netflixNavigationAllowed, parseDuoTelaUrl, sameDuoTelaOrigin, insecureOriginToTreatAsSecure } = require('./src/url-policy.cjs');
 const { workspaceBounds } = require('./src/layout.cjs');
 const { resolveProfileDir, readDuoTelaUrlSetting, readAllowLanSetting, readAllowRemoteSetting, migrateLegacyProfile } = require('./src/runtime-paths.cjs');
@@ -48,13 +49,13 @@ app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
 const lanOrigin = insecureOriginToTreatAsSecure(configuredDuoUrl);
 if (lanOrigin) app.commandLine.appendSwitch('unsafely-treat-insecure-origin-as-secure', lanOrigin);
 
-function startBundledServer() {
+function startBundledServer(port = 0) {
   const entry = path.join(__dirname, 'preview', 'server', 'index.js');
   if (!fs.existsSync(entry)) return Promise.resolve(null);
   return new Promise((resolve, reject) => {
     const child = utilityProcess.fork(entry, [], {
       cwd: path.dirname(entry),
-      env: { ...process.env, HOST: '127.0.0.1', PORT: '0', ALLOW_NON_LOOPBACK: '0', TMDB_READ_ACCESS_TOKEN: '', YOUTUBE_DATA_API_KEY: '' },
+      env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), ALLOW_NON_LOOPBACK: '0', TMDB_READ_ACCESS_TOKEN: '', YOUTUBE_DATA_API_KEY: '' },
       stdio: 'pipe',
       serviceName: 'Dalari Cine sala local'
     });
@@ -107,6 +108,23 @@ function launchInstaller(file) {
 }
 function sendUpdateState(state) {
   if (duoView && !duoView.webContents.isDestroyed()) duoView.webContents.send('duotela:update-state', state);
+}
+
+// O localStorage da interface é por endereço (inclui a porta). Por isso a porta do serviço local é sempre a mesma: a última
+// que funcionou fica em <perfil>/local-port.txt. Se estiver ocupada, usa outra só nesta abertura (as configurações voltam da
+// cópia de segurança, veja settings-store.cjs) e continua tentando a mesma nas próximas.
+async function startStableServer() {
+  const dir = profileDir, saved = settingsStore.readPort({ fs, dir });
+  if (saved) {
+    try { return await startBundledServer(saved); }
+    catch (error) {
+      diagnostic('local_port_unavailable', { port: saved });
+      if (bundledServer) { try { bundledServer.kill(); } catch { /* já encerrado */ } bundledServer = null; }
+    }
+  }
+  const url = await startBundledServer(0);
+  if (!saved && url) { const port = Number(new URL(url).port); settingsStore.writePort({ fs, dir, port }); }
+  return url;
 }
 
 function hostOnly(raw) {
@@ -222,11 +240,11 @@ function createWindow(duoUrl) {
     ...(fs.existsSync(path.join(__dirname, 'assets', 'icon.png')) ? { icon: path.join(__dirname, 'assets', 'icon.png') } : {})
   });
 
-  duoView = makeView('duotela-local-spike', path.join(__dirname, 'src', 'duotela-preload.cjs'));
+  duoView = makeView('persist:duotela-local', path.join(__dirname, 'src', 'duotela-preload.cjs'));
   netflixView = makeView('persist:duotela-netflix-spike', path.join(__dirname, 'src', 'netflix-preload.cjs'));
   toolbarView = makeView('duotela-toolbar-spike', path.join(__dirname, 'src', 'toolbar-preload.cjs'));
   toolbarView.setBackgroundColor('#00000000');
-  const duoSession = session.fromPartition('duotela-local-spike');
+  const duoSession = session.fromPartition('persist:duotela-local');
   const allowDuoMicrophone = (contents, permission, url, mediaTypes) =>
     contents === duoView?.webContents && !!duoUrl && sameDuoTelaOrigin(url, duoUrl.origin) &&
     (permission === 'speaker-selection' ||   // escolher a saída de áudio da conversa
@@ -271,6 +289,11 @@ function createWindow(duoUrl) {
   ipcMain.on('duotela:ptt-key', acceptPttKey);
   const acceptOpenExternal = (event, url) => { if (fromDuo(event) && isAllowedExternal(url)) shell.openExternal(url).catch(() => {}); };
   ipcMain.on('duotela:open-external', acceptOpenExternal);
+  // Cópia de segurança das configurações: o preload restaura na abertura (síncrono, antes dos scripts da página) e envia mudanças.
+  const settingsLoad = event => { event.returnValue = event.sender === duoView?.webContents ? settingsStore.readBackup({ fs, dir: profileDir }) : {}; };
+  const settingsSave = (event, data) => { if (event.sender === duoView?.webContents) settingsStore.writeBackup({ fs, dir: profileDir, data }); };
+  ipcMain.on('duotela:settings-load', settingsLoad);
+  ipcMain.on('duotela:settings-save', settingsSave);
   ipcMain.handle('duotela:update-get', event => (fromDuo(event) && updater ? updater.getState() : null));
   ipcMain.handle('duotela:update-check', event => (fromDuo(event) && updater ? updater.check({ manual: true }) : null));
   ipcMain.handle('duotela:update-install', event => (fromDuo(event) && updater ? updater.install() : null));
@@ -358,6 +381,8 @@ function createWindow(duoUrl) {
     ipcMain.removeListener('duotela:duck', acceptDuck);
     ipcMain.removeListener('duotela:ptt-key', acceptPttKey);
     ipcMain.removeListener('duotela:open-external', acceptOpenExternal);
+    ipcMain.removeListener('duotela:settings-load', settingsLoad);
+    ipcMain.removeListener('duotela:settings-save', settingsSave);
     for (const channel of ['duotela:update-get', 'duotela:update-check', 'duotela:update-install', 'duotela:update-auto']) ipcMain.removeHandler(channel);
     ipcMain.removeListener('duotela:netflix-room-state', acceptNetflixRoomState);
     ipcMain.removeListener('duotela:netflix-report', relayNetflixEvent);
@@ -379,7 +404,7 @@ app.whenReady().then(async () => {
   let duoUrl;
   try {
     if (configuredDuoUrlError) throw configuredDuoUrlError;
-    duoUrl = configuredDuoUrl || parseDuoTelaUrl(await startBundledServer());
+    duoUrl = configuredDuoUrl || parseDuoTelaUrl(await startStableServer());
     if (lanOrigin) diagnostic('lan_mode', { origin: lanOrigin, microphoneOriginTreatedAsSecure: true });
   } catch (error) {
     dialog.showErrorBox('Serviço Dalari Cine indisponível', error.message);

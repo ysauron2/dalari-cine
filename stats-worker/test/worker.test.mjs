@@ -144,3 +144,14 @@ test('retenção por semana de entrada: voltou no dia seguinte (d1) e nos 7 dias
   assert.match(s.retention[0].start, /^\d{4}-\d{2}-\d{2}$/);
   assert.match(csv(s), /ativos_hora_utc/);
 });
+
+test('erros do app: só as categorias fixas passam; texto livre, mensagens e chaves desconhecidas são recusados', () => {
+  const base = { v: 1, id: 'a'.repeat(22), app: '0.3.0', os: 'win', state: 'idle' };
+  for (const k of ['mic_denied', 'mic_missing', 'mic_busy', 'mic_insecure', 'player_fail', 'room_lost', 'update_fail', 'unexpected']) {
+    assert.deepEqual(validatePing({ ...base, ev: { n: 'app_error', k } }).ev, { n: 'app_error', k });
+  }
+  for (const k of ['TypeError: x is undefined', 'C:\Users\Daniel\app.js', '', 'mic', 'MIC_DENIED', 5, null]) {
+    assert.equal(validatePing({ ...base, ev: { n: 'app_error', k } }), null, String(k));
+  }
+  assert.equal(validatePing({ ...base, ev: { n: 'app_error', k: 'unexpected', message: 'boom' } }), null, 'sem campos extras no evento');
+});

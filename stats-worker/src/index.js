@@ -5,6 +5,7 @@
 //   GET  /api/export.csv  planilha (protegido)
 // Não guarda endereço IP, nome, título assistido nem conteúdo. O IP só é visto de passagem, para um limite de taxa em memória.
 import { DASHBOARD_HTML } from './dashboard.js';
+import { runScheduled, sendTelegram, handleTelegramWebhook } from './alerts.js';
 
 const ENUMS = {
   os: ['win', 'mac', 'linux', 'other'],
@@ -27,6 +28,8 @@ const EVENTS = {
   // qualidade da chamada, só em faixas
   voice_quality: ['good', 'fair', 'poor'],
   connect_time: ['<3s', '3-10s', '>10s'],
+  // erros do app, só em categorias fixas (nunca mensagem, caminho ou texto livre)
+  app_error: ['mic_denied', 'mic_missing', 'mic_busy', 'mic_insecure', 'player_fail', 'room_lost', 'update_fail', 'unexpected'],
 };
 const ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 const APP_RE = /^[0-9A-Za-z.+-]{1,20}$/;
@@ -158,7 +161,27 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000)) 
     if (url.pathname === '/api/summary') return json(sum);
     return new Response(csv(sum), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="dalari-estatisticas.csv"', 'Cache-Control': 'no-store' } });
   }
+  // Webhook do Telegram: você manda /agora, /hoje, /semana ou /erros ao seu bot e ele responde. Sem senha do painel (o Telegram não
+  // consegue), mas só com o cabeçalho secreto certo e só para o SEU chat.
+  if (url.pathname === '/v1/telegram') {
+    if (request.method !== 'POST') return json({ ok: false }, 405);
+    const r = await handleTelegramWebhook(request, env, now);
+    return json({ ok: r.status === 200 }, r.status);
+  }
+  // Teste do Telegram: o painel autenticado manda uma mensagem de teste (confirma o token e o chat, sem esperar um alerta de verdade)
+  if (url.pathname === '/api/alert-test') {
+    if (request.method !== 'POST') return json({ ok: false }, 405);
+    const auth = await authorized(request, env);
+    if (auth === 'not_configured') return new Response('Painel não configurado: defina o segredo PANEL_PASSWORD.', { status: 503 });
+    if (!auth) return new Response('Senha necessária.', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Dalari Cine · estatísticas", charset="UTF-8"', 'Cache-Control': 'no-store' } });
+    const r = await sendTelegram(env, '✅ Teste do Dalari Cine: o aviso por Telegram está funcionando.' + (env.PANEL_URL ? '\n' + env.PANEL_URL : ''));
+    return json({ ok: !!r.ok, skipped: r.skipped || null, status: r.status || null }, r.ok ? 200 : (r.skipped ? 409 : 502));
+  }
   return new Response('Não encontrado', { status: 404 });
 }
 
-export default { fetch: (request, env) => handle(request, env) };
+export default {
+  fetch: (request, env) => handle(request, env),
+  // Agendamentos (wrangler.toml): alertas a cada 30 min e resumo semanal
+  scheduled: (event, env, ctx) => { ctx.waitUntil(runScheduled(env, event.cron, Math.floor(Date.now() / 1000)).catch(() => {})); },
+};

@@ -13,7 +13,7 @@
   const POLICY_DATE = '22/10/2026';
 
   const STATS_BLOCKS = [
-    ['O que é enviado', 'A cada 2 minutos, enquanto o app está aberto: um número aleatório da instalação, a versão do app, o sistema (Windows, Mac ou Linux), se você está em sala ou em chamada, e contadores (salas criadas, chamadas iniciadas, duração em faixas como "5 a 30 minutos", o tipo de conexão, falhas de voz, as etapas do pareamento por código curto e se ele falhou, a qualidade da chamada em faixas (boa, média ou ruim) e o tempo para a voz conectar). Também é registrada a hora em que o app está aberto, para saber os horários de pico.'],
+    ['O que é enviado', 'A cada 2 minutos, enquanto o app está aberto: um número aleatório da instalação, a versão do app, o sistema (Windows, Mac ou Linux), se você está em sala ou em chamada, e contadores (salas criadas, chamadas iniciadas, duração em faixas como "5 a 30 minutos", o tipo de conexão, falhas de voz, as etapas do pareamento por código curto e se ele falhou, a qualidade da chamada em faixas (boa, média ou ruim), o tempo para a voz conectar e erros do app em categorias fixas, como "microfone bloqueado" ou "vídeo não abriu", sem mensagem nem detalhes). Também é registrada a hora em que o app está aberto, para saber os horários de pico.'],
     ['O que nunca é enviado', 'Nome, o que você assiste, conversas, o código ou os participantes das salas, e o seu endereço IP não é guardado.'],
     ['Para quê', 'Para o criador, que mantém o app sozinho, saber quantas pessoas usam, quais recursos funcionam e onde há falhas (como voz que não conecta ou pareamento que não completa), e assim corrigir e melhorar o app nas redes e computadores de verdade. Você decide agora e pode mudar quando quiser em Perfil → Estatísticas anônimas.'],
   ];
@@ -42,13 +42,13 @@
 
   const POLICY = [
     ['Quem somos', 'O Dalari Cine é um aplicativo gratuito de assistir junto, mantido por uma pessoa física. Dúvidas ou pedidos sobre privacidade: abra uma "issue" no repositório do projeto no GitHub.'],
-    ['Dados guardados no seu computador', 'Nome de exibição, preferências, histórico, progresso e a sessão da Netflix ficam apenas no seu computador (no perfil do aplicativo e no armazenamento do navegador). Nada disso é enviado a um servidor do Dalari Cine, porque não existe servidor do Dalari Cine com conta de usuário.'],
+    ['Dados guardados no seu computador', 'Nome de exibição, preferências, histórico, progresso e a sessão da Netflix ficam apenas no seu computador (no perfil do aplicativo e no armazenamento do navegador). Nada disso é enviado a um servidor do Dalari Cine, porque não existe servidor do Dalari Cine com conta de usuário. Uma cópia de segurança do nome e das preferências (sem a sessão da Netflix) fica no mesmo perfil, num arquivo chamado settings-backup.json, para que nada se perca ao atualizar ou reinstalar o aplicativo.'],
     ['Dados que saem do seu computador', '1) Conexão com a outra pessoa: um canal direto criptografado (WebRTC). Nele passam o estado da sala (votos, reprodução) e, pela voz, o áudio da conversa, que não passa por nenhum servidor nosso. 2) Código curto: mensagens cifradas de conexão enviadas ao serviço ntfy.sh, que vê o texto cifrado, o tamanho e o endereço de rede de quem conecta, mas não o conteúdo. 3) Descoberta de rota: consulta a um servidor STUN do Google, que vê o endereço de rede público do seu aparelho. 4) Catálogo de títulos e capas: consulta ao TMDB. 5) Vídeos do YouTube e a Netflix: carregados diretamente dos serviços deles, sob os termos e a política de cada um.'],
     ['Dados que não coletamos', 'Não coletamos nome real, e-mail, telefone, senhas, cartões, conteúdo de conversas, gravações de voz, o que você assiste nem a sua localização. Não há anúncios nem rastreamento.'],
-    ['Estatísticas de uso (opcionais)', 'O objetivo é o criador receber informações para melhorar o app: quantas pessoas usam, quais recursos funcionam e onde acontecem falhas. Versões que têm o serviço de estatísticas ativado perguntam antes e não enviam nada sem a sua permissão; versões sem o serviço não enviam estatísticas. Se você aceitar, a cada 2 minutos com o app aberto é enviado a um serviço do criador, hospedado na Cloudflare: um número aleatório da instalação (criado só quando você aceita e apagado quando você recusa), a versão, o sistema, se você está em sala ou em chamada e contadores agregados (salas criadas, chamadas iniciadas, duração em faixas, tipo de conexão, falhas de voz, etapas do pareamento por código curto, qualidade da chamada em faixas e tempo para conectar). O serviço também guarda, por hora, quais instalações estiveram ativas (para o mapa de horários de pico) e o dia da primeira vez e dos retornos (para medir se as pessoas voltam). Não são enviados nome, o que você assiste, conteúdo de conversa, códigos ou participantes de salas, e o serviço não guarda o seu endereço IP (a Cloudflare, como provedora do serviço, vê o IP na própria conexão). Você pode ver o que é enviado e desligar a qualquer momento em Perfil → Estatísticas anônimas.'],
+    ['Estatísticas de uso (opcionais)', 'O objetivo é o criador receber informações para melhorar o app: quantas pessoas usam, quais recursos funcionam e onde acontecem falhas. Versões que têm o serviço de estatísticas ativado perguntam antes e não enviam nada sem a sua permissão; versões sem o serviço não enviam estatísticas. Se você aceitar, a cada 2 minutos com o app aberto é enviado a um serviço do criador, hospedado na Cloudflare: um número aleatório da instalação (criado só quando você aceita e apagado quando você recusa), a versão, o sistema, se você está em sala ou em chamada e contadores agregados (salas criadas, chamadas iniciadas, duração em faixas, tipo de conexão, falhas de voz, etapas do pareamento por código curto, qualidade da chamada em faixas, tempo para conectar e erros do app em categorias fixas, como microfone bloqueado, vídeo que não abriu, sala que caiu ou atualização que falhou; nunca o texto do erro, caminhos de arquivos ou dados pessoais). O serviço também guarda, por hora, quais instalações estiveram ativas (para o mapa de horários de pico) e o dia da primeira vez e dos retornos (para medir se as pessoas voltam). Não são enviados nome, o que você assiste, conteúdo de conversa, códigos ou participantes de salas, e o serviço não guarda o seu endereço IP (a Cloudflare, como provedora do serviço, vê o IP na própria conexão). Você pode ver o que é enviado e desligar a qualquer momento em Perfil → Estatísticas anônimas.'],
     ['Atualizações do aplicativo', 'Se você deixar ligado em Perfil → Atualizações (é o padrão), o app consulta o GitHub (github.com/…/releases) 20 segundos depois de abrir e a cada 6 horas para saber se há versão nova. O GitHub vê o endereço de rede do seu aparelho nessa consulta, como em qualquer download; nada do Dalari Cine é enviado além do pedido do arquivo. Uma versão nova só é instalada quando você clica em Atualizar agora, e o app confere uma assinatura digital antes de abrir o instalador. Você pode desligar a verificação automática em Perfil.'],
     ['Como apagar seus dados', 'Feche o Dalari Cine e apague a pasta "Dalari Cine" em %APPDATA% (Windows) ou em ~/Library/Application Support (macOS). Versões de teste antigas usavam a pasta "DuoTela Teste"; o app a renomeia sozinho na primeira abertura. Isso remove nome, preferências, histórico e a sessão da Netflix. Desinstalar o aplicativo não apaga essa pasta por si só.'],
-    ['Atualizações desta política', 'Versão 3, de ' + POLICY_DATE + '. Mudanças relevantes serão mostradas no aplicativo, e quem aceitou uma versão anterior das estatísticas será perguntado de novo.'],
+    ['Atualizações desta política', 'Versão 4, de ' + POLICY_DATE + '. Mudanças relevantes serão mostradas no aplicativo, e quem aceitou uma versão anterior das estatísticas será perguntado de novo.'],
   ];
 
   function storage(win) { try { return win.localStorage; } catch { return null; } }
@@ -62,6 +62,14 @@
       + '.duo-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.duo-btn{font:inherit;font-weight:700;cursor:pointer;border-radius:999px;padding:10px 18px;border:1px solid #344050;background:#202838;color:#f2f4f8}'
       + '.duo-btn.main{background:#FFAC8F;border-color:transparent;color:#2b1519}.duo-btn:hover{filter:brightness(1.08)}.duo-btn:focus-visible{outline:2px solid #FFAC8F;outline-offset:2px}'
       + '.duo-pre{font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;background:#0b101c;border:1px solid #344050;border-radius:12px;padding:10px 12px;color:#bff3d6!important}'
+      + '.wl-hero{position:relative;height:150px;margin:-8px -8px 4px;display:grid;place-items:center;perspective:700px;overflow:hidden;border-radius:18px;background:radial-gradient(ellipse at 50% 120%,#ffac8f2e,transparent 70%)}'
+      + '.wl-logo{position:relative;width:84px;height:84px;border-radius:22px;box-shadow:0 14px 40px #f58fb455;animation:wl-pop .9s cubic-bezier(.2,1.3,.3,1) both,wl-sway 7s ease-in-out .9s infinite}'
+      + '.wl-ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid #ffac8f66;opacity:0;animation:wl-ring 2.8s ease-out .9s infinite}.wl-ring.b{animation-delay:2.3s}'
+      + '.wl-spark{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);color:#ffd9c8;opacity:0;animation:wl-twinkle var(--d) ease-in-out var(--l) infinite}'
+      + '.duo-welcome section{opacity:0;transform:translateY(10px);animation:wl-in .6s ease-out forwards;animation-delay:calc(.5s + var(--i,0)*.12s)}.duo-welcome .duo-actions{opacity:0;animation:wl-in .6s ease-out 1.4s forwards}'
+      + '@keyframes wl-pop{from{opacity:0;transform:scale(.4) rotateY(-120deg)}to{opacity:1;transform:scale(1) rotateY(0)}}@keyframes wl-sway{0%,100%{transform:rotateY(-14deg) rotateX(4deg)}50%{transform:rotateY(14deg) rotateX(-4deg)}}'
+      + '@keyframes wl-ring{from{opacity:.7;transform:scale(.7)}to{opacity:0;transform:scale(2)}}@keyframes wl-in{to{opacity:1;transform:none}}@keyframes wl-twinkle{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:.9;transform:scale(1)}}'
+      + '@media (prefers-reduced-motion:reduce){.wl-hero *,.duo-welcome section,.duo-welcome .duo-actions{animation:none!important;opacity:1;transform:none}.wl-ring{display:none}}'
       + '.profile-adv{margin-top:18px}.profile-adv h3{margin:0 0 6px}.profile-adv .duo-btn{margin:0 8px 8px 0;font-size:12px;padding:8px 14px}';
   }
 
@@ -83,11 +91,11 @@
       dialog.append(row);
       doc.body.append(dialog);
       dialog.addEventListener('close', () => { dialog?.remove(); dialog = null; });
-      dialog.showModal();
-      row.querySelector('.main')?.focus();
+      dialog.showModal(); dialog.scrollTop = 0;
+      row.querySelector('.main')?.focus({ preventScroll: true });
     }
     function showPrivacy(back) {
-      open('Política de privacidade', 'Curta e direta. Versão 3, ' + POLICY_DATE + '.', POLICY, [{ label: back ? 'Voltar' : 'Fechar', main: true, onClick: () => { closeDialog(); if (back) showWelcome(); } }]);
+      open('Política de privacidade', 'Curta e direta. Versão 4, ' + POLICY_DATE + '.', POLICY, [{ label: back ? 'Voltar' : 'Fechar', main: true, onClick: () => { closeDialog(); if (back) showWelcome(); } }]);
     }
     const tel = win.DuoTelemetry?.shared?.() || null;
     const choose = (value, then) => { tel?.setConsent(value); refreshStatsButton(); then?.(); };
@@ -102,6 +110,24 @@
       const A = win.DuoAudioCheck;
       if (A && !A.hasSeen(win)) win.setTimeout(() => A.open({ win, firstRun: true }), 350);
     }
+    // Cabeçalho animado das boas-vindas: o logo entra girando em 3D, anéis de luz e estrelinhas, e os blocos de texto aparecem em sequência
+    function decorateWelcome() {
+      const d = dialog;
+      if (!d) return;
+      d.classList.add('duo-welcome');
+      const hero = el('div', undefined, { class: 'wl-hero', 'aria-hidden': 'true' });
+      hero.append(el('span', undefined, { class: 'wl-ring' }), el('span', undefined, { class: 'wl-ring b' }), el('img', undefined, { class: 'wl-logo', src: 'assets/duotela-icon.png', alt: '' }));
+      const stars = [[12, 22], [86, 18], [24, 70], [76, 72], [50, 10], [92, 52]];
+      stars.forEach(([x, y], i) => {
+        const sp = win.DuoIcons?.node(doc, 'sparkle', 'wl-spark');
+        if (!sp) return;
+        sp.style.setProperty('--x', x + '%'); sp.style.setProperty('--y', y + '%'); sp.style.setProperty('--s', (12 + (i % 3) * 5) + 'px');
+        sp.style.setProperty('--d', (3 + (i % 3)) + 's'); sp.style.setProperty('--l', (i * 0.5) + 's');
+        hero.append(sp);
+      });
+      d.insertBefore(hero, d.firstChild);
+      [...d.querySelectorAll('section')].forEach((sec, i) => sec.style.setProperty('--i', String(i)));
+    }
     function showWelcome() {
       const stats = !!tel?.available;
       open('Bem-vindo ao Dalari Cine', 'Antes de começar, o essencial sobre os seus dados.', welcomeBlocks(stats).concat(stats ? STATS_BLOCKS : []), stats ? [
@@ -112,6 +138,7 @@
         { label: 'Entendi', main: true, onClick: () => { markSeen(win); closeDialog(); afterWelcome(); } },
         { label: 'Ler a política de privacidade', onClick: () => showPrivacy(true) },
       ]);
+      decorateWelcome();
       dialog.addEventListener('cancel', () => { /* Esc fecha sem marcar como visto: volta na próxima abertura */ });
     }
     // Perfil → Estatísticas anônimas: decidir (se ainda não), ver exatamente o que é enviado e ligar/desligar

@@ -8,10 +8,13 @@
   <link rel="icon" type="image/png" href="assets/duotela-icon-64.png">
   <style>
     :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f5f2f5;background:#090b12;font-synthesis:none;--base:#090b12;--panel:#11151f;--panel2:#171c28;--muted:#9aa2b2;--line:#283041;--accent:#f7a474;--accent2:#ffc194;--pink:#ee7c9b;--green:#a6dbc2;--radius:22px}
+    @property --ambient{syntax:"<color>";inherits:true;initial-value:#ffac8f}@property --ambient-soft{syntax:"<color>";inherits:true;initial-value:#ffac8f33}
+    body{--ambient:#ffac8f;--ambient-soft:#ffac8f33;transition:--ambient 1.4s ease,--ambient-soft 1.4s ease}
     *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}a{color:inherit;text-decoration:none}
     .shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh;max-width:1760px;margin:auto;background:radial-gradient(circle at 50% -10%,#242138 0,transparent 37%),var(--base)}
     .sidebar{position:sticky;top:0;height:100vh;padding:33px 21px 27px;border-right:1px solid #212633;background:#10131c;display:flex;flex-direction:column;gap:32px}
     .brand{display:flex;align-items:center;gap:12px;padding:0 6px}.brand-mark{width:37px;height:37px;display:block;object-fit:cover;border-radius:11px;box-shadow:0 8px 26px #f0998450}.brand-copy b{display:block;font-size:18px;letter-spacing:-.05em}.brand-copy small{display:block;color:#a0a5b5;font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-top:2px}
+    .ico{width:1.1em;height:1.1em;vertical-align:-.2em;flex:none;margin-right:.4em}button>.ico:only-child,.rb-icon>.ico,.nav .icon>.ico{margin:0}.nav .icon>.ico{width:1.25em;height:1.25em;vertical-align:middle}
     .side-label{color:#757d8f;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:0 15px;margin:2px 0 7px}.nav{display:grid;gap:5px}.nav button{width:100%;border:0;background:transparent;color:#a5adbc;text-align:left;padding:13px 14px;border-radius:13px;display:flex;align-items:center;gap:13px;font-size:13px;transition:background .2s,color .2s,transform .2s}.nav button:hover{background:#232838;color:#fff;transform:translateX(3px)}.nav button.active{background:linear-gradient(90deg,#f7a4742b,#f7a47408);color:#ffd0aa}.icon{display:inline-grid;place-items:center;width:20px;font-size:17px;line-height:1}.nav button.active .icon{color:var(--accent)}
     .side-bottom{margin-top:auto}.couple-card{padding:16px;background:linear-gradient(145deg,#2b2638,#1b2332);border:1px solid #4b4257;border-radius:18px}.avatars{display:flex;margin-bottom:13px}.avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;border:2px solid #292438;background:#aa6585;font-weight:800;font-size:13px}.avatar+.avatar{margin-left:-9px;background:#7285b6}.couple-card b{display:block;font-size:13px}.couple-card p{color:#b6b8c4;font-size:11px;line-height:1.5;margin:5px 0 0}.side-footer{font-size:10px;color:#687083;padding:0 6px}
     main{padding:30px 34px 64px;min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:27px}.topbar h1{font-size:14px;font-weight:600;color:#aeb4c1;margin:0}.topbar h1 strong{color:#fff}.top-actions{display:flex;align-items:center;gap:10px}.search{width:min(266px,35vw);height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:12px;background:#181c27;border:1px solid #2b3040;color:#9ca3b5}.search input{border:0;outline:0;background:transparent;color:#fff;width:100%;font-size:12px}.search input::placeholder{color:#778093}.round{border:1px solid #353a4c;color:#e8e9ec;background:#1a1f2b;width:38px;height:38px;border-radius:12px;display:grid;place-items:center}.round:hover{border-color:#f7a474}
@@ -84,13 +87,16 @@
 <div class="toast" id="toast" role="status"></div>
 <script src="src/catalog.js"></script>
 <script src="src/match-engine.js"></script>
+<script src="server/icons.js"></script>
+<script src="server/ambient.js"></script>
+<script src="server/reconnect.js"></script>
 <script>
 (()=>{'use strict';
 const catalog=window.DuoCatalog,Engine=window.MatchEngine;
 const tmdbCatalog=window.DuoCatalogSource==='tmdb';
 const categories=tmdbCatalog?['Todos',Engine.RECOMMENDED,'Filmes','Séries','Animes',...new Set(catalog.map(x=>x.genre).filter(x=>x&&x!=='Anime'))]:Engine.CATEGORIES;
 const meta=item=>[item.kind,item.genre!==item.kind?item.genre:null,Number.isFinite(item.minutes)&&item.minutes>0?item.minutes+' min':null,Number.isFinite(item.tmdbRating)?'★ '+item.tmdbRating+' TMDB':null].filter(Boolean).join(' · ');
-const views=[['home','⌂','Início'],['discover','✦','Descobrir'],['list','♡','Nossa lista'],['history','◷','Histórico'],['room','◉','Nossa sala'],['profile','☻','Perfil']];
+const views=[['home','home','Início'],['discover','discover','Descobrir'],['list','heart','Nossa lista'],['history','history','Histórico'],['room','room','Nossa sala'],['profile','user','Perfil']];
 const key='sessao-a-dois-prototype-v1';
 const roundKey='sessao-a-dois-prototipo-v1-round';
 const profileKey='duotela-display-name-v1';
@@ -119,7 +125,7 @@ function reason(item){return Engine.explain(item,catalog,saved)}
 function card(item){const s=state(item.id);return `<button class="card poster-card" data-title="${esc(item.id)}" aria-label="Abrir ${esc(item.title)}"><span class="poster-title">${esc(item.title)}</span><div class="card-art" style="background-image:url('${esc(item.image)}')"><span class="service">${esc(item.service)}</span><span class="play">⌕</span></div><div class="card-body"><span class="card-meta">${esc(meta(item))}</span>${s.progress>0?`<div class="progress"><i style="width:${s.progress}%"></i></div>`:''}<span class="reason">${esc(reason(item))}</span></div></button>`}
 function cards(selector,items,empty){document.querySelector(selector).innerHTML=items.length?items.map(card).join(''):`<div class="empty">${empty}</div>`}
 function relevant(item){return !search||(`${item.title} ${item.genre} ${item.description}`).toLocaleLowerCase('pt-BR').includes(search)}
-function render(){document.querySelector('#desktop-nav').innerHTML=views.map(([id,icon,label])=>`<button data-view="${id}" class="${active===id?'active':''}" aria-current="${active===id?'page':'false'}"><span class="icon">${icon}</span><span class="label">${label}</span></button>`).join('');document.querySelector('#mobile-nav').innerHTML=views.map(([id,icon,label])=>`<button data-view="${id}" aria-current="${active===id?'page':'false'}"><span class="icon">${icon}</span>${label}</button>`).join('');for(const [id] of views)document.querySelector('#view-'+id).hidden=id!==active;
+function render(){document.querySelector('#desktop-nav').innerHTML=views.map(([id,icon,label])=>`<button data-view="${id}" class="${active===id?'active':''}" aria-current="${active===id?'page':'false'}"><span class="icon">${DuoIcons.html(icon)}</span><span class="label">${label}</span></button>`).join('');document.querySelector('#mobile-nav').innerHTML=views.map(([id,icon,label])=>`<button data-view="${id}" aria-current="${active===id?'page':'false'}"><span class="icon">${DuoIcons.html(icon)}</span>${label}</button>`).join('');for(const [id] of views)document.querySelector('#view-'+id).hidden=id!==active;
   const partial=catalog.filter(x=>state(x.id).progress>0&&state(x.id).progress<100&&relevant(x));cards('#continue-cards',partial,'Escolha um título e ajuste o progresso para aparecer aqui.');
   const ranked=Engine.rankTitles(catalog,saved).map(r=>r.item).filter(x=>state(x.id).progress<100&&relevant(x));cards('#recommend-cards',search?ranked:ranked.slice(0,5),'Todos os títulos já foram marcados como assistidos.');
  const inCat=new Set(Engine.filterByCategory(catalog,filter,saved).map(x=>x.id)),discover=Engine.rankTitles(catalog,saved).map(r=>r.item).filter(x=>relevant(x)&&inCat.has(x.id));cards('#discover-cards',discover,'Nenhum título combina com a busca.');

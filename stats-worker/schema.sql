@@ -35,3 +35,9 @@ CREATE TABLE IF NOT EXISTS hourly (
   id   TEXT NOT NULL,
   PRIMARY KEY (day, hour, id)
 );
+
+-- Último aviso enviado por tipo (para não repetir o mesmo alerta do Telegram a cada 30 minutos).
+CREATE TABLE IF NOT EXISTS alerts (
+  kind    TEXT PRIMARY KEY,
+  last_at INTEGER NOT NULL
+);

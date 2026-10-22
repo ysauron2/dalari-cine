@@ -45,6 +45,17 @@
     return { toHost: 'duo-' + hex(bits.slice(0, 16)), toGuest: 'duo-' + hex(bits.slice(16, 32)), key };
   }
 
+  /** Código de reencontro: derivado do código usado no pareamento e do número da sala, igual nos dois lados e sem trafegar nada.
+      Serve para religar a conexão direta se ela cair, sem pedir outro código à pessoa. Não é o código original (tópicos diferentes). */
+  async function deriveReconnectCode(code, room, subtle = globalThis.crypto?.subtle) {
+    const norm = normalizeCode(code);
+    if (!norm || !/^\d{6}$/.test(String(room))) throw new Error('Código inválido.');
+    if (!subtle) throw new Error('Este navegador não oferece criptografia aqui (use 127.0.0.1, localhost ou https).');
+    const digest = new Uint8Array(await subtle.digest('SHA-256', enc.encode('duotela-reconnect-v1:' + norm + ':' + room)));
+    const raw = [...digest.slice(0, CODE_LEN)].map((b) => ALPHABET[b & 31]).join('');
+    return raw.slice(0, 4) + '-' + raw.slice(4);
+  }
+
   async function seal(key, obj, subtle = globalThis.crypto.subtle) {
     const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
     const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj))));
@@ -100,7 +111,7 @@
 
   /** Host: escuta o código; ao chegar a PRIMEIRA oferta válida e ainda dentro do prazo, responde e encerra (uso único).
       respond(offerCode) -> { answer, extra? } ; devolve { stop(), result } onde result resolve quando houve resposta. */
-  function hostListen({ code, relay, respond, now = () => Date.now() }) {
+  function hostListen({ code, relay, respond, now = () => Date.now(), seen = null }) {
     const ctl = new AbortController();
     const expiresAt = now() + TTL_MS;
     let stopped = false;
@@ -116,6 +127,8 @@
             while (queue.length && !handled) {
               const msg = await open(keys.key, queue.shift());
               if (!msg || msg.t !== 'offer' || typeof msg.c !== 'string' || !(msg.exp > now())) continue;   // lixo, repetida ou vencida
+              if (seen && (seen.has(msg.n) || seen.size > 1000)) continue;      // oferta que este Host já atendeu antes (o relé repete mensagens recentes)
+              if (seen) seen.add(msg.n);
               handled = true;                                                                                // uso único: a primeira vale
               clearInterval(tick);
               const out = await respond(msg.c);
@@ -154,5 +167,5 @@
     return got;
   }
 
-  return { newCode, normalizeCode, looksLikeShortCode, deriveKeys, seal, open, Relay, hostListen, guestPair, DEFAULT_RELAY, TTL_MS, ALPHABET };
+  return { newCode, normalizeCode, looksLikeShortCode, deriveKeys, deriveReconnectCode, seal, open, Relay, hostListen, guestPair, DEFAULT_RELAY, TTL_MS, ALPHABET };
 });

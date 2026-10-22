@@ -29,6 +29,9 @@ O Dalari Cine é um aplicativo gratuito para Windows e macOS. Ele **não transmi
 - **Entrar numa sala com um código curto** (`XXXX-XXXX`), de uso único e válido por 15 minutos. Nada de colar links enormes: quem cria a sala gera o código, a outra pessoa digita.
 - **Match de títulos.** Para decidir o que assistir: votem em títulos do catálogo (do TMDB, com onde assistir no Brasil) e o app mostra o que combina.
 - **Salas de até 4 pessoas** (o uso mais testado é com 2).
+- **Reconexão automática:** se a conexão cair (queda de internet, troca de Wi-Fi), a sala volta sozinha, sem gerar outro código.
+- **Visual de cinema:** ao dar play, o resto da tela escurece e volta quando você mexe o mouse; o fundo da sala ganha a cor do cartaz do filme; o avatar de quem fala "respira" com o volume da voz.
+- **Seus dados ficam salvos:** nome, preferências e escolhas de áudio continuam lá depois de fechar o app e de atualizar, com uma cópia de segurança no seu perfil.
 - **Atualização automática**, com aviso e confirmação de assinatura digital antes de instalar.
 - **Estatísticas para nerds** (Ctrl+Shift+D, ou no menu): rota da conexão, qualidade e latência da voz, para quem quer ver o que acontece por baixo.
 
