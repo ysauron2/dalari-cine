@@ -63,7 +63,7 @@
     const frame = root.document.createElement('div');
     frame.className = 'duo-youtube-frame';
     container.append(heading, status, frame, startButton);
-    let player = null, videoId = null, latest = null, lastVersion = -1, suppressedUntil = 0, generation = 0, readyTimer = null, autoplayBlocked = false;
+    let player = null, videoId = null, latest = null, lastVersion = -1, suppressedUntil = 0, generation = 0, readyTimer = null, autoplayBlocked = false, lastSyncId = 0;
     startButton.addEventListener('click', () => {
       if (!player || !latest?.media) return;
       playLocal();
@@ -140,7 +140,12 @@
         startButton.hidden = true;
         status.textContent = 'Carregando o vídeo…';
         mount(videoId);
-      } else applyPlayback();
+      } else {
+        // "Sincronizar agora": na primeira vez que vê uma nova sincronização, todos vão exatamente ao ponto combinado
+        const sync = snapshot.playback?.syncId || 0, fresh = sync > 0 && sync !== lastSyncId;
+        if (sync) lastSyncId = sync;
+        applyPlayback(fresh);
+      }
     }
     function currentPosition() { return Math.max(0, Number(player?.getCurrentTime?.()) || 0); }
     function playLocal() { suppressedUntil = Date.now() + 1200; autoplayBlocked = false; startButton.hidden = true; status.textContent = 'Iniciando neste navegador…'; if (player?.playVideo) player.playVideo(); }

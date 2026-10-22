@@ -32,3 +32,25 @@ test('Sobre e créditos: homenagem, autoria, aviso de terceiros e links só do G
   assert.match(text, /não é afiliado/);
   for (const url of Object.values(LINKS)) assert.match(url, /^https:\/\/github\.com\/[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)?$/);
 });
+
+test('homenagem em 3D: texto certo, sem sobrenome, e só aparece uma vez', () => {
+  const T = require('../server/tribute.js');
+  const text = [T.TEXT.title, T.TEXT.names.join(' '), T.TEXT.line, T.TEXT.by].join(' ');
+  assert.match(text, /Larissa B\./);
+  assert.match(text, /Daniel Didini \(Kaizen\)/);
+  assert.doesNotMatch(text, /Batista|Sousa/);
+  const store = new Map();
+  const win = { localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) } };
+  assert.equal(T.hasSeen(win), false);
+  T.markSeen(win);
+  assert.equal(T.hasSeen(win), true);
+  assert.equal(T.show({ win }), false, 'já vista: não mostra de novo');
+  assert.equal(T.hasSeen({ get localStorage() { throw new Error('bloqueado'); } }), false, 'sem armazenamento: não quebra');
+});
+
+test('a homenagem abre com um clique em Sobre e créditos e nunca aparece sozinha', () => {
+  const src = readFileSync(new URL('../server/first-run.js', import.meta.url), 'utf8');
+  assert.match(src, /Ver a homenagem/, 'botão visível no Sobre');
+  assert.doesNotMatch(src, /DuoTribute\?\.show\(\{ onClose/, 'nada de homenagem automática na abertura');
+  assert.equal((src.match(/DuoTribute\?\.show\(/g) || []).length, 1, 'só o botão chama a homenagem');
+});

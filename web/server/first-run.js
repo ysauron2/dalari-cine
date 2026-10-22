@@ -15,16 +15,16 @@
   const STATS_BLOCKS = [
     ['O que é enviado', 'A cada 2 minutos, enquanto o app está aberto: um número aleatório da instalação, a versão do app, o sistema (Windows, Mac ou Linux), se você está em sala ou em chamada, e contadores (salas criadas, chamadas iniciadas, duração em faixas como "5 a 30 minutos", o tipo de conexão, falhas de voz, as etapas do pareamento por código curto e se ele falhou, a qualidade da chamada em faixas (boa, média ou ruim) e o tempo para a voz conectar). Também é registrada a hora em que o app está aberto, para saber os horários de pico.'],
     ['O que nunca é enviado', 'Nome, o que você assiste, conversas, o código ou os participantes das salas, e o seu endereço IP não é guardado.'],
-    ['Para quê', 'Para o criador saber quantas pessoas usam o app e se a voz funciona bem nas redes de verdade. Você decide agora e pode mudar quando quiser em Perfil → Estatísticas anônimas.'],
+    ['Para quê', 'Para o criador, que mantém o app sozinho, saber quantas pessoas usam, quais recursos funcionam e onde há falhas (como voz que não conecta ou pareamento que não completa), e assim corrigir e melhorar o app nas redes e computadores de verdade. Você decide agora e pode mudar quando quiser em Perfil → Estatísticas anônimas.'],
   ];
 
   const welcomeBlocks = (statsAvailable) => [
     ['O que é o Dalari Cine', 'Duas telas, uma sessão: cada pessoa assiste no próprio serviço (YouTube, Netflix) e o Dalari Cine sincroniza o play, a pausa e a posição, com conversa por voz. Ele não transmite nem grava o vídeo.'],
-    ['De onde vem o nome', 'Dalari junta Daniel e Larissa, que criaram o app para assistir juntos mesmo à distância. Cine é a sessão de cinema que vocês montam, cada um na sua tela.'],
+    ['De onde vem o nome', 'Dalari junta Daniel e Larissa. O Daniel criou o app para assistir filmes com ela mesmo à distância. Cine é a sessão de cinema que vocês montam, cada um na sua tela.'],
     ['Seus dados ficam com você', 'O Dalari Cine não tem cadastro nem login próprios e não guarda nenhum dado de cadastro. O que você configura (nome de exibição, preferências, histórico e progresso) fica salvo apenas neste computador. A Netflix é acessada na janela da própria Netflix: o Dalari Cine não lê nem guarda sua senha, e a sessão fica somente no perfil do aplicativo neste computador.'],
     ['O que sai do seu computador', 'Para falar com outra pessoa, os aparelhos se conectam direto, de forma criptografada. O código curto usa um serviço de encontro gratuito de terceiros (ntfy.sh) que vê apenas texto cifrado e os endereços de rede de quem conecta. Para achar o caminho da conexão, é consultado um servidor STUN público do Google.'],
     statsAvailable
-      ? ['Estatísticas anônimas (opcionais)', 'Esta versão pode enviar estatísticas anônimas de uso, só se você permitir. Você escolhe no fim desta tela e pode mudar depois em Perfil.']
+      ? ['Estatísticas anônimas (opcionais)', 'O criador do app recebe estatísticas anônimas de uso e de falhas (por exemplo, se a voz não conectou) para melhorar o Dalari Cine. Nada é enviado sem a sua permissão. Você escolhe no fim desta tela e pode mudar depois em Perfil.']
       : ['Estatísticas de uso', 'Esta versão não envia estatísticas de uso. Quando houver estatísticas anônimas (para o criador saber quantas pessoas usam o app), elas serão opcionais: o app pedirá a sua permissão antes de enviar qualquer coisa.'],
   ];
   const WELCOME = welcomeBlocks(false);
@@ -45,7 +45,7 @@
     ['Dados guardados no seu computador', 'Nome de exibição, preferências, histórico, progresso e a sessão da Netflix ficam apenas no seu computador (no perfil do aplicativo e no armazenamento do navegador). Nada disso é enviado a um servidor do Dalari Cine, porque não existe servidor do Dalari Cine com conta de usuário.'],
     ['Dados que saem do seu computador', '1) Conexão com a outra pessoa: um canal direto criptografado (WebRTC). Nele passam o estado da sala (votos, reprodução) e, pela voz, o áudio da conversa, que não passa por nenhum servidor nosso. 2) Código curto: mensagens cifradas de conexão enviadas ao serviço ntfy.sh, que vê o texto cifrado, o tamanho e o endereço de rede de quem conecta, mas não o conteúdo. 3) Descoberta de rota: consulta a um servidor STUN do Google, que vê o endereço de rede público do seu aparelho. 4) Catálogo de títulos e capas: consulta ao TMDB. 5) Vídeos do YouTube e a Netflix: carregados diretamente dos serviços deles, sob os termos e a política de cada um.'],
     ['Dados que não coletamos', 'Não coletamos nome real, e-mail, telefone, senhas, cartões, conteúdo de conversas, gravações de voz, o que você assiste nem a sua localização. Não há anúncios nem rastreamento.'],
-    ['Estatísticas de uso (opcionais)', 'Versões que têm o serviço de estatísticas ativado perguntam antes e não enviam nada sem a sua permissão; versões sem o serviço não enviam estatísticas. Se você aceitar, a cada 2 minutos com o app aberto é enviado a um serviço do criador, hospedado na Cloudflare: um número aleatório da instalação (criado só quando você aceita e apagado quando você recusa), a versão, o sistema, se você está em sala ou em chamada e contadores agregados (salas criadas, chamadas iniciadas, duração em faixas, tipo de conexão, falhas de voz, etapas do pareamento por código curto, qualidade da chamada em faixas e tempo para conectar). O serviço também guarda, por hora, quais instalações estiveram ativas (para o mapa de horários de pico) e o dia da primeira vez e dos retornos (para medir se as pessoas voltam). Não são enviados nome, o que você assiste, conteúdo de conversa, códigos ou participantes de salas, e o serviço não guarda o seu endereço IP (a Cloudflare, como provedora do serviço, vê o IP na própria conexão). Você pode ver o que é enviado e desligar a qualquer momento em Perfil → Estatísticas anônimas.'],
+    ['Estatísticas de uso (opcionais)', 'O objetivo é o criador receber informações para melhorar o app: quantas pessoas usam, quais recursos funcionam e onde acontecem falhas. Versões que têm o serviço de estatísticas ativado perguntam antes e não enviam nada sem a sua permissão; versões sem o serviço não enviam estatísticas. Se você aceitar, a cada 2 minutos com o app aberto é enviado a um serviço do criador, hospedado na Cloudflare: um número aleatório da instalação (criado só quando você aceita e apagado quando você recusa), a versão, o sistema, se você está em sala ou em chamada e contadores agregados (salas criadas, chamadas iniciadas, duração em faixas, tipo de conexão, falhas de voz, etapas do pareamento por código curto, qualidade da chamada em faixas e tempo para conectar). O serviço também guarda, por hora, quais instalações estiveram ativas (para o mapa de horários de pico) e o dia da primeira vez e dos retornos (para medir se as pessoas voltam). Não são enviados nome, o que você assiste, conteúdo de conversa, códigos ou participantes de salas, e o serviço não guarda o seu endereço IP (a Cloudflare, como provedora do serviço, vê o IP na própria conexão). Você pode ver o que é enviado e desligar a qualquer momento em Perfil → Estatísticas anônimas.'],
     ['Atualizações do aplicativo', 'Se você deixar ligado em Perfil → Atualizações (é o padrão), o app consulta o GitHub (github.com/…/releases) 20 segundos depois de abrir e a cada 6 horas para saber se há versão nova. O GitHub vê o endereço de rede do seu aparelho nessa consulta, como em qualquer download; nada do Dalari Cine é enviado além do pedido do arquivo. Uma versão nova só é instalada quando você clica em Atualizar agora, e o app confere uma assinatura digital antes de abrir o instalador. Você pode desligar a verificação automática em Perfil.'],
     ['Como apagar seus dados', 'Feche o Dalari Cine e apague a pasta "Dalari Cine" em %APPDATA% (Windows) ou em ~/Library/Application Support (macOS). Versões de teste antigas usavam a pasta "DuoTela Teste"; o app a renomeia sozinho na primeira abertura. Isso remove nome, preferências, histórico e a sessão da Netflix. Desinstalar o aplicativo não apaga essa pasta por si só.'],
     ['Atualizações desta política', 'Versão 3, de ' + POLICY_DATE + '. Mudanças relevantes serão mostradas no aplicativo, e quem aceitou uma versão anterior das estatísticas será perguntado de novo.'],
@@ -97,14 +97,19 @@
       b.hidden = !tel?.available;
       b.textContent = 'Estatísticas anônimas: ' + (tel?.consent === 'on' ? 'ligadas' : tel?.consent === 'off' ? 'desligadas' : 'não decidido');
     }
+    // Depois das boas-vindas, na primeira vez, o assistente de áudio e conexão (dá para pular)
+    function afterWelcome() {
+      const A = win.DuoAudioCheck;
+      if (A && !A.hasSeen(win)) win.setTimeout(() => A.open({ win, firstRun: true }), 350);
+    }
     function showWelcome() {
       const stats = !!tel?.available;
       open('Bem-vindo ao Dalari Cine', 'Antes de começar, o essencial sobre os seus dados.', welcomeBlocks(stats).concat(stats ? STATS_BLOCKS : []), stats ? [
-        { label: 'Aceitar estatísticas e continuar', main: true, onClick: () => { choose('on'); markSeen(win); closeDialog(); } },
-        { label: 'Continuar sem enviar', onClick: () => { choose('off'); markSeen(win); closeDialog(); } },
+        { label: 'Aceitar estatísticas e continuar', main: true, onClick: () => { choose('on'); markSeen(win); closeDialog(); afterWelcome(); } },
+        { label: 'Continuar sem enviar', onClick: () => { choose('off'); markSeen(win); closeDialog(); afterWelcome(); } },
         { label: 'Ler a política de privacidade', onClick: () => showPrivacy(true) },
       ] : [
-        { label: 'Entendi', main: true, onClick: () => { markSeen(win); closeDialog(); } },
+        { label: 'Entendi', main: true, onClick: () => { markSeen(win); closeDialog(); afterWelcome(); } },
         { label: 'Ler a política de privacidade', onClick: () => showPrivacy(true) },
       ]);
       dialog.addEventListener('cancel', () => { /* Esc fecha sem marcar como visto: volta na próxima abertura */ });
@@ -132,7 +137,9 @@
     function showAbout() {
       const v = tel?.config?.version;
       open('Sobre o Dalari Cine', v && v !== 'dev' ? 'Versão ' + v : 'Créditos e agradecimentos', ABOUT, [
-        { label: 'Perfil do Kaizen no GitHub', main: true, onClick: () => openLink(LINKS.author) },
+        // A homenagem animada em 3D (tribute.js) abre com um clique; nunca aparece sozinha.
+        { label: '♥ Ver a homenagem', main: true, onClick: () => { closeDialog(); win.DuoTribute?.show({ force: true, win }); } },
+        { label: 'Perfil do Kaizen no GitHub', onClick: () => openLink(LINKS.author) },
         { label: 'Código no GitHub', onClick: () => openLink(LINKS.repo) },
         { label: 'Fechar', onClick: () => closeDialog() },
       ]);
@@ -145,6 +152,7 @@
       if (t.dataset.duoOpen === 'welcome') showWelcome();
       if (t.dataset.duoOpen === 'stats') showStats();
       if (t.dataset.duoOpen === 'about') showAbout();
+      if (t.dataset.duoOpen === 'audiocheck') win.DuoAudioCheck?.open({ win });
     });
     win.DuoFirstRun.showWelcome = showWelcome; win.DuoFirstRun.showPrivacy = () => showPrivacy(false); win.DuoFirstRun.showAbout = showAbout;
     // Carrega o endereço do serviço de estatísticas; se a pessoa já permitiu, retoma os avisos.

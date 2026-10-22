@@ -6,7 +6,7 @@ const { ipcRenderer } = require('electron');
 
 const WATCH = /^\/watch\/([0-9]{1,12})\/?$/;
 let room = null;
-let lastVersion = 0;
+let lastVersion = 0; let lastSyncId = 0;
 let lastWatch = null;
 let attached = null;
 let suppressedUntil = 0;
@@ -103,10 +103,12 @@ async function applyRoom() {
     const elapsed = pb.state === 'playing' ? Math.max(0, Math.min(14400, (state.serverTime - pb.updatedAt) / 1000)) : 0;
     const target = Math.max(0, Math.min(86400, pb.positionSec + elapsed));
     remote = { at: Date.now(), target, playing: pb.state === 'playing' };
-    if (Number.isFinite(video.currentTime) && Math.abs(video.currentTime - target) > 2.5) video.currentTime = target;
+    // "Sincronizar agora": na primeira vez que vê uma nova sincronização, vai exatamente ao ponto combinado (sem a folga de 2,5 s)
+    const freshSync = Number(pb.syncId) > 0 && pb.syncId !== lastSyncId;
+    if (Number.isFinite(video.currentTime) && (freshSync || Math.abs(video.currentTime - target) > 2.5)) video.currentTime = target;
     if (pb.state === 'playing' && video.paused) await video.play();
     if (pb.state === 'paused' && !video.paused) video.pause();
-    if (room === state) lastVersion = pb.version;
+    if (room === state) { lastVersion = pb.version; if (freshSync) lastSyncId = pb.syncId; }
     report('status', video, 'applied');
   } catch (error) {
     if (room === state) lastVersion = state.playback.version;
@@ -117,8 +119,8 @@ async function applyRoom() {
   }
 }
 ipcRenderer.on('duotela:netflix-state', (_event, state) => {
-  if (!state?.media) { room = state; lastVersion = 0; remote = null; return; }
-  if (room?.code !== state.code || room?.media?.watchId !== state.media.watchId) { lastVersion = 0; remote = null; }
+  if (!state?.media) { room = state; lastVersion = 0; lastSyncId = 0; remote = null; return; }
+  if (room?.code !== state.code || room?.media?.watchId !== state.media.watchId) { lastVersion = 0; lastSyncId = 0; remote = null; }
   room = state;
   void applyRoom();
 });

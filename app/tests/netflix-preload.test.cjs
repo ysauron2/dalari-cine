@@ -87,3 +87,23 @@ test('ducking da Netflix: abaixa proporcionalmente ao volume que a pessoa tinha,
   h.duck(1); assert.equal(h.video.volume, 0.5);
   h.duck(1); assert.equal(h.video.volume, 0.5);
 });
+
+test('Sincronizar agora: a primeira vez que vê uma sincronização vai exatamente ao ponto combinado, mesmo dentro da folga de 2,5 s; depois volta ao normal', async () => {
+  const h = harness();
+  h.tick();
+  h.send(h.state(1));                                                   // tocando, ~21 s
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.video.currentTime, 21);
+  h.send(h.state(2, { state: 'paused', positionSec: 22.4, syncId: 1 })); // 1,4 s de diferença: sem syncId não mexeria
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.video.paused, true);
+  assert.equal(h.video.currentTime, 22.4);
+  h.video.currentTime = 23.1;                                           // a pessoa mexeu um pouco durante a contagem
+  h.send(h.state(3, { state: 'playing', positionSec: 22.4, syncId: 1, updatedAt: 100000 }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.video.paused, false);
+  assert.equal(h.video.currentTime, 23.1, 'o mesmo syncId não força outro ajuste');
+  h.send(h.state(4, { state: 'paused', positionSec: 30, syncId: 2 }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.video.currentTime, 30, 'um syncId novo volta a forçar');
+});

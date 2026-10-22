@@ -179,6 +179,13 @@ class DuoRoomClient {
   openYouTubeVideo(videoId, title) { return this.send('video.open', { videoId, title }); }
   selectNetflixTitle(titleId, watchId) { return this.send('media.netflix', { titleId, watchId }); }
   playbackNetflix(titleId, watchId, action, positionSec) { return this.send('playback.netflix', { titleId, watchId, action, positionSec }); }
+  /** "Estou pronto" para o play combinado; todos veem quem está pronto. */
+  setReady(ready) { return this.send('ready.set', { ready: !!ready }); }
+  /** Sincronizar agora: todos pausam no mesmo ponto, contagem 3-2-1 e play junto. */
+  syncNow() { return this.send('sync.start', {}); }
+  cancelSync() { return this.send('sync.cancel', {}); }
+  /** Reação rápida (heart, laugh, wow, clap, cry, popcorn) que aparece para todos. */
+  sendReaction(emoji) { return this.send('reaction.send', { emoji }); }
   voiceReady(ready) { return this.send('voice.ready', { ready }); }
   voiceRetry() { return this.send('voice.retry', {}); }
   voiceOffer(session, sdp, to) { return this.send('voice.offer', to ? { session, sdp, to } : { session, sdp }); }

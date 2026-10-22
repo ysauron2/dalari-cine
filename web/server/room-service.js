@@ -42,6 +42,8 @@ const DEFAULTS = {
   maxWaiters: 200,
   maxWaitSec: 25,
   presenceMs: 45 * 1000,
+  countdownMs: 3500,             // "Sincronizar agora": pausa todos no mesmo ponto e dá play junto depois deste tempo (3, 2, 1)
+  reactionGapMs: 600,            // intervalo mínimo entre reações da mesma pessoa
   rateLimits: { create: 10, join: 20, general: 600, youtubeSearch: 12 }, // por IP de socket e por minuto
   logger: null,                  // (evento) => void; só recebe método/rota-modelo/status
   servePrototype: false,         // serve a interface no mesmo origin durante desenvolvimento local
@@ -175,9 +177,34 @@ function createRoomService(userOpts = {}) {
     }
   }
 
+  // ---------- sincronizar agora (contagem) e reações ----------
+  const REACTIONS = ['heart', 'laugh', 'wow', 'clap', 'cry', 'popcorn'];
+  function cancelCountdown(room) {
+    if (room.countdownTimer) { clearTimeout(room.countdownTimer); room.countdownTimer = null; }
+    room.countdown = null;
+  }
+  /** Quando a contagem termina, o Host da sala (este serviço) muda o estado para "tocando" a partir do ponto combinado. */
+  function runCountdown(room) {
+    const c = room.countdown;
+    if (!c || now() < c.startsAt) return false;
+    const pb = room.playback;
+    cancelCountdown(room);
+    if (room.media && pb && pb.syncId === c.id) {   // se alguém mexeu no vídeo durante a contagem, não sobrescreve
+      room.playback = { ...pb, state: 'playing', positionSec: c.positionSec, updatedBy: c.by, updatedAt: c.startsAt, version: pb.version + 1 };
+    }
+    bump(room);
+    return true;
+  }
+  function scheduleCountdown(room) {
+    if (room.countdownTimer) clearTimeout(room.countdownTimer);
+    room.countdownTimer = setTimeout(() => { room.countdownTimer = null; if (rooms.get(room.code) === room) runCountdown(room); }, opts.countdownMs + 30);
+    if (room.countdownTimer.unref) room.countdownTimer.unref();
+  }
+
   /** Aplica expirações de forma preguiçosa. */
   function tick(room) {
     const t = now();
+    if (room.countdown && t >= room.countdown.startsAt) runCountdown(room);
     if (room.status === 'open' && t >= room.expiresAt) { room.status = 'expired'; room.endedAt = t; bump(room); }
     if (room.status === 'open') {
       for (const g of GUEST_SLOTS) {
@@ -270,6 +297,10 @@ function createRoomService(userOpts = {}) {
     snap.selectedMatch = snap.round && snap.round.result.status === 'match' ? snap.round.result.matchId : null;
     snap.media = room.media;
     snap.playback = room.playback;
+    snap.ready = {};
+    for (const r of approved) snap.ready[r] = !!room.ready[r];
+    snap.countdown = room.countdown ? { id: room.countdown.id, by: room.countdown.by, startsAt: room.countdown.startsAt, positionSec: room.countdown.positionSec } : null;
+    snap.reactions = room.reactions.map((r) => ({ id: r.id, slot: r.slot, emoji: r.emoji, at: r.at }));
     snap.voice = voiceView(room, role, approved);
     snap.viewing = { host: { ...room.viewing.host }, guest: { ...room.viewing.guest } };
     for (const r of approved) snap.viewing[r] = { ...room.viewing[r] };
@@ -439,6 +470,10 @@ function createRoomService(userOpts = {}) {
     'media.netflix': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['titleId', 'watchId']) && typeof p.titleId === 'string' && typeof p.watchId === 'string' && NETFLIX_WATCH_ID_RE.test(p.watchId) },
     'playback.netflix': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['titleId', 'watchId', 'action', 'positionSec']) && typeof p.titleId === 'string' && typeof p.watchId === 'string' && NETFLIX_WATCH_ID_RE.test(p.watchId) && ['play', 'pause', 'seek'].includes(p.action) && typeof p.positionSec === 'number' && Number.isFinite(p.positionSec) && p.positionSec >= 0 && p.positionSec <= 86400 },
     viewing: { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['titleId', 'progress', 'rating', 'listed']) && typeof p.titleId === 'string' && intIn(p.progress, 0, 100) && (p.rating === -1 || p.rating === 0 || p.rating === 1) && typeof p.listed === 'boolean' },
+    'ready.set': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['ready']) && typeof p.ready === 'boolean' },
+    'sync.start': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
+    'sync.cancel': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
+    'reaction.send': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['emoji']) && typeof p.emoji === 'string' && REACTIONS.includes(p.emoji) },
     'voice.ready': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['ready']) && typeof p.ready === 'boolean' },
     'voice.retry': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
     'voice.offer': { roles: ROLES, check: (p) => voiceSignal(p) },
@@ -448,6 +483,10 @@ function createRoomService(userOpts = {}) {
   function applyAction(room, role, type, p) {
     if (has(p, 'titleId') && !titleIds.has(p.titleId) && !(type === 'playback' && p.titleId === `youtube:${p.videoId}`)) throw new HttpError(400, 'unknown_title');
     const eng = TO_ENGINE[role];
+    // Durante a contagem, pausas e posições vindas dos players (efeito de pausar/ajustar para todos) são ignoradas;
+    // dar play à mão cancela a contagem; trocar de vídeo ou de plataforma também.
+    if (room.countdown && (type === 'playback' || type === 'playback.netflix')) { if (p.action === 'play') cancelCountdown(room); else return; }
+    if (room.countdown && ['platform.select', 'round.start', 'round.manual', 'media.youtube', 'media.netflix', 'video.open'].includes(type)) cancelCountdown(room);
     switch (type) {
       case 'platform.select':
         if (room.platform !== p.platform) {
@@ -527,6 +566,36 @@ function createRoomService(userOpts = {}) {
       case 'viewing':
         room.viewing[role][p.titleId] = { progress: p.progress, rating: p.rating, listed: p.listed };
         break;
+      case 'ready.set':
+        room.ready[role] = p.ready;
+        break;
+      case 'sync.start': {
+        if (!room.media || !room.playback) throw new HttpError(409, 'no_media');
+        if (room.countdown) throw new HttpError(409, 'countdown_active');
+        const pb = room.playback, t = now();
+        const estimate = pb.state === 'playing' ? pb.positionSec + Math.max(0, (t - pb.updatedAt) / 1000) : pb.positionSec;
+        const position = Math.min(86400, Math.max(0, estimate));
+        room.syncSeq += 1;
+        room.countdown = { id: room.syncSeq, by: role, startsAt: t + opts.countdownMs, positionSec: position };
+        room.playback = { ...pb, state: 'paused', positionSec: position, updatedBy: role, updatedAt: t, version: pb.version + 1, syncId: room.syncSeq };
+        for (const r of ROLES) room.ready[r] = false;   // todos saem do "pronto": a contagem é o sinal de largada
+        scheduleCountdown(room);
+        break;
+      }
+      case 'sync.cancel':
+        if (!room.countdown) throw new HttpError(409, 'no_countdown');
+        if (role !== 'host' && role !== room.countdown.by) throw new HttpError(403, 'wrong_role');
+        cancelCountdown(room);
+        break;
+      case 'reaction.send': {
+        const t = now();
+        if (t - room.lastReactionAt[role] < opts.reactionGapMs) throw new HttpError(429, 'rate_limited');
+        room.lastReactionAt[role] = t;
+        room.reactionSeq += 1;
+        room.reactions.push({ id: room.reactionSeq, slot: role, emoji: p.emoji, at: t });
+        if (room.reactions.length > 8) room.reactions.shift();
+        break;
+      }
       case 'voice.ready':
         if (room.voice.ready[role] !== p.ready) {
           room.voice.ready[role] = p.ready;
@@ -600,6 +669,7 @@ function createRoomService(userOpts = {}) {
       lastSeq: slotMap(0), lastActionHash: slotMap(null), lastSeen: slotMap((r) => (r === 'host' ? t : 0)),
       round: null, platform: null, media: null, playback: null, viewing: slotMap(() => ({})),
       voice: { ready: slotMap(false), pairs: {} },
+      ready: slotMap(false), countdown: null, countdownTimer: null, syncSeq: 0, reactions: [], reactionSeq: 0, lastReactionAt: slotMap(0),
     };
     const inviteSecret = newInvite(room);
     rooms.set(code, room);
@@ -661,11 +731,11 @@ function createRoomService(userOpts = {}) {
     } else if (d === 'deny') g.state = 'denied';
     else {
       g.state = 'removed';
-      room.voice.ready[slot] = false;
+      room.voice.ready[slot] = false; room.ready[slot] = false;
       bumpPairsOf(room, slot);
       compositionChanged(room, 'removed', slot);
     }
-    if (d === 'deny') { room.voice.ready[slot] = false; bumpPairsOf(room, slot); }
+    if (d === 'deny') { room.voice.ready[slot] = false; room.ready[slot] = false; bumpPairsOf(room, slot); }
     bump(room);
     return { ok: true, snapshot: snapshotFor(room, 'host') };
   }
@@ -679,7 +749,7 @@ function createRoomService(userOpts = {}) {
     if (room.status === 'open' && g && LIVE.includes(g.state)) {
       const wasApproved = g.state === 'approved';
       g.state = 'left';
-      room.voice.ready[role] = false;
+      room.voice.ready[role] = false; room.ready[role] = false;
       bumpPairsOf(room, role);
       if (wasApproved) compositionChanged(room, 'left', role);
       bump(room);
@@ -717,6 +787,7 @@ function createRoomService(userOpts = {}) {
     if (!exactKeys(body, [])) throw new HttpError(400, 'malformed');
     if (room.status === 'open') {
       room.status = 'closed'; room.endedAt = now();
+      cancelCountdown(room);
       room.voice.pairs = {};
       bump(room);
     }
@@ -780,7 +851,7 @@ function createRoomService(userOpts = {}) {
   const staticFiles = new Map([
     ['/', 'index.html'], ['/index.html', 'index.html'],
     ['/src/catalog.js', 'src/catalog.js'], ['/src/match-engine.js', 'src/match-engine.js'],
-    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
+    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
   ]);
   async function serveFile(p, res) {
     let rel = staticFiles.get(p);

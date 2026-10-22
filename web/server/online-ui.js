@@ -130,6 +130,30 @@
     .stage-seek:disabled{opacity:.45;cursor:not-allowed}
     .stage-after{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 24px;border:1px solid var(--line);border-radius:22px;background:var(--s1)}
     .stage-after h4{font-size:15px}.stage-after p{margin-top:4px}
+    /* quem está pronto, reações e contagem 3-2-1 */
+    .session-card{display:grid;gap:10px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--s1)}
+    .session-card h4{font-size:14px}
+    .ready-list{display:flex;flex-wrap:wrap;gap:6px}
+    .ready-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:#cfd6e2}
+    .ready-chip.is-on{border-color:#6ee7a8;color:#bff3d6;background:#6ee7a814}
+    .session-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .session-note{font-size:12px;color:#a9b2c2;margin:0}
+    .react-row{display:flex;gap:6px;flex-wrap:wrap}
+    .react-btn{font-size:20px;line-height:1;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#121926;cursor:pointer;transition:transform .12s ease,border-color .12s ease}
+    .react-btn:hover{transform:translateY(-2px);border-color:var(--coral)}.react-btn:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+    .sync-overlay{position:absolute;inset:0;z-index:5;display:grid;place-items:center;align-content:center;gap:6px;background:radial-gradient(ellipse at center,#05070ccc 0%,#05070c66 60%,transparent 100%);pointer-events:none}
+    .sync-overlay[hidden]{display:none}
+    .sync-stage{perspective:700px;height:min(26vw,170px);display:grid;place-items:center}
+    .sync-num{display:block;font:800 min(24vw,150px)/1 system-ui,"Segoe UI",sans-serif;color:#fff;text-shadow:0 0 34px #ffac8faa,0 0 80px #f58fb455;transform-style:preserve-3d;animation:sync-flip 1s cubic-bezier(.2,.8,.2,1) both}
+    .sync-go{font-size:min(18vw,110px)}
+    .sync-cap{margin:0;color:#e8ecf4;font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+    .sync-cancel{pointer-events:auto;margin-top:6px}
+    @keyframes sync-flip{0%{opacity:0;transform:rotateX(-88deg) translateZ(-140px) scale(.7)}22%{opacity:1;transform:rotateX(0) translateZ(0) scale(1)}72%{opacity:1;transform:rotateX(0) translateZ(0) scale(1)}100%{opacity:0;transform:rotateX(72deg) translateZ(130px) scale(1.12)}}
+    .reaction-layer{position:fixed;inset:0;pointer-events:none;z-index:2147480000;overflow:hidden}
+    .reaction-fly{position:absolute;bottom:14vh;left:var(--x);display:grid;justify-items:center;gap:2px;font-size:36px;animation:react-up 2.8s ease-out forwards}
+    .reaction-fly small{font-size:11px;color:#fff;text-shadow:0 1px 6px #000c;white-space:nowrap}
+    @keyframes react-up{0%{opacity:0;transform:translateY(0) scale(.5)}10%{opacity:1;transform:translateY(-18px) scale(1.2)}100%{opacity:0;transform:translateY(-44vh) scale(1) rotate(var(--r))}}
+    @media (prefers-reduced-motion:reduce){.sync-num{animation:none}.reaction-fly{animation:react-fade 2s linear forwards}@keyframes react-fade{0%,80%{opacity:1}100%{opacity:0}}}
 
     /* painel lateral */
     .rv3-side{display:grid;gap:16px;min-width:0}
@@ -274,6 +298,7 @@
             <span class="light l1" aria-hidden="true"></span><span class="light l2" aria-hidden="true"></span>
             <div class="stage-badges"><span class="stage-badge" id="stage-badge"></span></div>
             <div class="stage-empty" id="stage-empty"></div>
+            <div class="sync-overlay" id="sync-overlay" role="status" aria-live="assertive" hidden></div>
           </div>
           <div class="stage-bar" id="stage-bar" role="group" aria-label="Controles do vídeo"></div>
         </section>
@@ -282,6 +307,7 @@
       <aside class="rv3-side" aria-label="Sessão, busca e match">
         <h4>Na sessão</h4>
         <div class="people-card"><div class="people-top" id="people-top"></div><div class="online-voice" id="online-voice"></div><div class="voice-devices" id="online-voice-devices" hidden></div></div>
+        <div class="session-card" id="session-card"></div>
         <span class="rv3-kicker">Fazer juntos</span>
         <button type="button" class="rb rv3-ctx-toggle" id="rv3-ctx-toggle" data-online-act="ctx-toggle" aria-expanded="false" aria-controls="rv3-ctx-wrap"><span id="rv3-ctx-label">Buscar vídeo e match</span><span class="chev" aria-hidden="true">⌄</span></button>
         <div class="rv3-ctx-wrap" id="rv3-ctx-wrap"><div class="rv3-ctx-inner">
@@ -298,6 +324,8 @@
   const $ = (sel) => panel.querySelector(sel);
   const lobby = $('#online-lobby'), content = $('#online-content'), message = $('#online-message'), rv3 = $('#rv3');
   const stageView = $('#stage-view'), stageEmpty = $('#stage-empty'), stageBar = $('#stage-bar'), stageBadge = $('#stage-badge');
+  const syncOverlay = $('#sync-overlay'), sessionCard = $('#session-card');
+  const reactionLayer = document.createElement('div'); reactionLayer.className = 'reaction-layer'; reactionLayer.setAttribute('aria-hidden', 'true'); document.body.append(reactionLayer);
   const inviteDialog = $('#rv3-invite-dialog'), menu = $('#rv3-menu'), menuBtn = $('#rv3-menu-btn'), ctxWrap = $('#rv3-ctx-wrap');
   // Nó estável do iframe: fica fora das regiões que são redesenhadas a cada snapshot.
   const playerPanel = document.createElement('section');
@@ -384,6 +412,8 @@
     invite_used: 'Este convite já foi usado. Peça um novo ao Host.',
     invite_expired: 'O convite expirou (vale 15 minutos). Peça um novo ao Host.',
     room_full: 'A sala está cheia.',
+    no_media: 'Abra um vídeo na sala antes de sincronizar.',
+    countdown_active: 'Já tem uma contagem em andamento.',
   }[e?.code] || null);
   const P2P_ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
   let hostLink = null, hostLinks = [], guestLink = null, guestLinkOpen = null, p2pAnswerDraft = '', p2pNote = '';
@@ -492,9 +522,81 @@
     if (!m || recents[0]?.videoId === m.videoId) return;
     recents = [{ videoId: m.videoId, title: m.title || 'Vídeo do YouTube' }, ...recents.filter((r) => r.videoId !== m.videoId)].slice(0, 5);
   }
+  /* ---------- pronto, contagem 3-2-1 e reações ---------- */
+  const REACTION_EMOJI = { heart: '❤️', laugh: '\u{1F602}', wow: '\u{1F62E}', clap: '\u{1F44F}', cry: '\u{1F622}', popcorn: '\u{1F37F}' };
+  let seenReactionId = null, countdownId = 0, countdownTimer = null, lastReactAt = 0;
+  function floatReaction(emoji, who) {
+    const fly = make('div', undefined, { class: 'reaction-fly' });
+    fly.style.setProperty('--x', (8 + Math.round(Math.random() * 80)) + 'vw'); fly.style.setProperty('--r', (Math.round(Math.random() * 30) - 15) + 'deg');
+    fly.append(make('span', emoji), make('small', who));
+    reactionLayer.append(fly);
+    while (reactionLayer.children.length > 14) reactionLayer.firstChild.remove();
+    setTimeout(() => fly.remove(), 3000);
+  }
+  function stopCountdown() {
+    clearInterval(countdownTimer); countdownTimer = null;
+    syncOverlay.hidden = true; syncOverlay.replaceChildren();
+  }
+  // O Host da sala marca o instante exato do play (relógio do servidor); aqui só se mostra 3, 2, 1 e ▶ em cima do vídeo.
+  function startCountdown(c, serverTime) {
+    stopCountdown();
+    const offset = serverTime - Date.now();
+    const caption = make('p', `${c.by === client?.role ? 'Você pediu' : nameFor(c.by) + ' pediu'} para sincronizar`, { class: 'sync-cap' });
+    const stage = make('div', undefined, { class: 'sync-stage', 'aria-hidden': 'true' });
+    syncOverlay.replaceChildren(stage, caption);
+    if (client?.role === 'host' || c.by === client?.role) syncOverlay.append(button('Cancelar', 'sync-cancel', { class: 'sync-cancel' }));
+    syncOverlay.hidden = false;
+    let shown = null;
+    const tick = () => {
+      const remain = c.startsAt - (Date.now() + offset);
+      if (remain < -700) { stopCountdown(); return; }
+      const label = remain > 2500 ? '3' : remain > 1500 ? '2' : remain > 500 ? '1' : '▶';
+      if (label === shown) return;
+      shown = label;
+      const num = make('span', label, { class: 'sync-num' + (label === '▶' ? ' sync-go' : '') });
+      stage.replaceChildren(num);
+      if (label === '▶') { syncOverlay.querySelector('.sync-cancel')?.remove(); caption.textContent = 'Play!'; }
+    };
+    tick(); countdownTimer = setInterval(tick, 60);
+  }
+  function syncEffects(s) {
+    if (!s || s.status !== 'active' || !client) { stopCountdown(); seenReactionId = null; return; }
+    const list = s.reactions || [], maxId = list.reduce((m, r) => Math.max(m, r.id), 0);
+    if (seenReactionId === null) seenReactionId = maxId;                        // primeira vez nesta sala: não repete o passado
+    for (const r of list) if (r.id > seenReactionId && r.slot !== client.role && REACTION_EMOJI[r.emoji]) floatReaction(REACTION_EMOJI[r.emoji], nameFor(r.slot));
+    seenReactionId = Math.max(seenReactionId, maxId);
+    if (s.countdown) { if (s.countdown.id !== countdownId) { countdownId = s.countdown.id; startCountdown(s.countdown, s.serverTime); } }
+    else if (countdownTimer && !syncOverlay.querySelector('.sync-go')) stopCountdown();   // cancelada (a do fim some sozinha depois do ▶)
+  }
+  function sendReaction(id) {
+    if (!client || !REACTION_EMOJI[id] || Date.now() - lastReactAt < 600) return;
+    lastReactAt = Date.now();
+    floatReaction(REACTION_EMOJI[id], 'Você');
+    client.sendReaction(id).catch(() => { /* reação é opcional: se falhar, ninguém precisa saber */ });
+  }
+  function renderSession() {
+    const s = snapshot, ids = members(), ready = s.ready || {};
+    const canSync = !!s.media && !!s.playback && !s.countdown;
+    const everyone = ids.length > 1 && ids.every((r) => ready[r]);
+    paint(sessionCard, [ids.map(nameFor), ids.map((r) => !!ready[r]), !!s.media, !!s.playback, !!s.countdown, client.role], (el) => {
+      el.append(make('h4', 'Quem está pronto?'));
+      const list = make('div', undefined, { class: 'ready-list', role: 'list' });
+      for (const r of ids) list.append(make('span', `${ready[r] ? '✓' : '○'} ${r === client.role ? 'Você' : nameFor(r)}`, { class: 'ready-chip' + (ready[r] ? ' is-on' : ''), role: 'listitem' }));
+      const mine = !!ready[client.role];
+      const actions = make('div', undefined, { class: 'session-actions' });
+      actions.append(
+        button(mine ? '✓ Estou pronto' : 'Estou pronto', 'ready-toggle', { class: mine ? 'rb-main' : '', 'aria-pressed': String(mine) }),
+        button('▶ Sincronizar agora', 'sync-now', canSync ? { class: everyone ? 'rb-main' : '' } : { disabled: '', title: s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }));
+      const note = make('p', everyone ? 'Todos prontos! Cliquem em Sincronizar agora: todo mundo pausa no mesmo ponto, conta 3, 2, 1 e dá play junto.' : 'Marque quando estiver pronto. Se alguém ficou para trás, Sincronizar agora alinha todo mundo.', { class: 'session-note' });
+      const react = make('div', undefined, { class: 'react-row', role: 'group', 'aria-label': 'Reações rápidas' });
+      for (const [id, emoji] of Object.entries(REACTION_EMOJI)) react.append(make('button', emoji, { type: 'button', class: 'react-btn', 'data-online-act': 'react', 'data-emoji': id, 'aria-label': 'Reagir ' + id }));
+      el.append(list, actions, note, react);
+    });
+  }
   function apply(s) {
     if (!s) return;
     snapshot = s;
+    syncEffects(s);
     window.duoDesktop?.setPlatform(s.status === 'active' ? s.platform : null);
     window.duoDesktop?.syncNetflix(s.status === 'active' && s.platform === 'netflix' ? {
       status: s.status, platform: s.platform, code: s.code, you: s.you, revision: s.revision,
@@ -536,6 +638,7 @@
     nfBridge?.stop();
     closeP2P();
     ducker?.reset(); speakingNow = {}; pttDown(false);
+    stopCountdown(); countdownId = 0; seenReactionId = null;
     client?.stop(); client = null; snapshot = null; invite = ''; inviteShown = false; inviteManual = false; status = 'desconectado';
     shownMatch = null; searchQuery = ''; youtubeQuery = ''; youtubeLink = ''; youtubeResults = []; youtubeSearched = false; recents = []; linkOpen = false; tab = 'search'; ctxOpen = false; closeArmed = false; preferredPlatform = null; autoSelectInFlight = false;
     if (inviteDialog.open) inviteDialog.close();
@@ -779,7 +882,7 @@
     $('#rv3-grid').hidden = !act; $('#rv3-chips').hidden = !act;
     if (!act) return;
     if (s.selectedMatch && shownMatch !== s.selectedMatch) { shownMatch = s.selectedMatch; uiVersion++; }
-    renderChips(); renderPeople(); renderStage(); renderAfter(); renderTabs(); renderPanel();
+    renderChips(); renderPeople(); renderStage(); renderSession(); renderAfter(); renderTabs(); renderPanel();
   }
   const capacityOf = () => snapshot?.capacity || 2;
   const hasRoom = () => (snapshot?.participants?.length || 1) + (snapshot?.pendingGuests?.length || 0) < capacityOf();
@@ -813,7 +916,7 @@
         if (client.role !== 'host') { chip.disabled = true; chip.title = `${nameFor('host')} escolhe a plataforma`; }
         el.append(chip);
       }
-      el.append(make('span', !snapshot.platform ? (client.role === 'host' ? 'Escolha uma plataforma para começar' : `${nameFor('host')} escolhe a plataforma`) : snapshot.platform === 'youtube' ? 'YouTube pronto · demais serviços: catálogo' : (snapshot.platform === 'netflix' ? (window.duoDesktop ? 'Netflix nesta janela · controle conjunto em desenvolvimento' : 'Netflix: match e sincronização experimental (Chrome/Edge com a extensão de teste)') : `${shortPlatform[snapshot.platform]}: catálogo e match; reprodução integrada indisponível`), { class: 'rv3-hint' }));
+      el.append(make('span', !snapshot.platform ? (client.role === 'host' ? 'Escolha uma plataforma para começar' : `${nameFor('host')} escolhe a plataforma`) : snapshot.platform === 'youtube' ? 'YouTube pronto · demais serviços: catálogo' : (snapshot.platform === 'netflix' ? (window.duoDesktop ? 'Netflix nesta janela · controle conjunto em desenvolvimento' : 'Netflix: match e sincronização experimental (Chrome/Edge com a extensão de teste)') : `${shortPlatform[snapshot.platform]}: catálogo e match por enquanto · a integração está em desenvolvimento`), { class: 'rv3-hint' }));
     });
   }
   const AVATAR_TONES = ['#FFAC8F', '#EE94B3', '#A6E4C6', '#9DB8F5'];
@@ -842,7 +945,7 @@
         el.append(make('h4', 'Onde vamos assistir?'), make('p', client.role === 'host' ? 'Escolha uma plataforma acima para começar.' : `${nameFor('host')} escolhe a plataforma da sala.`));
       } else if (matched) {
         el.style.backgroundImage = `linear-gradient(90deg,#0b1220f0,#0b122099),url('${matched.image}')`;
-        el.append(make('h4', `✦ É um match! ${matched.title}`), make('p', platform === 'youtube' ? 'Agora qualquer pessoa pode escolher o vídeo exato do YouTube.' : desktopNetflix ? (s.media ? 'O título foi associado. Cada pessoa usa sua própria Netflix nesta janela; play e pausa seguem a sala.' : 'Abra o título na Netflix desta janela e associe uma vez para a sala.') : platform === 'netflix' ? (s.media ? 'Título associado. Cada pessoa assiste na própria aba da Netflix; o Dalari Cine sincroniza play, pause e posição.' : 'Cada pessoa assiste na própria conta da Netflix. Abra o título lá e associe a aba à sala.') : 'Vocês escolheram o título. A reprodução integrada nesta plataforma ainda não está disponível.'));
+        el.append(make('h4', `✦ É um match! ${matched.title}`), make('p', platform === 'youtube' ? 'Agora qualquer pessoa pode escolher o vídeo exato do YouTube.' : desktopNetflix ? (s.media ? 'O título foi associado. Cada pessoa usa sua própria Netflix nesta janela; play e pausa seguem a sala.' : 'Abra o título na Netflix desta janela e associe uma vez para a sala.') : platform === 'netflix' ? (s.media ? 'Título associado. Cada pessoa assiste na própria aba da Netflix; o Dalari Cine sincroniza play, pause e posição.' : 'Cada pessoa assiste na própria conta da Netflix. Abra o título lá e associe a aba à sala.') : 'Vocês escolheram o título. A integração com esta plataforma está em desenvolvimento: por enquanto, assistam por lá.'));
         if (platform === 'youtube') el.append(button('Buscar vídeo →', 'tab-search', { class: 'rb-main' }));
         if (platform === 'netflix') {
           const watchUrl = s.media && window.DuoNetflixBridge?.netflixWatchUrl(s.media.watchId);
@@ -853,7 +956,7 @@
             : button('Configurar Netflix →', 'tab-search', { class: 'rb-main' }));
         }
       } else {
-        el.append(make('h4', 'A próxima escolha é de vocês'), make('p', platform === 'youtube' ? 'Votem nas sugestões ao lado ou abram um vídeo do YouTube.' : desktopNetflix ? 'Votem nas sugestões ao lado. Depois do match, abram o título na Netflix nesta janela.' : platform === 'netflix' ? 'Votem nas sugestões ao lado. Depois do match, cada pessoa abre o título na própria Netflix.' : `Votem nas sugestões ao lado. A reprodução integrada de ${shortPlatform[platform]} ainda não está disponível.`));
+        el.append(make('h4', 'A próxima escolha é de vocês'), make('p', platform === 'youtube' ? 'Votem nas sugestões ao lado ou abram um vídeo do YouTube.' : desktopNetflix ? 'Votem nas sugestões ao lado. Depois do match, abram o título na Netflix nesta janela.' : platform === 'netflix' ? 'Votem nas sugestões ao lado. Depois do match, cada pessoa abre o título na própria Netflix.' : `Votem nas sugestões ao lado. A integração com ${shortPlatform[platform]} está em desenvolvimento.`));
         if (client.role === 'host' && !s.round) el.append(button('✦ Me surpreenda', 'surprise', { class: 'rb-main' }));
       }
     });
@@ -950,7 +1053,7 @@
     el.append(make('h4', s.media ? 'Trocar o vídeo' : s.selectedMatch ? `Vídeo para ${title(s.selectedMatch)}` : 'O que vamos ver?'), make('p', 'Troquem o vídeo sem pedir nova aprovação.'));
     if (s.platform !== 'youtube') {
       const soft = make('div', undefined, { class: 'soft' });
-      soft.append(make('p', !s.platform ? 'Escolha uma plataforma acima para liberar a busca.' : `A reprodução integrada de ${shortPlatform[s.platform]} ainda não está disponível. Usem o Match para decidir o título e assistam por lá.`));
+      soft.append(make('p', !s.platform ? 'Escolha uma plataforma acima para liberar a busca.' : `${shortPlatform[s.platform]} está sendo integrado ao Dalari Cine e ainda não toca por aqui. Por enquanto, usem o Match para decidir o título e assistam por lá.`));
       if (s.platform) soft.append(button('Ir para Match →', 'tab-match', { class: 'rb-accent' }));
       el.append(soft); return;
     }
@@ -1081,7 +1184,7 @@
       if (matched) {
         const banner = make('div', undefined, { class: 'match-banner is-fresh' });
         banner.append(make('b', `✦ É um match! ${matched.title}`), make('p', `${meta(matched)}. Todos da rodada escolheram este título.`));
-        banner.append(make('p', s.platform === 'youtube' ? (s.media ? 'O vídeo escolhido está aberto na sala.' : 'Agora qualquer pessoa pode escolher o vídeo exato do YouTube.') : s.platform === 'netflix' && window.duoDesktop ? 'A Netflix está aberta nesta janela. A associação automática do título e os controles conjuntos serão integrados em seguida.' : s.platform === 'netflix' ? (s.media ? 'O link foi compartilhado; cada pessoa abre e sincroniza sua aba da Netflix.' : 'Abra o título na Netflix e associe uma aba à sala.') : 'A reprodução integrada nesta plataforma será feita em outra etapa.'));
+        banner.append(make('p', s.platform === 'youtube' ? (s.media ? 'O vídeo escolhido está aberto na sala.' : 'Agora qualquer pessoa pode escolher o vídeo exato do YouTube.') : s.platform === 'netflix' && window.duoDesktop ? 'A Netflix está aberta nesta janela. A associação automática do título e os controles conjuntos serão integrados em seguida.' : s.platform === 'netflix' ? (s.media ? 'O link foi compartilhado; cada pessoa abre e sincroniza sua aba da Netflix.' : 'Abra o título na Netflix e associe uma aba à sala.') : 'A integração com esta plataforma está em desenvolvimento.'));
         el.append(banner);
       }
     }
@@ -1527,6 +1630,10 @@
     if (act === 'voice-resume-audio') return void run(async () => { await voice.audio.play(); voice.emit('connected'); });
     if (act === 'details') return void adapter.openTitle(b.dataset.id);
     if (act === 'surprise' || act === 'recommend') return void api.startRound(act);
+    if (act === 'react') return void sendReaction(b.dataset.emoji);
+    if (act === 'ready-toggle') return void run(async () => { await client.setReady(!snapshot?.ready?.[client.role]); apply(client.snapshot); });
+    if (act === 'sync-now') return void run(async () => { await client.syncNow(); apply(client.snapshot); });
+    if (act === 'sync-cancel') return void run(async () => { await client.cancelSync(); stopCountdown(); apply(client.snapshot); });
     if (act === 'suggest-title') return void run(async () => { await client.pickManually(b.dataset.id); apply(client.snapshot); });
     if (act === 'yes' || act === 'no') return void run(async () => { await client.vote(b.dataset.id, act); apply(client.snapshot); });
     if (act === 'nf-associate') return void run(async () => {
