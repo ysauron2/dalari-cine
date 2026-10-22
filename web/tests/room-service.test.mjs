@@ -176,7 +176,7 @@ test('voz troca SDP apenas entre participantes aprovados e limpa sinais ao sair'
   const env = await boot();
   try {
     const { host, guest } = await pair(env, { approve: false });
-    await assert.rejects(host.voiceReady(true), (e) => e.code === 'not_active');
+    await assert.rejects(guest.voiceReady(true), (e) => e.code === 'not_active', 'convidado pendente não troca sinais de voz');
     await host.approveGuest();
     await host.voiceReady(true);
     await guest.getState({ after: 0 });
@@ -348,7 +348,7 @@ test('convite: uso único, terceiro recusado, convidado duplicado recusado, apro
     assert.equal(pend.round, undefined);
     await assert.rejects(g1.setViewing('noite', { progress: 5 }), (e) => e.code === 'not_active');
     const hs = await host.getState({ after: 0 });
-    assert.equal(hs.status, 'pending_approval');
+    assert.equal(hs.status, 'active', 'o Host segue usando a sala enquanto o pedido espera');
     assert.ok(hs.pendingGuest);
     // replay do convite: usado
     const g2 = new DuoRoomClient({ serviceUrl: env.url });

@@ -161,6 +161,26 @@ npx wrangler deploy
 
 **Feedback (`POST /v1/feedback`)**: o app manda tipo, texto (3 a 1000 caracteres), contato opcional e, se a pessoa deixar marcado, versão e sistema. O Worker valida com formato fechado, escapa todo o texto antes de mandar ao Telegram e **não guarda o texto nem o contato** (só um contador diário). Limites: 3 mensagens por hora por IP e 60 por dia no total (429); sem Telegram configurado responde 503. Erros do Telegram viram 502 e o app mantém o texto na tela para tentar de novo.
 
+## Catálogo de títulos (TMDB)
+
+O Worker monta o catálogo que o Início e o Descobrir mostram (cartaz, onde assistir no Brasil, **duração** e **trailer**) e o entrega ao app em `GET /v1/catalog`. O token do TMDB fica **só aqui**, como segredo: nunca vai para o PC das pessoas.
+
+1. No TMDB (Configurações → API), copie o **"Token de Leitura da API"** (o comprido, que começa com `eyJ`). **Não** é a "Chave da API" curta.
+2. Guarde como segredo (a digitação fica oculta):
+
+```powershell
+npx wrangler secret put TMDB_READ_ACCESS_TOKEN
+```
+
+3. Crie as tabelas novas (é seguro repetir) e publique:
+
+```powershell
+npx wrangler d1 execute dalari-stats --remote --file=schema.sql
+npx wrangler deploy
+```
+
+Como funciona: a cada 30 minutos o Worker confere se o catálogo está em dia. O plano grátis da Cloudflare só permite cerca de 50 chamadas externas por execução, então os detalhes de cada título (duração, trailer, onde assistir) são buscados aos poucos e guardados; em 2 ou 3 rodadas o catálogo de 60 títulos fica completo, e depois é renovado uma vez por dia (detalhes com mais de 7 dias são refeitos). Só entram títulos com **assinatura ou grátis confirmados no Brasil**. Se o catálogo ficar parado por mais de 2 dias, o resumo do dia no Telegram avisa.
+
 ## Testar sem Cloudflare
 
 ```powershell

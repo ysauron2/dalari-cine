@@ -2,6 +2,7 @@
 /* Inicia o serviço de sala. Padrão: 127.0.0.1:8787, sem log de requisições. NÃO é implantação. */
 const { createRoomService } = require('./room-service.js');
 const { loadTmdbCatalog } = require('./tmdb-catalog.js');
+const { loadRemoteCatalog } = require('./catalog-source.js');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
@@ -42,13 +43,18 @@ async function start() {
     try { catalog = await loadTmdbCatalog(process.env.TMDB_READ_ACCESS_TOKEN); catalogMode = 'live'; }
     catch { throw new Error('Catálogo TMDB indisponível ou sem títulos confirmados nos serviços selecionados no Brasil. Confira o token e a conexão.'); }
   } else {
-    const snapshotPath = path.join(__dirname, '..', 'data', 'tmdb-catalog-br.json');
-    try {
-      catalog = JSON.parse(await fs.readFile(snapshotPath, 'utf8'));
-      if (!Array.isArray(catalog) || catalog.length === 0) throw new Error('invalid_catalog_snapshot');
-      catalogMode = 'snapshot';
-    } catch (e) {
-      if (e.code !== 'ENOENT') throw e;
+    // 1º o catálogo do serviço do criador (atualizado todo dia, com duração e trailer); sem rede ou sem catálogo lá, o que veio junto com o app
+    catalog = await loadRemoteCatalog({ origin: statsOrigin() });
+    if (catalog) catalogMode = 'remote';
+    else {
+      const snapshotPath = path.join(__dirname, '..', 'data', 'tmdb-catalog-br.json');
+      try {
+        catalog = JSON.parse(await fs.readFile(snapshotPath, 'utf8'));
+        if (!Array.isArray(catalog) || catalog.length === 0) throw new Error('invalid_catalog_snapshot');
+        catalogMode = 'snapshot';
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+      }
     }
   }
   service = createRoomService({ allowedOrigins, allowNonLoopback: process.env.ALLOW_NON_LOOPBACK === '1', servePrototype: true, catalog, catalogSource: catalog ? 'tmdb' : 'demo', youtubeApiKey: process.env.YOUTUBE_DATA_API_KEY || null, iceServers: ice.iceServers, turn: ice.turn, statsOrigin: statsOrigin(), ...(process.env.DUOTELA_RELAY_ORIGINS ? { relayOrigins: process.env.DUOTELA_RELAY_ORIGINS.split(',').map((x) => x.trim()).filter(Boolean) } : {}) });
@@ -56,7 +62,7 @@ async function start() {
   console.log(`Dalari Cine room service em http://${a.address}:${a.port} (HTTP puro, sem TLS: só desenvolvimento local).`);
   console.log(`Voz: ${ice.iceServers.length} servidor(es) STUN/ICE${ice.turn ? ' + TURN com credenciais temporárias' : ', sem TURN (algumas redes não conectarão a voz)'}.`);
   console.log(`Interface de teste: http://127.0.0.1:${a.port}/`);
-  console.log(catalog ? `Catálogo TMDB ${catalogMode === 'live' ? 'consultado' : 'local'}: ${catalog.length} títulos. ${catalogMode === 'snapshot' ? 'A disponibilidade reflete a última consulta, não uma verificação em tempo real.' : 'Disponibilidade consultada no Brasil.'}` : 'Catálogo fictício de demonstração ativo. Configure TMDB_READ_ACCESS_TOKEN para consultar o TMDB.');
+  console.log(catalog ? `Catálogo TMDB ${catalogMode === 'live' ? 'consultado' : catalogMode === 'remote' ? 'do serviço do criador' : 'local'}: ${catalog.length} títulos. ${catalogMode === 'snapshot' ? 'A disponibilidade reflete a última consulta, não uma verificação em tempo real.' : 'Disponibilidade consultada no Brasil.'}` : 'Catálogo fictício de demonstração ativo. Configure TMDB_READ_ACCESS_TOKEN para consultar o TMDB.');
   if (host !== '127.0.0.1' && host !== '::1' && host !== 'localhost') {
     console.warn('AVISO: interface não-loopback. Coloque HTTPS e limite de taxa num proxy reverso confiável.');
   }

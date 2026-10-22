@@ -205,7 +205,7 @@
   const normalizePeople = (list) => {
     if (!Array.isArray(list)) return null;
     const ordered = ALL_PEOPLE.filter((p) => list.includes(p));
-    return ordered.length >= 2 && ordered.length === list.length ? ordered : null;
+    return ordered.length >= 1 && ordered.length === list.length ? ordered : null;      // uma pessoa só também vale (Host sozinho na sala)
   };
   const sameAsPair = (people) => people.length === 2 && people[0] === 'you' && people[1] === 'partner';
 

@@ -49,3 +49,14 @@ CREATE TABLE IF NOT EXISTS versions_seen (
 );
 -- Quem já usa hoje conta como "já visto": sem isso, rodar este arquivo geraria um aviso por versão antiga.
 INSERT OR IGNORE INTO versions_seen (app, first_seen) SELECT app, MIN(first_seen) FROM installs GROUP BY app;
+
+-- Catálogo de títulos do TMDB (montado pelo Worker; o token fica só nele). Um detalhe por título e o catálogo final em catalog_meta.
+CREATE TABLE IF NOT EXISTS catalog_items (
+  id         TEXT PRIMARY KEY,
+  json       TEXT NOT NULL,
+  fetched_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS catalog_meta (
+  k TEXT PRIMARY KEY,
+  v TEXT NOT NULL
+);

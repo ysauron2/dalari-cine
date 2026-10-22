@@ -7,6 +7,7 @@ import { summary } from './index.js';
 import { cloudflareStats, cloudflareText, usageAlerts, configured as cfConfigured } from './cloudflare.js';
 import { statusText, nowText, todayText, weekText, errorsText, versionsText, helpText, alerts, WELCOME, UNKNOWN, newInstallText, newVersionText, dailyText } from './messages.js';
 import { KEYBOARD, commandFromText } from './format.js';
+import { catalogNote } from './catalog.js';
 
 export const WEEKLY_CRON = '0 12 * * 1';
 export const DAILY_CRON = '0 1 * * *';          // 01:00 UTC = 22:00 em Brasília
@@ -36,7 +37,7 @@ export async function runScheduled(env, cron, now, fetchImpl = globalThis.fetch)
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return { skipped: 'not_configured', sent: [] };
   if (cron === DAILY_CRON) {
     const cf = cfConfigured(env) ? await cloudflareStats(env, now, fetchImpl) : null;
-    const r = await sendTelegram(env, dailyText(await summary(env.DB, 1, now), cf, env.PANEL_URL || ''), fetchImpl);
+    const r = await sendTelegram(env, dailyText(await summary(env.DB, 1, now), cf, env.PANEL_URL || '') + await catalogNote(env.DB, now), fetchImpl);
     return { sent: r.ok ? ['daily'] : [], failed: r.ok ? [] : ['daily'] };
   }
   if (cron === WEEKLY_CRON) {

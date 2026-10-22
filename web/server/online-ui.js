@@ -442,6 +442,8 @@
     room_full: 'A sala está cheia.',
     no_media: 'Abra um vídeo na sala antes de sincronizar.',
     countdown_active: 'Já tem uma contagem em andamento.',
+    title_not_on_platform: 'Esse título não está na plataforma escolhida para a sala.',
+    round_locked: 'Já tem um match nesta rodada.',
     queue_full: 'A fila está cheia (no máximo 10 vídeos).',
     already_queued: 'Esse vídeo já está na fila.',
     queue_empty: 'A fila está vazia.',
@@ -494,6 +496,13 @@
       const next = { ...api.getOwn(id) };
       mutate(next);
       await run(async () => { await client.setViewing(id, next); apply(client.snapshot); });
+    },
+    /** Do Descobrir/Início: indica um título para a votação da sala. Devolve { ok } ou { ok: false, reason }. */
+    async proposeTitle(titleId) {
+      if (!client || snapshot?.status !== 'active') return { ok: false, reason: 'no_room' };
+      let ok = false;
+      await run(async () => { await client.pickManually(titleId); apply(client.snapshot); ok = true; });
+      return ok ? { ok } : { ok, reason: 'rejected' };
     },
     async startRound(mode) {
       if (!client || snapshot?.status !== 'active') return;
@@ -1025,6 +1034,7 @@
   }
   function phaseText() {
     const s = snapshot?.status;
+    if (s === 'active' && client.role === 'host' && (snapshot.participants || []).length < 2 && !snapshot.media) return 'Sala sua, ainda sem convidado';
     if (s === 'active') return snapshot.media ? 'Vocês estão assistindo juntos' : snapshot.selectedMatch ? 'Uma escolha para a sala' : 'Escolham a próxima história';
     if (s === 'pending_approval') return client.role === 'host' ? `${snapshot.pendingGuest?.displayName || 'Alguém'} quer entrar` : 'Aguardando aprovação do Host';
     if (s === 'guest_left') return 'Você saiu desta sala';
@@ -1077,15 +1087,16 @@
       for (const p of pendings) seenPending.add(p.id + p.requestedAt);
       if (inviteDialog.open) inviteDialog.close();
     }
-    if (!s || (state === 'active' && !pendings.length)) { el.hidden = true; regionKeys.delete(el); return; }
+    const solo = state === 'active' && role === 'host' && (s.participants || []).length < 2 && !pendings.length;
+    if (!s || (state === 'active' && !pendings.length && !solo)) { el.hidden = true; regionKeys.delete(el); return; }
     el.hidden = false;
     el.classList.toggle('is-attn', pendings.length > 0);
-    paint(el, [state, role, !!invite, isDesktop, pendings.map((p) => p.id + p.displayName), s.inviteState, hasRoom()], () => {
+    paint(el, [state, role, !!invite, isDesktop, pendings.map((p) => p.id + p.displayName), s.inviteState, hasRoom(), solo], () => {
       if (pendings.length) {
         el.append(make('h4', pendings.length === 1 ? `${pendings[0].displayName} quer entrar na sala` : `${pendings.length} pessoas querem entrar`), make('p', 'Confirme que foi você quem enviou cada convite; o nome exibido pode ser escolhido por qualquer pessoa. Esta é a única aprovação: depois de entrar, a pessoa não precisa de novas.'));
         for (const p of pendings) el.append(row(button(`Aprovar ${p.displayName}`, 'approve', { 'data-id': p.id, class: 'rb-main' }), button('Negar entrada', 'deny', { 'data-id': p.id })));
-      } else if (role === 'host' && state === 'waiting_guest') {
-        el.append(make('h4', 'Esperando o convidado'), make('p', isDesktop && P2P ? 'Clique em Convidar para gerar um código curto e enviá-lo só à pessoa desejada.' : invite ? 'O convite está pronto. Use Convidar para copiá-lo e enviá-lo só à pessoa desejada.' : s.inviteState === 'used' ? 'O convite anterior já foi usado.' : s.inviteState === 'expired' ? 'O convite anterior expirou.' : 'Gere um convite de uso único para a outra pessoa.'),
+      } else if (role === 'host' && solo) {
+        el.append(make('h4', 'Sala aberta, só você por enquanto'), make('p', isDesktop && P2P ? 'Clique em Convidar para gerar um código curto e enviá-lo só à pessoa desejada.' : invite ? 'O convite está pronto. Use Convidar para copiá-lo e enviá-lo só à pessoa desejada.' : s.inviteState === 'used' ? 'O convite anterior já foi usado.' : s.inviteState === 'expired' ? 'O convite anterior expirou.' : 'Gere um convite de uso único para a outra pessoa.'),
           row(isDesktop && P2P ? button('Convidar', 'invite-open', { class: 'rb-main' }) : button(invite ? 'Copiar convite' : 'Gerar novo convite', invite ? 'copy' : 'invite', { class: 'rb-main' })));
       } else if (role !== 'host' && state === 'pending_approval') {
         el.append(make('h4', 'Aguardando aprovação do Host'), make('p', 'Assim que o Host aprovar, você entra na sala.'));

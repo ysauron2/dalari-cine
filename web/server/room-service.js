@@ -246,9 +246,9 @@ function createRoomService(userOpts = {}) {
 
   function roomStatus(room) {
     if (room.status !== 'open') return room.status;               // 'closed' | 'expired'
-    if (approvedSlots(room).length >= 2) return 'active';
-    if (pendingSlots(room).length) return 'pending_approval';
-    return 'waiting_guest';
+    // A sala funciona para o Host mesmo sozinho: quem entra depois (com a aprovação dele) simplesmente se junta. O convidado pendente
+    // continua vendo 'pending_approval' (veja snapshotFor), mas isso não trava o Host.
+    return 'active';
   }
 
   function inviteState(room) {
@@ -979,7 +979,7 @@ function createRoomService(userOpts = {}) {
   const staticFiles = new Map([
     ['/', 'index.html'], ['/index.html', 'index.html'],
     ['/src/catalog.js', 'src/catalog.js'], ['/src/match-engine.js', 'src/match-engine.js'], ['/src/tonight.js', 'src/tonight.js'],
-    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/server/lag-watch.js', 'server/lag-watch.js'], ['/server/chat.js', 'server/chat.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
+    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/server/lag-watch.js', 'server/lag-watch.js'], ['/server/chat.js', 'server/chat.js'], ['/server/whats-new.js', 'server/whats-new.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
   ]);
   async function serveFile(p, res) {
     let rel = staticFiles.get(p);

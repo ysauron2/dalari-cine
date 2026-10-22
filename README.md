@@ -26,9 +26,18 @@ O Dalari Cine é um aplicativo gratuito para Windows e macOS. Ele **não transmi
   - indicador de quem está falando e volume separado por pessoa;
   - tecla de **push-to-talk**, inclusive com a Netflix em foco;
   - escolha de microfone e de saída de áudio.
-- **Entrar numa sala com um código curto** (`XXXX-XXXX`), de uso único e válido por 15 minutos. Nada de colar links enormes: quem cria a sala gera o código, a outra pessoa digita.
-- **Match de títulos.** Para decidir o que assistir: votem em títulos do catálogo (do TMDB, com onde assistir no Brasil) e o app mostra o que combina.
+- **Convite com um toque.** Quem cria a sala copia uma mensagem pronta, com um link; a outra pessoa toca no link, o app abre e entra sozinho. Por baixo há um **código curto** (`XXXX-XXXX`), de uso único e válido por 15 minutos, que também dá para digitar.
+- **Sala sua, mesmo sozinho.** Crie a sala e use tudo antes de o convidado chegar; ele se junta quando quiser, com a sua aprovação.
+- **Match de títulos.** Para decidir o que assistir: votem em títulos do catálogo (do TMDB, com onde assistir no Brasil, duração e trailer) e o app mostra o que combina.
+- **Sugestões para a noite.** No Início, escolha o clima (leve, rir, tensão, emoção, aventura) e a plataforma, ou toque em **Me surpreenda**. Cada título mostra por que combina, tem **trailer** e leva para a votação da sala com um toque.
 - **Salas de até 4 pessoas** (o uso mais testado é com 2).
+- **Durante o filme:**
+  - **Intervalo:** pausa para todos no mesmo ponto, com contagem regressiva; no fim, 3-2-1 e todos voltam juntos.
+  - **Fila de vídeos do YouTube:** adicione vários links; quando um acaba, o próximo toca sozinho.
+  - **Chat da sala:** um botão no canto, que não cobre o vídeo, para mensagens curtas.
+  - **Aviso de atraso:** "fulano ficou 8 s atrás", com um botão para alinhar todos.
+  - **Reações rápidas** que flutuam na tela.
+- **Fale com o criador.** O botão **Sugestão ou problema** manda uma mensagem direto para quem mantém o app; quando algo dá errado, o app oferece reportar em um clique (só vai o que você escrever e, se você deixar marcado, a versão e o sistema).
 - **Reconexão automática:** se a conexão cair (queda de internet, troca de Wi-Fi), a sala volta sozinha, sem gerar outro código.
 - **Visual de cinema:** ao dar play, o resto da tela escurece e volta quando você mexe o mouse; o fundo da sala ganha a cor do cartaz do filme; o avatar de quem fala "respira" com o volume da voz.
 - **Seus dados ficam salvos:** nome, preferências e escolhas de áudio continuam lá depois de fechar o app e de atualizar, com uma cópia de segurança no seu perfil.
@@ -57,16 +66,17 @@ Para conferir que o arquivo é mesmo desta página, baixe só pelas Releases des
 ## Como usar com outra pessoa
 
 1. As duas pessoas instalam o Dalari Cine.
-2. Quem vai receber cria a sala e gera o **código curto**; manda o código por qualquer app de conversa.
-3. A outra pessoa digita o código em "Entrar numa sala", e quem criou aprova a entrada.
+2. Quem vai receber cria a sala e clica em **Convidar → Copiar convite com link**; manda a mensagem por qualquer app de conversa.
+3. A outra pessoa toca no link (ou digita o código curto em "Entrar numa sala"), e quem criou aprova a entrada. O link só abre o app se ele já estiver instalado; senão a página mostra onde baixar.
 4. Escolham a plataforma (YouTube ou Netflix), liguem a voz e comecem. Quem muda play, pausa ou posição, muda para todos.
 
-Não existe conta nem login: a conexão é direta entre os aparelhos. O código curto passa por um serviço público de encontro (ntfy.sh) que só vê texto cifrado.
+Não existe conta nem login: a conexão é direta entre os aparelhos. O código curto passa por um serviço público de encontro (ntfy.sh) que só vê texto cifrado. No link do convite, o código fica só depois do `#`, parte que o navegador nunca envia a servidor.
 
 ## Privacidade
 
 - Sem cadastro, sem login, sem anúncios. Nome de exibição, preferências e histórico ficam só no seu computador.
 - A voz e o estado da sala vão **direto** entre os aparelhos, criptografados. Não passam por servidor do Dalari Cine, porque não existe um.
+- O **catálogo de títulos** é baixado de um serviço do criador (Cloudflare, que guarda a chave do TMDB). O pedido não leva nada seu, mas a Cloudflare vê o endereço de rede, como em qualquer site. Sem internet, o app usa a lista que vem junto.
 - **Estatísticas anônimas são opcionais** e só são enviadas se você aceitar na primeira abertura (dá para mudar em Perfil). O que é enviado, e o que nunca é, está explicado no app e em [PRIVACIDADE.md](PRIVACIDADE.md). Nunca vão nome, o que você assiste, conversas, códigos ou participantes das salas.
 - O app não lê sua senha da Netflix: o login acontece na própria página da Netflix, dentro da janela do app.
 

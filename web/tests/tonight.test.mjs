@@ -84,9 +84,18 @@ test('a página carrega o módulo, tem o bloco "Noite de hoje" e os filtros de D
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /<script src="src\/tonight\.js"><\/script>/);
   assert.ok(html.indexOf('src/tonight.js') < html.indexOf('(()=>{'), 'o módulo carrega antes do script da página');
-  for (const id of ['tonight-moods', 'tonight-platforms', 'tonight-results', 'pf-filters']) assert.match(html, new RegExp('id="' + id + '"'));
-  assert.match(html, /data-tonight="go"/); assert.match(html, /data-tonight="surprise"/);
+  for (const id of ['rec-filters', 'rec-title', 'rec-sub', 'recommend-cards', 'pf-filters']) assert.match(html, new RegExp('id="' + id + '"'));
+  assert.ok(html.includes('data-tonight="surprise"') && html.includes('data-tonight="clear"'));
   assert.match(readFileSync(new URL('../server/room-service.js', import.meta.url), 'utf8'), /'\/src\/tonight\.js', 'src\/tonight\.js'/);
   assert.match(readFileSync(new URL('../../app/src/duotela-preload.cjs', import.meta.url), 'utf8'), /openNetflixSearch/);
   assert.match(readFileSync(new URL('../../app/main.cjs', import.meta.url), 'utf8'), /duotela:netflix-search/);
+});
+
+test('Início tem uma lista só de sugestões: os ajustes (clima, plataforma, me surpreenda) mexem nela e não existe uma segunda lista', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /id="tonight"|tonight-results|Sugerir 3 para/, 'sem o bloco separado');
+  assert.equal((html.match(/id="recommend-cards"/g) || []).length, 1);
+  assert.ok(html.includes('renderRecommend(ranked);'));
+  assert.ok(html.includes('tonight.picks=Tonight.pick('), 'me surpreenda sorteia na própria lista');
+  assert.ok(html.includes("if(b.dataset.tonight==='clear'){tonight.mood='';tonight.platform='';tonight.minutes=0;tonight.picks=null}"), 'Limpar volta ao normal');
 });

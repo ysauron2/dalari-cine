@@ -7,6 +7,7 @@
 import { DASHBOARD_HTML } from './dashboard.js';
 import { runScheduled, sendTelegram, handleTelegramWebhook, notifyActivity } from './alerts.js';
 import { handleFeedback } from './feedback.js';
+import { readCatalog, refreshCatalog } from './catalog.js';
 
 const ENUMS = {
   os: ['win', 'mac', 'linux', 'other'],
@@ -161,6 +162,16 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000), 
     return json({ ok: true }, 200, CORS);
   }
 
+  // Catálogo de títulos (TMDB) para o app: público, sem dados de ninguém, em cache por 1 hora
+  if (url.pathname === '/v1/catalog') {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (request.method !== 'GET') return json({ ok: false }, 405, CORS);
+    let c = null;
+    try { c = await readCatalog(env.DB); } catch { return json({ ok: false, error: 'storage' }, 503, CORS); }
+    if (!c) { await after(ctx, refreshCatalog(env, now).catch(() => {})); return json({ ok: false, error: 'not_ready' }, 503, CORS); }
+    return new Response(JSON.stringify({ v: 1, updatedAt: c.updatedAt, titles: c.titles }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=3600', ...CORS } });
+  }
+
   // Feedback vindo do app (só quando a pessoa clica em Enviar): vai direto ao Telegram do criador, sem ser guardado
   if (url.pathname === '/v1/feedback') {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -202,5 +213,9 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000), 
 export default {
   fetch: (request, env, ctx) => handle(request, env, Math.floor(Date.now() / 1000), ctx),
   // Agendamentos (wrangler.toml): alertas a cada 30 min e resumo semanal
-  scheduled: (event, env, ctx) => { ctx.waitUntil(runScheduled(env, event.cron, Math.floor(Date.now() / 1000)).catch(() => {})); },
+  scheduled: (event, env, ctx) => {
+    const now = Math.floor(Date.now() / 1000);
+    // catálogo primeiro (barato quando está em dia), depois os alertas; um não derruba o outro
+    ctx.waitUntil(refreshCatalog(env, now).catch(() => {}).then(() => runScheduled(env, event.cron, now)).catch(() => {}));
+  },
 };
