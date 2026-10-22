@@ -37,7 +37,7 @@ $preview = Join-Path $res 'preview'
 New-Item -ItemType Directory -Path $preview | Out-Null
 Copy-Item -LiteralPath (Join-Path $Web 'index.html') -Destination $preview
 if (Test-Path -LiteralPath (Join-Path $Web 'stats-config.json')) { Copy-Item -LiteralPath (Join-Path $Web 'stats-config.json') -Destination $preview }
-foreach ($section in 'assets', 'data', 'server', 'src') { Copy-Item -LiteralPath (Join-Path $Web $section) -Destination $preview -Recurse }
+foreach ($section in 'assets', 'data', 'media', 'server', 'src', 'styles') { Copy-Item -LiteralPath (Join-Path $Web $section) -Destination $preview -Recurse }
 # Carimba a versão (variável VERSION, definida no GitHub Actions) em stats-config.json; sem BOM, para o Node ler.
 $cfgPath = Join-Path $preview 'stats-config.json'
 if ($env:VERSION -and (Test-Path -LiteralPath $cfgPath)) {

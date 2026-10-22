@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Sala de cinema com fileiras de poltronas em silhueta diante de uma tela iluminada">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14091a"/><stop offset="1" stop-color="#07050b"/></linearGradient>
+    <linearGradient id="scr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd9a8"/><stop offset=".5" stop-color="#ff9a78"/><stop offset="1" stop-color="#e86a9a"/></linearGradient>
+    <radialGradient id="halo" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="#ff9a78" stop-opacity=".6"/><stop offset="1" stop-color="#ff9a78" stop-opacity="0"/></radialGradient>
+    <linearGradient id="beam" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ffd9a8" stop-opacity=".35"/><stop offset="1" stop-color="#ffd9a8" stop-opacity="0"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <ellipse cx="960" cy="360" rx="900" ry="440" fill="url(#halo)"/>
+  <rect x="420" y="130" width="1080" height="450" rx="14" fill="url(#scr)" filter="url(#soft)" opacity=".6"/>
+  <rect x="430" y="140" width="1060" height="430" rx="10" fill="url(#scr)"/>
+  <path d="M430 470 L700 330 L880 430 L1060 300 L1240 420 L1490 340 L1490 570 L430 570 Z" fill="#14091a" opacity=".2"/>
+  <polygon points="900,0 1020,0 1500,1080 420,1080" fill="url(#beam)"/>
+  <rect x="930" y="40" width="60" height="30" rx="8" fill="#0a0610"/>
+  <g fill="#0a0610">
+    <g transform="translate(0 700)"><rect x="140" y="0" width="1640" height="60" rx="22"/><g id="r1"><rect x="200" y="-52" width="90" height="70" rx="26"/><rect x="340" y="-52" width="90" height="70" rx="26"/><rect x="480" y="-52" width="90" height="70" rx="26"/><rect x="620" y="-52" width="90" height="70" rx="26"/><rect x="760" y="-52" width="90" height="70" rx="26"/><rect x="900" y="-52" width="90" height="70" rx="26"/><rect x="1040" y="-52" width="90" height="70" rx="26"/><rect x="1180" y="-52" width="90" height="70" rx="26"/><rect x="1320" y="-52" width="90" height="70" rx="26"/><rect x="1460" y="-52" width="90" height="70" rx="26"/><rect x="1600" y="-52" width="90" height="70" rx="26"/></g></g>
+    <g transform="translate(0 830)"><rect x="60" y="0" width="1800" height="70" rx="26"/><rect x="100" y="-64" width="104" height="84" rx="30"/><rect x="260" y="-64" width="104" height="84" rx="30"/><rect x="420" y="-64" width="104" height="84" rx="30"/><rect x="580" y="-64" width="104" height="84" rx="30"/><rect x="740" y="-64" width="104" height="84" rx="30"/><rect x="900" y="-64" width="104" height="84" rx="30"/><rect x="1060" y="-64" width="104" height="84" rx="30"/><rect x="1220" y="-64" width="104" height="84" rx="30"/><rect x="1380" y="-64" width="104" height="84" rx="30"/><rect x="1540" y="-64" width="104" height="84" rx="30"/><rect x="1700" y="-64" width="104" height="84" rx="30"/></g>
+    <g transform="translate(0 980)"><rect x="0" y="0" width="1920" height="100"/><rect x="40" y="-76" width="120" height="96" rx="34"/><rect x="220" y="-76" width="120" height="96" rx="34"/><rect x="400" y="-76" width="120" height="96" rx="34"/><rect x="580" y="-76" width="120" height="96" rx="34"/><rect x="760" y="-76" width="120" height="96" rx="34"/><rect x="940" y="-76" width="120" height="96" rx="34"/><rect x="1120" y="-76" width="120" height="96" rx="34"/><rect x="1300" y="-76" width="120" height="96" rx="34"/><rect x="1480" y="-76" width="120" height="96" rx="34"/><rect x="1660" y="-76" width="120" height="96" rx="34"/></g>
+    <circle cx="760" cy="758" r="26"/><circle cx="800" cy="758" r="24"/><circle cx="1090" cy="752" r="26"/>
+  </g>
+</svg>

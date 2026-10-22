@@ -35,7 +35,7 @@ ditto "$ROOT/src" "$RES/src"
 ditto "$ROOT/assets" "$RES/assets"
 mkdir -p "$RES/preview"
 cp "$PREVIEW/index.html" "$RES/preview/"
-for section in assets data server src; do ditto "$PREVIEW/$section" "$RES/preview/$section"; done
+for section in assets data media server src styles; do ditto "$PREVIEW/$section" "$RES/preview/$section"; done
 [ -f "$PREVIEW/stats-config.json" ] && cp "$PREVIEW/stats-config.json" "$RES/preview/"
 # O serviço entrega extension-bridge/src/bridge-protocol.js, exigido por server/netflix-bridge.js.
 # Carimba a versão (variável VERSION, definida no GitHub Actions) em stats-config.json

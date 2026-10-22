@@ -1,0 +1,60 @@
+/* Dalari Cine — tokens de design (cores, espaços, raios, sombras, tipografia, camadas e movimento).
+   Os nomes antigos (--base, --panel, --accent...) continuam valendo com os mesmos valores; os novos são semânticos.
+   Regra: componentes novos usam estes tokens, nunca valores soltos. */
+:root {
+  /* cores de marca (antigas, mantidas) */
+  --base: #090b12; --panel: #11151f; --panel2: #171c28; --muted: #9aa2b2; --line: #283041;
+  --accent: #f7a474; --accent2: #ffc194; --pink: #ee7c9b; --green: #a6dbc2; --radius: 22px;
+
+  /* superfícies, do fundo para a frente */
+  --surface-0: #090b12; --surface-1: #10131c; --surface-2: #11151f; --surface-3: #171c28; --surface-4: #202838;
+  --surface-overlay: #05060bca;
+
+  /* texto */
+  --text: #f5f2f5; --text-soft: #cfd6e2; --text-dim: #a9b2c2; --text-on-accent: #2b1519;
+
+  /* destaque e estados */
+  --brand: #f7a474; --brand-strong: #ffac8f; --brand-soft: #f7a47422;
+  --success: #9be8b9; --warning: #ffd9b8; --danger: #ff9d9d; --info: #9cc7ff;
+  --border-strong: #3a4051; --focus: var(--brand-strong);
+
+  /* espaçamento (base de 4 px) */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+
+  /* raios */
+  --radius-xs: 8px; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 22px; --radius-xl: 32px; --radius-pill: 999px;
+
+  /* sombras e brilho */
+  --shadow-1: 0 8px 24px #0006; --shadow-2: 0 18px 50px #000b; --shadow-3: 0 30px 80px #000c;
+  --glow-brand: 0 0 0 1px var(--brand), 0 10px 40px #f7a47433;
+
+  /* gradientes */
+  --grad-brand: linear-gradient(135deg, #ffac8f, #f58fb4);
+  --grad-scrim-bottom: linear-gradient(to top, #090b12f2 0%, #090b12b3 38%, #090b1200 100%);
+  --grad-scrim-left: linear-gradient(to right, #090b12f2 0%, #090b12a6 42%, #090b1200 100%);
+
+  /* tipografia */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --text-xs: 12px; --text-sm: 13px; --text-md: 14px; --text-lg: 16px; --text-xl: 20px; --text-2xl: 26px; --text-3xl: 34px;
+  --text-hero: clamp(32px, 4.6vw, 66px);
+  --leading-tight: 1.15; --leading-normal: 1.5;
+
+  /* camadas */
+  --z-raised: 2; --z-sticky: 5; --z-modal: 10; --z-toast: 20; --z-chat: 2147479000; --z-reaction: 2147480000;
+
+  /* movimento: a escala vem do nível escolhido (veja motion.css); 1 = completo */
+  --motion-scale: 1;
+  --dur-instant: calc(80ms * var(--motion-scale));
+  --dur-fast: calc(140ms * var(--motion-scale));
+  --dur-base: calc(260ms * var(--motion-scale));
+  --dur-slow: calc(600ms * var(--motion-scale));
+  --dur-hero: calc(900ms * var(--motion-scale));
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .5, 1);
+
+  /* foco visível (acessibilidade) */
+  --focus-ring: 2px solid var(--focus);
+  --focus-offset: 2px;
+}

@@ -35,7 +35,7 @@
     ['Feito para assistir junto', 'O Dalari Cine foi criado por Daniel Didini (Kaizen) para que quem está longe possa ver o mesmo filme ao mesmo tempo, conversando por voz. É gratuito e sem anúncios.'],
     ['Em homenagem a Larissa B.', 'Larissa foi quem o incentivou a tirar a ideia do papel. O nome Dalari junta Daniel e Larissa, e este app existe por causa desse incentivo.'],
     ['Código aberto', 'O código é livre, sob a licença MIT, e está no GitHub. Sugestões e problemas podem ser enviados por lá, em "issues", ou direto ao criador em Perfil → Falar com o criador.'],
-    ['Feito com ajuda de', 'Electron for Content Security (Castlabs) e Chromium, Widevine (Google), TMDB (catálogo de títulos e capas), ntfy.sh (código curto), Cloudflare (estatísticas opcionais) e o servidor STUN do Google. Cada um tem a sua própria licença; veja THIRD-PARTY-NOTICES.md no repositório.'],
+    ['Feito com ajuda de', 'Electron for Content Security (Castlabs) e Chromium, Widevine (Google), TMDB (catálogo de títulos e capas), ntfy.sh (código curto), Cloudflare (estatísticas opcionais) o servidor STUN do Google e a fonte Inter (licença OFL). Cada um tem a sua própria licença; veja THIRD-PARTY-NOTICES.md no repositório.'],
     ['TMDB', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'],
     ['Aviso', 'O Dalari Cine não é afiliado, patrocinado nem aprovado pela Netflix, pelo YouTube ou pelo TMDB. Netflix e YouTube são marcas dos seus donos. O app não captura, grava nem retransmite vídeo: cada pessoa assiste no próprio serviço, com a própria conta.'],
   ];
@@ -70,7 +70,7 @@
       + '.duo-welcome section{opacity:0;transform:translateY(10px);animation:wl-in .6s ease-out forwards;animation-delay:calc(.5s + var(--i,0)*.12s)}.duo-welcome .duo-actions{opacity:0;animation:wl-in .6s ease-out 1.4s forwards}'
       + '@keyframes wl-pop{from{opacity:0;transform:scale(.4) rotateY(-120deg)}to{opacity:1;transform:scale(1) rotateY(0)}}@keyframes wl-sway{0%,100%{transform:rotateY(-14deg) rotateX(4deg)}50%{transform:rotateY(14deg) rotateX(-4deg)}}'
       + '@keyframes wl-ring{from{opacity:.7;transform:scale(.7)}to{opacity:0;transform:scale(2)}}@keyframes wl-in{to{opacity:1;transform:none}}@keyframes wl-twinkle{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:.9;transform:scale(1)}}'
-      + '@media (prefers-reduced-motion:reduce){.wl-hero *,.duo-welcome section,.duo-welcome .duo-actions{animation:none!important;opacity:1;transform:none}.wl-ring{display:none}}'
+      + ':where(:root[data-motion="reduced"],:root[data-motion="off"]) .wl-hero *,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-welcome section,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-welcome .duo-actions{animation:none!important;opacity:1;transform:none}:where(:root[data-motion="reduced"],:root[data-motion="off"]) .wl-ring{display:none}'
       + '.profile-adv{margin-top:18px}.profile-adv h3{margin:0 0 6px}.profile-adv .duo-btn{margin:0 8px 8px 0;font-size:12px;padding:8px 14px}';
   }
 

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Quatro amigos de costas em um sofá, diante de uma tela que ilumina a sala">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#150d2b"/><stop offset=".55" stop-color="#2a1639"/><stop offset="1" stop-color="#0b0812"/></linearGradient>
+    <radialGradient id="screen" cx=".5" cy=".38" r=".55"><stop offset="0" stop-color="#ffd9a8" stop-opacity=".95"/><stop offset=".35" stop-color="#ff8f6b" stop-opacity=".45"/><stop offset="1" stop-color="#ff8f6b" stop-opacity="0"/></radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe7c2"/><stop offset=".5" stop-color="#ffb487"/><stop offset="1" stop-color="#f27b92"/></linearGradient>
+    <linearGradient id="beam" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#ffc59a" stop-opacity=".28"/><stop offset="1" stop-color="#ffc59a" stop-opacity="0"/></linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <ellipse cx="960" cy="400" rx="860" ry="520" fill="url(#screen)"/>
+  <polygon points="620,220 1300,220 1720,1000 200,1000" fill="url(#beam)"/>
+  <rect x="650" y="180" width="620" height="350" rx="26" fill="url(#panel)" filter="url(#soft)" opacity=".55"/>
+  <rect x="660" y="190" width="600" height="330" rx="22" fill="url(#panel)"/>
+  <path d="M660 430 L860 330 L1010 410 L1120 340 L1260 420 L1260 520 L660 520 Z" fill="#0b0812" opacity=".22"/>
+  <rect x="930" y="520" width="60" height="70" fill="#0d0a16"/><rect x="860" y="585" width="200" height="14" rx="7" fill="#0d0a16"/>
+  <g fill="#0b0812">
+    <rect x="360" y="740" width="1200" height="230" rx="70"/>
+    <rect x="330" y="800" width="140" height="190" rx="50"/><rect x="1450" y="800" width="140" height="190" rx="50"/>
+    <g><circle cx="620" cy="690" r="52"/><rect x="560" y="735" width="120" height="120" rx="48"/></g>
+    <g><circle cx="800" cy="670" r="56"/><rect x="735" y="718" width="132" height="130" rx="52"/></g>
+    <g><circle cx="1010" cy="684" r="54"/><rect x="946" y="730" width="128" height="124" rx="50"/></g>
+    <g><circle cx="1210" cy="700" r="50"/><rect x="1150" y="744" width="120" height="116" rx="46"/></g>
+  </g>
+  <g fill="#ffb487" opacity=".35"><circle cx="620" cy="690" r="52"/><circle cx="800" cy="670" r="56"/><circle cx="1010" cy="684" r="54"/><circle cx="1210" cy="700" r="50"/></g>
+  <g fill="#0b0812"><circle cx="620" cy="690" r="46"/><circle cx="800" cy="670" r="50"/><circle cx="1010" cy="684" r="48"/><circle cx="1210" cy="700" r="44"/></g>
+  <rect x="0" y="960" width="1920" height="120" fill="#080610"/>
+  <g fill="#ffc59a" opacity=".5"><circle cx="1500" cy="880" r="26"/><circle cx="420" cy="900" r="18"/></g>
+</svg>

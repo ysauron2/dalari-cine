@@ -979,11 +979,13 @@ function createRoomService(userOpts = {}) {
   const staticFiles = new Map([
     ['/', 'index.html'], ['/index.html', 'index.html'],
     ['/src/catalog.js', 'src/catalog.js'], ['/src/match-engine.js', 'src/match-engine.js'], ['/src/tonight.js', 'src/tonight.js'],
-    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/server/lag-watch.js', 'server/lag-watch.js'], ['/server/chat.js', 'server/chat.js'], ['/server/whats-new.js', 'server/whats-new.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
+    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/server/lag-watch.js', 'server/lag-watch.js'], ['/server/chat.js', 'server/chat.js'], ['/server/whats-new.js', 'server/whats-new.js'], ['/server/motion.js', 'server/motion.js'], ['/styles/tokens.css', 'styles/tokens.css'], ['/styles/base.css', 'styles/base.css'], ['/styles/motion.css', 'styles/motion.css'], ['/media/manifest.json', 'media/manifest.json'], ['/src/media.js', 'src/media.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
   ]);
   async function serveFile(p, res) {
     let rel = staticFiles.get(p);
     if (!rel && /^\/assets\/[a-z0-9-]+\.(png|svg)$/.test(p)) rel = p.slice(1);
+    if (!rel && /^\/assets\/fonts\/[a-z0-9-]+\.woff2$/.test(p)) rel = p.slice(1);                    // fonte embutida
+    if (!rel && /^\/media\/[a-z0-9-]+\.(svg|webp|png|jpg|mp4|webm)$/.test(p)) rel = p.slice(1);       // pacote de mídia (cenas)
     if (!rel) throw new HttpError(404, 'not_found');
     const data = p === '/src/catalog.js' && catalogSource === 'tmdb'
       ? Buffer.from('window.DuoCatalog=' + JSON.stringify(catalog).replace(/</g, '\\u003c') + ';window.DuoCatalogSource="tmdb";', 'utf8')
@@ -991,7 +993,8 @@ function createRoomService(userOpts = {}) {
       if (e.code === 'ENOENT') throw new HttpError(404, 'not_found');
       throw e;
     });
-    const mime = rel.endsWith('.html') ? 'text/html' : rel.endsWith('.js') ? 'text/javascript' : rel.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+    const MIMES = { html: 'text/html', js: 'text/javascript', css: 'text/css', json: 'application/json', svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', woff2: 'font/woff2', mp4: 'video/mp4', webm: 'video/webm' };
+    const mime = MIMES[rel.slice(rel.lastIndexOf('.') + 1)] || 'application/octet-stream';
     const inlineHash = rel === 'index.html' ? inlineScriptSource(data.toString('utf8')) : '';
     res.writeHead(200, { 'Content-Type': mime + (mime.startsWith('text/') ? '; charset=utf-8' : ''), 'Content-Length': data.length,
       'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': rel === 'index.html' ? 'strict-origin-when-cross-origin' : 'no-referrer',
@@ -1013,7 +1016,7 @@ function createRoomService(userOpts = {}) {
         return res.end();
       }
       rateLimit(ip, 'general');
-      if (opts.servePrototype && req.method === 'GET' && (staticFiles.has(p) || p.startsWith('/assets/'))) {
+      if (opts.servePrototype && req.method === 'GET' && (staticFiles.has(p) || p.startsWith('/assets/') || p.startsWith('/media/'))) {
         route = '/prototype';
         if (url.search) throw new HttpError(400, 'bad_query');
         return await serveFile(p, res);

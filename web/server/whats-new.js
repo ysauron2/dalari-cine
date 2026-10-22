@@ -12,6 +12,10 @@
   const BASELINE = '0.3.1';          // quem nunca viu a janela é tratado como estando nesta versão
   // [ícone, título, texto curto]. Do mais novo para o mais antigo dentro de cada versão.
   const NEWS = {
+    '0.4.0': [
+      ['\u{1F39E}️', 'Movimento sob o seu controle', 'Em Perfil → Aparência você escolhe Completo, Reduzido ou Desligado. As reações voltam a aparecer mesmo com o "reduzir movimento" do sistema ligado.'],
+      ['\u{1F524}', 'Base visual nova', 'A fonte Inter agora vem junto com o app e há um conjunto de cores e medidas único, preparando a nova tela inicial.'],
+    ],
     '0.3.3': [
       ['\u{1F3E0}', 'Sala só sua', 'Crie a sala e use tudo sozinho; o convidado se junta quando quiser, com a sua aprovação.'],
       ['\u{1F3AC}', 'Sugestões por clima e plataforma', 'No Início, escolha o clima, a plataforma ou toque em Me surpreenda. A lista é uma só e mostra por que combina.'],

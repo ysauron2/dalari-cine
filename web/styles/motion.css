@@ -1,0 +1,23 @@
+/* Dalari Cine — níveis de movimento. O nível vem de motion.js (Perfil → Aparência → Movimento) e fica em <html data-motion="...">:
+     full     tudo: transições, 3D, parallax e rotação automática dos destaques
+     reduced  sem deslocamento nem 3D; mudanças instantâneas (o que precisa ser visto, como reações e a contagem 3-2-1, tem regra própria)
+     off      igual ao reduzido e sem rotação automática; informação nunca depende de animação
+   Regra de ouro: NUNCA usar `*{animation:none}` solto. Esta regra tem especificidade zero (:where), então qualquer componente que precise
+   continuar visível (reação, aviso) a vence com um seletor de classe. */
+:root[data-motion="reduced"] { --motion-scale: .01; }
+:root[data-motion="off"] { --motion-scale: 0; }
+
+:where(:root[data-motion="reduced"], :root[data-motion="off"]) *,
+:where(:root[data-motion="reduced"], :root[data-motion="off"]) *::before,
+:where(:root[data-motion="reduced"], :root[data-motion="off"]) *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* utilitários de entrada, usados pelos componentes novos (viram troca instantânea nos níveis reduzido e desligado) */
+@keyframes dc-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes dc-fade { from { opacity: 0; } to { opacity: 1; } }
+.dc-rise { animation: dc-rise var(--dur-slow) var(--ease-out) both; }
+.dc-fade { animation: dc-fade var(--dur-base) var(--ease-out) both; }

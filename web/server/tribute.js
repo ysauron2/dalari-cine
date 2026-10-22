@@ -59,7 +59,7 @@
       + '@keyframes tb-beat{0%,100%{transform:scale(1)}14%{transform:scale(1.07)}28%{transform:scale(1)}42%{transform:scale(1.05)}70%{transform:scale(1)}}'
       + '@keyframes tb-up{to{opacity:1;transform:none}}@keyframes tb-fade{to{opacity:1}}'
       + '@keyframes tb-twinkle{0%,100%{opacity:0;transform:translateY(0) scale(.6)}50%{opacity:.85;transform:translateY(-10px) scale(1)}}'
-      + '@media (prefers-reduced-motion:reduce){.duo-tribute:not(.tb-motion) *{animation:none!important;transition:none!important}.duo-tribute:not(.tb-motion) .tb-copy>*,.duo-tribute:not(.tb-motion) .tb-go,.duo-tribute:not(.tb-motion) .tb-skip,.duo-tribute:not(.tb-motion) .tb-replay{opacity:1;transform:none}.duo-tribute:not(.tb-motion) .tb-letter,.duo-tribute:not(.tb-motion) .tb-ring{display:none}.duo-tribute:not(.tb-motion) .tb-stars u{opacity:.5}}'
+      + ':where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) *{animation:none!important;transition:none!important}:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-copy>*,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-go,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-skip,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-replay{opacity:1;transform:none}:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-letter,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-ring{display:none}:where(:root[data-motion="reduced"],:root[data-motion="off"]) .duo-tribute:not(.tb-motion) .tb-stars u{opacity:.5}'
       + '.tb-replay{position:absolute;left:18px;top:14px;max-width:calc(100% - 140px);text-align:left;font:inherit;font-size:13px;color:#ffd9c8;background:#ffffff10;border:1px solid #ffac8f66;border-radius:999px;padding:7px 16px;cursor:pointer;opacity:1}.tb-replay:hover{background:#ffffff1c}.tb-replay:focus-visible{outline:2px solid #fff;outline-offset:3px}'
       + '@media (max-height:560px){.tb-scene{height:50%}.tb-copy{height:50%}.tb-heart b{font-size:130px}}';
   }
@@ -109,7 +109,7 @@
     const doc = win.document;
     const style = doc.createElement('style'); style.textContent = css(); doc.head.append(style);
     const { dlg, world, go, skip, copy } = build(doc);
-    const reduced = !!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const reduced = win.DuoMotion ? win.DuoMotion.reduced() : !!win.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (opts.motion) dlg.classList.add('tb-motion');
     let done = false;
     const finish = () => {

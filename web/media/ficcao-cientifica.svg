@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Planeta com anel sobre uma nebulosa, com uma grade de neon no horizonte">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#04061a"/><stop offset=".5" stop-color="#1a0f45"/><stop offset="1" stop-color="#3a1458"/></linearGradient>
+    <radialGradient id="neb1" cx=".25" cy=".3" r=".6"><stop offset="0" stop-color="#ff5fa8" stop-opacity=".5"/><stop offset="1" stop-color="#ff5fa8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="neb2" cx=".8" cy=".2" r=".55"><stop offset="0" stop-color="#4fd1ff" stop-opacity=".4"/><stop offset="1" stop-color="#4fd1ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="planet" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffd0a0"/><stop offset=".45" stop-color="#e8707f"/><stop offset="1" stop-color="#3a1458"/></radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9cc7ff" stop-opacity="0"/><stop offset=".5" stop-color="#cfe3ff" stop-opacity=".85"/><stop offset="1" stop-color="#9cc7ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="grid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5fa8" stop-opacity="0"/><stop offset="1" stop-color="#ff5fa8" stop-opacity=".85"/></linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#neb1)"/><rect width="1920" height="1080" fill="url(#neb2)"/>
+  <g fill="#fff" opacity=".85"><circle cx="120" cy="100" r="2"/><circle cx="300" cy="220" r="1.6"/><circle cx="480" cy="80" r="2.2"/><circle cx="640" cy="260" r="1.6"/><circle cx="1000" cy="120" r="2"/><circle cx="1180" cy="60" r="1.8"/><circle cx="1500" cy="200" r="2"/><circle cx="1700" cy="90" r="2.2"/><circle cx="1820" cy="300" r="1.6"/><circle cx="220" cy="420" r="1.6"/><circle cx="1380" cy="380" r="1.6"/><circle cx="820" cy="400" r="1.8"/></g>
+  <ellipse cx="1130" cy="400" rx="470" ry="86" transform="rotate(-14 1130 400)" fill="none" stroke="url(#ring)" stroke-width="22" opacity=".55"/>
+  <circle cx="1130" cy="400" r="230" fill="url(#planet)"/>
+  <path d="M900 430 C1000 470 1200 470 1340 380" stroke="#3a1458" stroke-width="14" fill="none" opacity=".35"/>
+  <path d="M660 420 C900 560 1360 540 1600 340" fill="none" stroke="url(#ring)" stroke-width="22" transform="rotate(-14 1130 400)" opacity=".0"/>
+  <path d="M700 460 C900 520 1300 520 1560 360" fill="none" stroke="#cfe3ff" stroke-width="14" opacity=".6" transform="rotate(-14 1130 400) translate(0 8)"/>
+  <rect x="0" y="720" width="1920" height="360" fill="#0a0620"/>
+  <g stroke="url(#grid)" stroke-width="2" fill="none">
+    <path d="M0 760 H1920 M0 810 H1920 M0 880 H1920 M0 980 H1920"/>
+    <path d="M960 720 L-400 1080 M960 720 L-40 1080 M960 720 L300 1080 M960 720 L630 1080 M960 720 L960 1080 M960 720 L1290 1080 M960 720 L1620 1080 M960 720 L1960 1080 M960 720 L2320 1080"/>
+  </g>
+  <rect x="0" y="718" width="1920" height="4" fill="#ff5fa8" opacity=".7"/>
+</svg>

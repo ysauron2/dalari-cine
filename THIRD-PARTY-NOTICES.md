@@ -6,6 +6,7 @@ O Dalari Cine usa e/ou carrega os componentes e serviços abaixo. Cada um tem a 
 
 - **Electron for Content Security (ECS), da Castlabs**: variante do Electron com suporte a conteúdo protegido. O Electron é licenciado sob a MIT; verifique a licença e os termos da versão da Castlabs usada (`app/package.json`).
 - **Widevine CDM, do Google**: módulo de descriptografia de conteúdo protegido, baixado em tempo de execução. Tem licença e termos próprios, e a reprodução protegida exige assinatura VMP (EVS da Castlabs). Quem recompila o aplicativo e o distribui deve ter a própria conta EVS e aceitar os termos da Castlabs.
+- **Inter** (fonte variável, subconjunto latino): © The Inter Project Authors, licença **SIL Open Font License 1.1**; o texto acompanha o arquivo em `web/assets/fonts/INTER-LICENSE-OFL.txt`. Veja também `docs/midia/CREDITOS.md`.
 - **Chromium** e suas dependências, incluídos no Electron: veja `LICENSES.chromium.html` dentro do aplicativo instalado.
 
 ## Serviços e conteúdo de terceiros

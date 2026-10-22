@@ -57,7 +57,7 @@ test('a homenagem abre com um clique em Sobre e créditos e nunca aparece sozinh
 
 test('homenagem 3D: com "reduzir movimento" a cena aparece parada, mas há um botão para ver a animação mesmo assim', () => {
   const src = readFileSync(new URL('../server/tribute.js', import.meta.url), 'utf8');
-  assert.match(src, /prefers-reduced-motion:reduce\)\{\.duo-tribute:not\(\.tb-motion\)/, 'a regra de movimento reduzido não vale depois que a pessoa pede a animação');
+  assert.match(src, /:where\(:root\[data-motion="reduced"\],:root\[data-motion="off"\]\) \.duo-tribute:not\(\.tb-motion\) \*\{animation:none!important/,'a regra de movimento reduzido não vale depois que a pessoa pede a animação');
   assert.match(src, /Ver a animação/);
   assert.match(src, /motion: true/);
 });

@@ -81,7 +81,7 @@ test('a página e o serviço entregam os módulos visuais; cinema, ambiente e av
     assert.match(svc, new RegExp(`'/server/${f}\\.js', 'server/${f}\\.js'`));
   }
   assert.match(ui, /cinema-on/);
-  assert.match(ui, /prefers-reduced-motion:reduce\)\{\.avatar/, 'avatar respira respeita "reduzir movimento"');
+  assert.match(ui, /:where\(:root\[data-motion="reduced"\],:root\[data-motion="off"\]\) \.avatar,:where\(:root\[data-motion="reduced"\],:root\[data-motion="off"\]\) \.avatar\.is-incall\{animation:none!important/,'avatar respira respeita "reduzir movimento"');
   assert.match(ui, /onLevels: \(l\) => onVoiceLevels\(l\)/);
   assert.match(voice, /this\.onLevels\(\{ \.\.\.levels \}\)/);
   assert.match(read('../server/first-run.js'), /wl-hero/);

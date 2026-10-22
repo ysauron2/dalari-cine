@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Duas silhuetas juntas sob uma manta, diante de uma janela com pôr do sol e luzes pequenas">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1236"/><stop offset=".45" stop-color="#8a3f6a"/><stop offset=".75" stop-color="#ff8a6b"/><stop offset="1" stop-color="#ffc27a"/></linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff0c9"/><stop offset=".4" stop-color="#ffc27a" stop-opacity=".85"/><stop offset="1" stop-color="#ff8a6b" stop-opacity="0"/></radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="1280" cy="640" r="320" fill="url(#sun)"/>
+  <circle cx="1280" cy="640" r="92" fill="#fff0c9"/>
+  <path d="M0 700 C300 640 520 740 860 690 C1180 640 1500 760 1920 690 L1920 1080 L0 1080 Z" fill="#3a1840" opacity=".8"/>
+  <path d="M0 780 C380 730 700 820 1060 770 C1400 724 1660 820 1920 770 L1920 1080 L0 1080 Z" fill="#240f2c"/>
+  <g fill="#ffe2a8" filter="url(#glow)" opacity=".8"><circle cx="160" cy="140" r="10"/><circle cx="330" cy="190" r="10"/><circle cx="520" cy="130" r="10"/><circle cx="720" cy="200" r="10"/><circle cx="930" cy="140" r="10"/><circle cx="1130" cy="210" r="10"/><circle cx="1340" cy="140" r="10"/><circle cx="1540" cy="200" r="10"/><circle cx="1740" cy="130" r="10"/></g>
+  <g fill="#fff2cf"><circle cx="160" cy="140" r="5"/><circle cx="330" cy="190" r="5"/><circle cx="520" cy="130" r="5"/><circle cx="720" cy="200" r="5"/><circle cx="930" cy="140" r="5"/><circle cx="1130" cy="210" r="5"/><circle cx="1340" cy="140" r="5"/><circle cx="1540" cy="200" r="5"/><circle cx="1740" cy="130" r="5"/></g>
+  <path d="M0 140 C300 220 600 80 960 170 C1300 250 1600 90 1920 170" fill="none" stroke="#2a1236" stroke-width="3" opacity=".7"/>
+  <g fill="#150a1c">
+    <rect x="520" y="780" width="920" height="210" rx="80"/>
+    <circle cx="840" cy="640" r="58"/><rect x="772" y="690" width="140" height="170" rx="62"/>
+    <circle cx="960" cy="660" r="54"/><rect x="898" y="708" width="130" height="150" rx="58"/>
+    <path d="M700 820 C860 760 1100 760 1260 820 L1260 990 L700 990 Z"/>
+  </g>
+  <path d="M880 660 C900 640 940 640 960 660" stroke="#ff8a6b" stroke-width="3" fill="none" opacity=".5"/>
+  <rect width="1920" height="1080" fill="none"/>
+</svg>

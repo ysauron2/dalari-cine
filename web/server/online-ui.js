@@ -165,7 +165,7 @@
     .reaction-fly{position:absolute;bottom:14vh;left:var(--x);display:grid;justify-items:center;gap:2px;font-size:36px;animation:react-up 2.8s ease-out forwards}
     .reaction-fly small{font-size:11px;color:#fff;text-shadow:0 1px 6px #000c;white-space:nowrap}
     @keyframes react-up{0%{opacity:0;transform:translateY(0) scale(.5)}10%{opacity:1;transform:translateY(-18px) scale(1.2)}100%{opacity:0;transform:translateY(-44vh) scale(1) rotate(var(--r))}}
-    @media (prefers-reduced-motion:reduce){.sync-num{animation:none}.reaction-fly{animation:react-fade 2s linear forwards!important;animation-duration:2s!important}@keyframes react-fade{0%,80%{opacity:1}100%{opacity:0}}}
+    :where(:root[data-motion="reduced"],:root[data-motion="off"]) .sync-num{animation:none}:where(:root[data-motion="reduced"],:root[data-motion="off"]) .reaction-fly{animation:react-fade 2s linear forwards!important;animation-duration:2s!important}@keyframes react-fade{0%,80%{opacity:1}100%{opacity:0}}
 
     /* painel lateral */
     .rv3-side{display:grid;gap:16px;min-width:0}
@@ -184,7 +184,7 @@
     .avatar.is-incall:not(.is-speaking){animation:duoBreathe 4.2s ease-in-out infinite}
     @keyframes duoBreathe{50%{transform:scale(1.045);box-shadow:0 0 0 2px #ffffff14,0 0 14px #ffffff10}}
     .avatar.is-speaking{box-shadow:0 0 0 calc(2px + var(--lvl,0)*4px) #A6E4C6,0 0 calc(12px + var(--lvl,0)*28px) #A6E4C6aa}
-    @media (prefers-reduced-motion:reduce){.avatar,.avatar.is-incall{animation:none!important;transform:none}}
+    :where(:root[data-motion="reduced"],:root[data-motion="off"]) .avatar,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .avatar.is-incall{animation:none!important;transform:none}
     .voice-sub{margin:6px 0 0;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#FFAC8F}.voice-check{display:flex;gap:8px;align-items:center;font-size:12px;color:#d6dbe6;cursor:pointer;margin:0}
     .voice-check input{width:auto;accent-color:#FFAC8F}.voice-device input[type=range]{width:100%;padding:0;border:0;background:transparent;accent-color:#FFAC8F}
     .voice-devices{margin-top:10px;display:grid;gap:10px;padding-top:10px;border-top:1px solid var(--line)}.voice-devices p{margin:0}
@@ -291,8 +291,8 @@
       .stage-after{padding:16px}
       .online-room .lobby{padding:16px}
     }
-    @media(prefers-reduced-motion:no-preference){.rv3-conn.is-off:before{animation:onlinePulse 1.3s ease-in-out infinite}}
-    @media(prefers-reduced-motion:reduce){.online-room,.online-room *,.online-room *:before,.online-room *:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+    :where(:root:not([data-motion="reduced"]):not([data-motion="off"])) .rv3-conn.is-off:before{animation:onlinePulse 1.3s ease-in-out infinite}
+    :where(:root[data-motion="reduced"],:root[data-motion="off"]) .online-room,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .online-room *,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .online-room *:before,:where(:root[data-motion="reduced"],:root[data-motion="off"]) .online-room *:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
     @keyframes onlinePulse{50%{opacity:.35;transform:scale(.7)}}
   </style><div class="lobby" id="online-lobby"><h3>Sala online · teste local</h3><p>Crie uma sala para até 4 pessoas ou entre com o convite recebido. O Host aprova cada entrada uma única vez; depois, todos controlam o vídeo.</p><div id="online-content"></div></div>
   <div class="rv3" id="rv3" hidden>
@@ -363,6 +363,8 @@
     onEvent: (m, ack) => nfLink.handleEvent(m, ack),
   }) : null;
   let nfLink = null;
+  // Movimento reduzido: vale a escolha do usuário (Perfil → Aparência), com o sistema como padrão
+  const reducedMotion = () => (window.DuoMotion ? window.DuoMotion.reduced() : !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   const clock = window.DuoYouTubePlayer?.formatClock || ((v) => String(Math.floor(v || 0)));
   const voice = window.DuoVoice ? new window.DuoVoice.VoiceCall({ onChange: () => renderVoice(), mount: panel, onSpeaking: (s) => onSpeakingChange(s), onLevels: (l) => onVoiceLevels(l) }) : null;
   if (voice) panel.insertBefore(voice.audio, message);
@@ -1252,7 +1254,7 @@
     el.setAttribute('aria-labelledby', `rv3-tab-${tab}`);
     const key = [tab, s.platform, !!s.youtubeSearchEnabled, s.selectedMatch, s.round, !!s.media, s.media?.videoId, client.role, youtubeResults, youtubeQuery.length > 0, recents, linkOpen, uiVersion, JSON.stringify(s.queue || []), members().map(nameFor), nfState()];
     const changed = paint(el, key, () => { if (tab === 'search') buildSearchPanel(el); else buildMatchPanel(el); });
-    if (changed && lastTab !== null && lastTab !== tab && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.classList.remove('is-swap'); void el.offsetWidth; el.classList.add('is-swap'); }
+    if (changed && lastTab !== null && lastTab !== tab && !reducedMotion()) { el.classList.remove('is-swap'); void el.offsetWidth; el.classList.add('is-swap'); }
     lastTab = tab;
   }
   const actions = (...buttons) => { const w = make('span', undefined, { class: 'item-actions' }); w.append(...buttons); return w; };
@@ -1725,7 +1727,7 @@
   function openCtx(which) {
     tab = which; ctxOpen = true; uiVersion++;
     renderTabs(); renderPanel();
-    if (window.matchMedia('(max-width:900px)').matches) $('#rv3-ctx-toggle').scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (window.matchMedia('(max-width:900px)').matches) $('#rv3-ctx-toggle').scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
   }
   async function submitYouTube(videoId, videoTitle) {
     await run(async () => {

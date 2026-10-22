@@ -6,8 +6,8 @@ const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
 test('reações continuam visíveis com "reduzir movimento": a regra global que zera animações não apaga a reação', () => {
   const ui = read('../server/online-ui.js');
   assert.ok(ui.includes('.reaction-fly{animation:react-fade 2s linear forwards!important;animation-duration:2s!important}'));
-  const html = read('../index.html');
-  assert.ok(html.includes('*,*:before,*:after{animation-duration:.01ms!important'), 'a regra global existe, e por isso a exceção precisa de !important');
+  const css = read('../styles/motion.css');
+  assert.ok(css.includes('animation-duration: .01ms !important;'), 'a regra geral de movimento reduzido existe (styles/motion.css), por isso a exceção precisa de !important');
 });
 
 test('botão "Sugestão ou problema" na lateral estreita vira só o ícone, sem texto quebrado, e continua acessível', () => {
