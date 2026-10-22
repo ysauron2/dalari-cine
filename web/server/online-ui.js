@@ -165,7 +165,7 @@
     .reaction-fly{position:absolute;bottom:14vh;left:var(--x);display:grid;justify-items:center;gap:2px;font-size:36px;animation:react-up 2.8s ease-out forwards}
     .reaction-fly small{font-size:11px;color:#fff;text-shadow:0 1px 6px #000c;white-space:nowrap}
     @keyframes react-up{0%{opacity:0;transform:translateY(0) scale(.5)}10%{opacity:1;transform:translateY(-18px) scale(1.2)}100%{opacity:0;transform:translateY(-44vh) scale(1) rotate(var(--r))}}
-    @media (prefers-reduced-motion:reduce){.sync-num{animation:none}.reaction-fly{animation:react-fade 2s linear forwards}@keyframes react-fade{0%,80%{opacity:1}100%{opacity:0}}}
+    @media (prefers-reduced-motion:reduce){.sync-num{animation:none}.reaction-fly{animation:react-fade 2s linear forwards!important;animation-duration:2s!important}@keyframes react-fade{0%,80%{opacity:1}100%{opacity:0}}}
 
     /* painel lateral */
     .rv3-side{display:grid;gap:16px;min-width:0}
@@ -497,12 +497,34 @@
       mutate(next);
       await run(async () => { await client.setViewing(id, next); apply(client.snapshot); });
     },
-    /** Do Descobrir/Início: indica um título para a votação da sala. Devolve { ok } ou { ok: false, reason }. */
-    async proposeTitle(titleId) {
-      if (!client || snapshot?.status !== 'active') return { ok: false, reason: 'no_room' };
+    /** Do Descobrir/Início: indica um título para a votação da sala. Se a sala está em outra plataforma, o Host troca para a do título. Devolve { ok } ou { ok: false, message }. */
+    async proposeTitle(item) {
+      if (!client || snapshot?.status !== 'active') return { ok: false, message: 'Crie ou entre em uma sala primeiro.' };
+      const names = Array.isArray(item?.watchProviders) ? item.watchProviders : [];
+      if (!snapshot.platform || !names.includes(platforms[snapshot.platform])) {
+        const key = ['youtube', 'netflix', 'prime', 'crunchyroll'].find((k) => names.includes(platforms[k]));
+        if (!key) return { ok: false, message: 'Esse título não está em nenhuma plataforma da sala.' };
+        if (client.role !== 'host') return { ok: false, message: nameFor('host') + ' precisa escolher ' + platforms[key] + ' para a sala: é lá que esse título está.' };
+        let switched = false;
+        await run(async () => { await client.selectPlatform(key); apply(client.snapshot); switched = true; });
+        if (!switched) return { ok: false, message: 'Não foi possível trocar a plataforma da sala. Veja o aviso na sala.' };
+      }
       let ok = false;
-      await run(async () => { await client.pickManually(titleId); apply(client.snapshot); ok = true; });
-      return ok ? { ok } : { ok, reason: 'rejected' };
+      await run(async () => { await client.pickManually(item.id); apply(client.snapshot); ok = true; });
+      return ok ? { ok } : { ok: false, message: 'Não foi possível indicar o título agora. Veja o aviso na sala.' };
+    },
+    /** Procurar um título na janela da Netflix do app: a sala precisa estar em modo Netflix (o Host troca sozinho). */
+    async searchNetflix(title) {
+      if (!window.duoDesktop?.openNetflixSearch) return { ok: false, message: 'A busca na janela da Netflix só existe no aplicativo instalado.' };
+      if (!client || snapshot?.status !== 'active') return { ok: false, message: 'Crie a sala para abrir a Netflix ao lado.' };
+      if (snapshot.platform !== 'netflix') {
+        if (client.role !== 'host') return { ok: false, message: nameFor('host') + ' precisa escolher a Netflix para a sala antes.' };
+        let switched = false;
+        await run(async () => { await client.selectPlatform('netflix'); apply(client.snapshot); switched = true; });
+        if (!switched) return { ok: false, message: 'Não foi possível escolher a Netflix para a sala.' };
+      }
+      window.duoDesktop.openNetflixSearch(title);
+      return { ok: true };
     },
     async startRound(mode) {
       if (!client || snapshot?.status !== 'active') return;
@@ -680,11 +702,12 @@
       actions.append(
         button(mine ? '@check Estou pronto' : 'Estou pronto', 'ready-toggle', { class: mine ? 'rb-main' : '', 'aria-pressed': String(mine) }),
         button('☕ Intervalo 5 min', 'break-start', canSync && !s.break ? {} : { disabled: '', title: s.break ? 'Já estão em intervalo' : s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }),
+        button('💬 Abrir chat', 'chat-open', { title: 'Conversar por mensagens, sem sair do vídeo' }),
         button('@sync Sincronizar agora', 'sync-now', canSync ? { class: everyone ? 'rb-main' : '' } : { disabled: '', title: s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }));
       const note = make('p', everyone ? 'Todos prontos! Cliquem em Sincronizar agora: todo mundo pausa no mesmo ponto, conta 3, 2, 1 e dá play junto.' : 'Marque quando estiver pronto. Se alguém ficou para trás, Sincronizar agora alinha todo mundo.', { class: 'session-note' });
       const react = make('div', undefined, { class: 'react-row', role: 'group', 'aria-label': 'Reações rápidas' });
       for (const [id, emoji] of Object.entries(REACTION_EMOJI)) react.append(make('button', emoji, { type: 'button', class: 'react-btn', 'data-online-act': 'react', 'data-emoji': id, 'aria-label': 'Reagir ' + id }));
-      const cine = make('button', cinemaOn ? '@moon Modo cinema: ligado' : '@moon Modo cinema: desligado', { type: 'button', class: 'rb', 'data-online-act': 'cinema-toggle', 'aria-pressed': String(cinemaOn), title: 'Com o vídeo tocando, o resto da tela escurece sozinho e volta quando você mexe o mouse' });
+      const cine = make('button', cinemaOn ? (s.media && s.playback?.state === 'playing' ? '@moon Modo cinema: ligado' : '@moon Modo cinema: ligado (age ao dar play)') : '@moon Modo cinema: desligado', { type: 'button', class: 'rb', 'data-online-act': 'cinema-toggle', 'aria-pressed': String(cinemaOn), title: 'Com o vídeo tocando, o resto da tela escurece sozinho e volta quando você mexe o mouse' });
       el.append(list, actions, note, react, cine);
     });
   }
@@ -1861,6 +1884,7 @@
     if (act === 'details') return void adapter.openTitle(b.dataset.id);
     if (act === 'surprise' || act === 'recommend') return void api.startRound(act);
     if (act === 'react') return void sendReaction(b.dataset.emoji);
+    if (act === 'chat-open') return void chatDock?.open();
     if (act === 'cinema-toggle') { cinemaOn = !cinemaOn; try { localStorage.setItem('duotela-cinema', cinemaOn ? '1' : '0'); } catch { /* sem armazenamento */ } updateCinema(snapshot); renderSession(); return; }
     if (act === 'ready-toggle') return void run(async () => { await client.setReady(!snapshot?.ready?.[client.role]); apply(client.snapshot); });
     if (act === 'break-start' || act === 'break-more') return void run(async () => { await client.startBreak(5); apply(client.snapshot); });

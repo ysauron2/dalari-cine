@@ -85,8 +85,8 @@ test('ligações: o servidor usa o catálogo remoto antes do local, e o detalhe 
   assert.match(index, /else \{\s*const snapshotPath/, 'sem catálogo remoto cai no arquivo local');
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   for (const t of ["roomBtn.id='detail-room'", "trBtn.id='detail-trailer-btn'", 'youtube-nocookie.com/embed/', 'function closeModal()']) assert.ok(html.includes(t), t);
-  assert.ok(html.includes("on.proposeTitle(it.id)"));
+  assert.ok(html.includes("on.proposeTitle(it)"));
   const ui = readFileSync(new URL('../server/online-ui.js', import.meta.url), 'utf8');
-  assert.match(ui, /async proposeTitle\(titleId\)/); assert.match(ui, /await client\.pickManually\(titleId\)/);
+  assert.match(ui, /async proposeTitle\(item\)/); assert.match(ui, /await client\.pickManually\(item\.id\)/);
   assert.match(readFileSync(new URL('../server/first-run.js', import.meta.url), 'utf8'), /Catálogo de títulos e capas: o app baixa a lista/);
 });

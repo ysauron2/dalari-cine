@@ -21,6 +21,7 @@ let roomPlatform = null;
 let netflixLoaded = false;
 let netflixRoomState = null;
 let bundledServer = null;
+let pendingNetflixSearch = null;   // busca pedida antes de a sala estar em modo Netflix: abre assim que a janela da Netflix aparecer
 let pttCode = null;   // tecla de push-to-talk escolhida na interface (KeyboardEvent.code)
 
 // Uma instância só: um link dalari://entrar/XXXX-XXXX clicado com o app aberto vai para a janela que já existe
@@ -245,12 +246,18 @@ function setRoomPlatform(platform) {
     window.contentView.addChildView(duoView);
     window.contentView.addChildView(toolbarView);
     netflixView.webContents.setAudioMuted(false);
-    if (!netflixLoaded) {
+    if (pendingNetflixSearch) {
+      const search = pendingNetflixSearch;
+      pendingNetflixSearch = null;
+      netflixLoaded = true;
+      netflixView.webContents.loadURL(search).catch(() => {});
+    } else if (!netflixLoaded) {
       netflixLoaded = true;
       netflixView.webContents.loadURL(NETFLIX_URL).catch(() => {});
     }
   } else {
     panelOpen = false;
+    pendingNetflixSearch = null;
     if (wasNetflix) {
       netflixView.webContents.setAudioMuted(true);
       const current = netflixView.webContents.getURL();
@@ -331,7 +338,10 @@ function createWindow(duoUrl) {
   // Descobrir → "Procurar na Netflix": a janela da Netflix abre a busca com o nome do título (só a interface do Dalari Cine pode pedir)
   const acceptNetflixSearch = (event, title) => {
     const url = fromDuo(event) ? netflixSearchUrl(title) : null;
-    if (url && !netflixView.webContents.isDestroyed()) netflixView.webContents.loadURL(url).catch(() => {});
+    if (!url || netflixView.webContents.isDestroyed()) return;
+    // A janela da Netflix só existe quando a sala está em modo Netflix; antes disso a busca fica guardada e abre junto com ela
+    if (roomPlatform === 'netflix') netflixView.webContents.loadURL(url).catch(() => {});
+    else pendingNetflixSearch = url;
   };
   ipcMain.on('duotela:netflix-search', acceptNetflixSearch);
   // Cópia de segurança das configurações: o preload restaura na abertura (síncrono, antes dos scripts da página) e envia mudanças.

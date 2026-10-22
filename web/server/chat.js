@@ -30,7 +30,7 @@
   const CSS = [
     '.chat-dock{position:fixed;right:16px;bottom:16px;z-index:2147479000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:min(320px,calc(100vw - 32px));font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;color:#f5f2f5}',
     '.chat-dock[hidden]{display:none}.chat-dock [hidden]{display:none!important}',
-    '.chat-toggle{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid #344050;background:#171E2Bf2;color:#f5f2f5;font-size:20px;cursor:pointer;box-shadow:0 10px 30px #0009;opacity:.8;transition:opacity .2s}',
+    '.chat-toggle{position:relative;min-width:44px;height:44px;padding:0 16px;border-radius:22px;border:1px solid #344050;background:#171E2Bf2;color:#f5f2f5;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px #0009;opacity:.8;transition:opacity .2s}',
     '.chat-toggle:hover,.chat-toggle:focus-visible,.chat-dock.is-open .chat-toggle{opacity:1}.chat-toggle:focus-visible,.chat-panel button:focus-visible,.chat-panel input:focus-visible{outline:2px solid #FFAC8F;outline-offset:2px}',
     '.chat-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#FFAC8F;color:#2b1519;font-size:11px;font-weight:800;line-height:18px;text-align:center}',
     '.chat-bubble{max-width:100%;padding:9px 13px;border:1px solid #344050;border-radius:14px;background:#171E2Bee;box-shadow:0 10px 30px #0009;cursor:pointer;overflow-wrap:anywhere;animation:chat-pop .25s ease-out}',
@@ -66,7 +66,7 @@
     form.append(input, sendBtn);
     const err = el('p', { class: 'chat-err', role: 'alert' }); err.hidden = true;
     panel.append(head, list, form, err);
-    const toggle = el('button', { type: 'button', class: 'chat-toggle', 'aria-label': 'Chat da sala', 'aria-expanded': 'false' }, '\u{1F4AC}');
+    const toggle = el('button', { type: 'button', class: 'chat-toggle', 'aria-label': 'Chat da sala', 'aria-expanded': 'false' }, '\u{1F4AC} Chat');
     const badge = el('span', { class: 'chat-badge', 'aria-hidden': 'true' }); badge.hidden = true;
     toggle.append(badge);
     root.append(bubble, panel, toggle);

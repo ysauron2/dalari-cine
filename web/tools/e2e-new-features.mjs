@@ -59,6 +59,14 @@ try {
   check('Host sozinho: faixa "só você por enquanto" com Convidar', /só você por enquanto/.test(await text(host, '#rv3-alert')), (await text(host, '#rv3-alert')).slice(0, 80));
   await click(host, '#rv3-chip-youtube');
   await host.waitFor(() => window.DuoTelaOnline.snapshot?.platform === 'youtube');
+  // "Levar para a sala": título da Netflix com a sala em YouTube → o Host troca a plataforma e o título entra na votação
+  const nf = await host.evaluate(() => { const it = window.DuoCatalog.find((x) => x.watchProviders.includes('Netflix')); return it ? { id: it.id, watchProviders: it.watchProviders } : null; });
+  const proposed = await host.evaluate((it) => window.DuoTelaOnline.proposeTitle(it), nf);
+  check('Levar para a sala: com a sala em YouTube, o Host troca para a Netflix e o título entra na votação', proposed.ok === true && await host.evaluate((id) => window.DuoTelaOnline.snapshot.platform === 'netflix' && window.DuoTelaOnline.snapshot.round?.picks.includes(id), nf.id), JSON.stringify(proposed));
+  const none = await host.evaluate(() => window.DuoTelaOnline.proposeTitle({ id: 'tmdb:movie:1', watchProviders: [] }));
+  check('Levar para a sala: título sem plataforma da sala recebe uma explicação clara', none.ok === false && /nenhuma plataforma/.test(none.message), none.message);
+  await click(host, '#rv3-chip-youtube');
+  await host.waitFor(() => window.DuoTelaOnline.snapshot?.platform === 'youtube');
   await setVal(host, '#online-youtube-url', 'https://www.youtube.com/watch?v=aqz-KE-bpKQ');
   await click(host, '[data-online-act=youtube-open]');
   await host.waitFor(() => window.DuoTelaOnline.snapshot?.media?.videoId === 'aqz-KE-bpKQ');
