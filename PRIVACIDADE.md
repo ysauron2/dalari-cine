@@ -22,6 +22,10 @@ Não coletamos nome real, e-mail, telefone, senhas, cartões, conteúdo de conve
 
 O objetivo é o criador receber informações para melhorar o app: quantas pessoas usam, quais recursos funcionam e onde acontecem falhas. Versões que têm o serviço de estatísticas ativado perguntam antes e não enviam nada sem a sua permissão; versões sem o serviço não enviam estatísticas. Se você aceitar, a cada 2 minutos com o app aberto é enviado a um serviço do criador, hospedado na Cloudflare: um número aleatório da instalação (criado só quando você aceita e apagado quando você recusa), a versão, o sistema, se você está em sala ou em chamada e contadores agregados (salas criadas, chamadas iniciadas, duração em faixas, tipo de conexão, falhas de voz, etapas do pareamento por código curto, qualidade da chamada em faixas, tempo para conectar e erros do app em categorias fixas, como microfone bloqueado, vídeo que não abriu, sala que caiu ou atualização que falhou; nunca o texto do erro, caminhos de arquivos ou dados pessoais). O serviço também guarda, por hora, quais instalações estiveram ativas (para o mapa de horários de pico) e o dia da primeira vez e dos retornos (para medir se as pessoas voltam). Não são enviados nome, o que você assiste, conteúdo de conversa, códigos ou participantes de salas, e o serviço não guarda o seu endereço IP (a Cloudflare, como provedora do serviço, vê o IP na própria conexão). Você pode ver o que é enviado e desligar a qualquer momento em Perfil → Estatísticas anônimas.
 
+## Mensagens de feedback (só quando você envia)
+
+Em Perfil → Falar com o criador você pode escrever uma ideia, um problema ou um elogio. Nada é enviado até você clicar em Enviar, e isso não depende de as estatísticas anônimas estarem ligadas. Vão para o serviço do criador (Cloudflare), que repassa ao Telegram dele: o tipo, o texto que você escreveu, o contato se você preencher e, só se a caixa estiver marcada, a versão do app e o sistema. Não vão o seu nome, o identificador da instalação nem o que você assiste. O serviço não guarda o texto nem o contato: ele só passa por lá. Evite escrever dados pessoais que você não queira que o criador veja.
+
 ## Atualizações do aplicativo
 
 Se você deixar ligado em Perfil → Atualizações (é o padrão), o app consulta o GitHub (github.com/…/releases) 20 segundos depois de abrir e a cada 6 horas para saber se há versão nova. O GitHub vê o endereço de rede do seu aparelho nessa consulta, como em qualquer download; nada do Dalari Cine é enviado além do pedido do arquivo. Uma versão nova só é instalada quando você clica em Atualizar agora, e o app confere uma assinatura digital antes de abrir o instalador. Você pode desligar a verificação automática em Perfil.
@@ -32,4 +36,4 @@ Feche o Dalari Cine e apague a pasta "Dalari Cine" em %APPDATA% (Windows) ou em 
 
 ## Atualizações desta política
 
-Versão 4, de 22/10/2026. Mudanças relevantes serão mostradas no aplicativo, e quem aceitou uma versão anterior das estatísticas será perguntado de novo.
+Versão 5, de 22/10/2026. Mudanças relevantes serão mostradas no aplicativo, e quem aceitou uma versão anterior das estatísticas será perguntado de novo.

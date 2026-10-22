@@ -41,3 +41,11 @@ CREATE TABLE IF NOT EXISTS alerts (
   kind    TEXT PRIMARY KEY,
   last_at INTEGER NOT NULL
 );
+
+-- Versões já vistas: para avisar a primeira pessoa que usa uma versão nova.
+CREATE TABLE IF NOT EXISTS versions_seen (
+  app        TEXT PRIMARY KEY,
+  first_seen INTEGER NOT NULL
+);
+-- Quem já usa hoje conta como "já visto": sem isso, rodar este arquivo geraria um aviso por versão antiga.
+INSERT OR IGNORE INTO versions_seen (app, first_seen) SELECT app, MIN(first_seen) FROM installs GROUP BY app;

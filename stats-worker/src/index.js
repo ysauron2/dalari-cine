@@ -5,7 +5,8 @@
 //   GET  /api/export.csv  planilha (protegido)
 // Não guarda endereço IP, nome, título assistido nem conteúdo. O IP só é visto de passagem, para um limite de taxa em memória.
 import { DASHBOARD_HTML } from './dashboard.js';
-import { runScheduled, sendTelegram, handleTelegramWebhook } from './alerts.js';
+import { runScheduled, sendTelegram, handleTelegramWebhook, notifyActivity } from './alerts.js';
+import { handleFeedback } from './feedback.js';
 
 const ENUMS = {
   os: ['win', 'mac', 'linux', 'other'],
@@ -70,6 +71,9 @@ function limited(ip, now) {
 }
 
 export async function recordPing(db, p, now) {
+  // antes de gravar: já conhecíamos esta instalação e esta versão? (para os avisos de "nova instalação" e "primeira pessoa na versão")
+  const prev = await db.prepare('SELECT app FROM installs WHERE id = ?1').bind(p.id).first();
+  const seenVersion = await db.prepare('SELECT 1 AS x FROM versions_seen WHERE app = ?1').bind(p.app).first();
   const stmts = [
     db.prepare('INSERT INTO installs (id, first_seen, last_seen, app, os, state, state_ts) VALUES (?1, ?2, ?2, ?3, ?4, ?5, ?2) ON CONFLICT(id) DO UPDATE SET last_seen = ?2, app = ?3, os = ?4, state = ?5, state_ts = ?2')
       .bind(p.id, now, p.app, p.os, p.state),
@@ -78,7 +82,9 @@ export async function recordPing(db, p, now) {
   const d = new Date(now * 1000);
   stmts.push(db.prepare('INSERT OR IGNORE INTO hourly (day, hour, id) VALUES (?1, ?2, ?3)').bind(day(now), d.getUTCHours(), p.id));
   if (p.ev) stmts.push(db.prepare('INSERT INTO counters (day, name, key, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT(day, name, key) DO UPDATE SET n = n + 1').bind(day(now), p.ev.n, p.ev.k));
+  if (!seenVersion) stmts.push(db.prepare('INSERT OR IGNORE INTO versions_seen (app, first_seen) VALUES (?1, ?2)').bind(p.app, now));
   await db.batch(stmts);
+  return { newInstall: !prev, previousApp: prev && prev.app !== p.app ? prev.app : null, newVersion: !seenVersion };
 }
 
 export async function summary(db, days, now) {
@@ -134,7 +140,10 @@ async function authorized(request, env) {
   return diff === 0;
 }
 
-export async function handle(request, env, now = Math.floor(Date.now() / 1000)) {
+// Depois de responder: no Worker real continua em segundo plano (ctx.waitUntil); nos testes espera terminar
+const after = (ctx, promise) => (ctx?.waitUntil ? ctx.waitUntil(promise) : promise);
+
+export async function handle(request, env, now = Math.floor(Date.now() / 1000), ctx = null) {
   const url = new URL(request.url);
   if (url.pathname === '/v1/ping') {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -146,8 +155,18 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000)) 
     try { body = JSON.parse(text); } catch { /* inválido */ }
     const p = validatePing(body);
     if (!p) return json({ ok: false, error: 'bad_request' }, 400, CORS);
-    try { await recordPing(env.DB, p, now); } catch { return json({ ok: false, error: 'storage' }, 503, CORS); }
+    let info = null;
+    try { info = await recordPing(env.DB, p, now); } catch { return json({ ok: false, error: 'storage' }, 503, CORS); }
+    await after(ctx, notifyActivity(env, p, info, now));
     return json({ ok: true }, 200, CORS);
+  }
+
+  // Feedback vindo do app (só quando a pessoa clica em Enviar): vai direto ao Telegram do criador, sem ser guardado
+  if (url.pathname === '/v1/feedback') {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (request.method !== 'POST') return json({ ok: false }, 405, CORS);
+    const r = await handleFeedback(request, env, now);
+    return json(r.status === 200 ? { ok: true } : { ok: false, error: r.error }, r.status, CORS);
   }
 
   if (['/', '/api/summary', '/api/export.csv'].includes(url.pathname)) {
@@ -181,7 +200,7 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000)) 
 }
 
 export default {
-  fetch: (request, env) => handle(request, env),
+  fetch: (request, env, ctx) => handle(request, env, Math.floor(Date.now() / 1000), ctx),
   // Agendamentos (wrangler.toml): alertas a cada 30 min e resumo semanal
   scheduled: (event, env, ctx) => { ctx.waitUntil(runScheduled(env, event.cron, Math.floor(Date.now() / 1000)).catch(() => {})); },
 };

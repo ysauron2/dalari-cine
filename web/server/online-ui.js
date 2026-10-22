@@ -343,7 +343,7 @@
   stageView.insertBefore(playerPanel, stageEmpty);
   const youtube = window.DuoYouTubePlayer?.create(playerPanel, {
     onAction: (id, action, seconds) => run(async () => { await client.playback(id, action, seconds); apply(client.snapshot); }),
-    onError: (error) => { say(error); if (Date.now() - lastPlayerFailAt > 30000) { lastPlayerFailAt = Date.now(); tel?.event('app_error', 'player_fail'); } },
+    onError: (error) => { say(error); if (Date.now() - lastPlayerFailAt > 30000) { lastPlayerFailAt = Date.now(); noteProblem('player_fail'); } },
   });
   let lastPlayerFailAt = 0;
   // Ponte Netflix: a credencial da sala fica aqui; a extensão só recebe a visão mínima (título, watchId, play/pause/seek).
@@ -370,9 +370,11 @@
   let speakingNow = {}, pttCapturing = false, pttFailsafe = null, holdActive = false;
   const codeLabel = (code) => ({ Backquote: 'Crase (acento grave)', Space: 'Espaço', ControlLeft: 'Ctrl esquerdo', ControlRight: 'Ctrl direito', AltLeft: 'Alt esquerdo', AltRight: 'Alt direito', ShiftLeft: 'Shift esquerdo', ShiftRight: 'Shift direito', Tab: 'Tab', CapsLock: 'Caps Lock' }[code] || String(code).replace(/^Key/, '').replace(/^Digit/, ''));
   const tel = window.DuoTelemetry?.shared?.() || null;
+  // Um problema que o app percebe: conta nas estatísticas (se permitidas) e oferece o botão Reportar (feedback.js)
+  const noteProblem = (code) => { tel?.event('app_error', code); try { window.DuoFeedback?.problem?.(code); } catch { /* sem feedback */ } };
   // Erro inesperado no app: só a contagem (no máximo 3 por abertura), nunca a mensagem nem o caminho do arquivo
   let unexpectedSent = 0;
-  const unexpected = () => { if (unexpectedSent < 3) { unexpectedSent++; tel?.event('app_error', 'unexpected'); } };
+  const unexpected = () => { if (unexpectedSent < 3) { unexpectedSent++; noteProblem('unexpected'); } };
   window.addEventListener('error', unexpected);
   window.addEventListener('unhandledrejection', unexpected);
   if (tel) tel.getState = () => (voice?.joined && voice.state === 'connected' ? 'call' : client ? 'room' : 'idle');
@@ -693,7 +695,7 @@
     client.start({ onSnapshot: apply, onStatus: (s, detail) => {
       stats?.log('sala: ' + s + (detail ? ' (' + detail + ')' : ''));
       if (status === s && s !== 'ended') return;
-      if (s === 'ended') { if (!['closed', 'expired', 'guest_denied', 'guest_removed', 'guest_left'].includes(detail)) tel?.event('app_error', 'room_lost'); disconnect(); say(`Sala encerrada: ${detail}.`); return; }
+      if (s === 'ended') { if (!['closed', 'expired', 'guest_denied', 'guest_removed', 'guest_left'].includes(detail)) noteProblem('room_lost'); disconnect(); say(`Sala encerrada: ${detail}.`); return; }
       status = s;
       render();
     } });
@@ -875,7 +877,7 @@
       },
       onState: (s) => {
         if (s.phase === 'ok') { say('Reconectado! A sala continua de onde parou.'); stats?.log('reconexão: convidado voltou'); void client?.getState({ after: 0 }).then((snap) => apply(snap), () => {}); }
-        else if (s.phase === 'giveup') { say('Não foi possível reconectar sozinho. Saia da sala e peça um novo código ao Host.'); tel?.event('app_error', 'room_lost'); }
+        else if (s.phase === 'giveup') { say('Não foi possível reconectar sozinho. Saia da sala e peça um novo código ao Host.'); noteProblem('room_lost'); }
       },
     });
     guestRc = rc;
@@ -1782,7 +1784,7 @@
     if (act === 'link-toggle') { linkOpen = !linkOpen; uiVersion++; renderPanel(); panel.querySelector(linkOpen ? '#online-youtube-url' : '#rv3-link-btn')?.focus(); return; }
     if (act === 'voice-join') return void run(async () => {
       voiceError = ''; voiceJoinAt = Date.now();
-      try { await voice.join(); } catch (e) { voiceError = e.message || 'Não foi possível ligar a voz.'; if (typeof e.code === 'string' && /^mic_/.test(e.code)) tel?.event('app_error', e.code); renderVoice(); return; }
+      try { await voice.join(); } catch (e) { voiceError = e.message || 'Não foi possível ligar a voz.'; if (typeof e.code === 'string' && /^mic_/.test(e.code)) noteProblem(e.code); renderVoice(); return; }
       renderVoice(); apply(client.snapshot);
     });
     if (act === 'ptt-key') { pttCapturing = true; deviceKey = ''; void renderDevices(); return; }

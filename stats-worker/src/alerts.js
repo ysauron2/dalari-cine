@@ -1,70 +1,32 @@
-// Alertas e resumo semanal por Telegram para o criador. Roda por agendamento (Cron Trigger do Worker):
-//   a cada 30 min  -> confere os contadores de hoje (UTC) e avisa se algo está falhando muito (no máximo 1 aviso por tipo a cada 6 h)
+// Bot do Telegram do criador: avisos automáticos, resumo semanal e respostas a comandos/botões.
+//   a cada 30 min  -> confere os contadores de hoje (UTC) e a Cloudflare; avisa se algo falha muito (1 aviso por tipo a cada 6 h)
 //   segunda 12:00 UTC (09:00 em Brasília) -> resumo da semana
-// Só usa contadores já agregados: nada que identifique alguém. Os segredos TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID vêm do ambiente;
-// sem eles, nada é enviado e nada quebra.
+//   você toca num botão (ou manda um comando) -> resposta na hora (webhook)
+// Só usa contadores agregados: nada que identifique alguém. Os textos ficam em messages.js e cloudflare.js.
 import { summary } from './index.js';
 import { cloudflareStats, cloudflareText, usageAlerts, configured as cfConfigured } from './cloudflare.js';
+import { statusText, nowText, todayText, weekText, errorsText, versionsText, helpText, alerts, WELCOME, UNKNOWN, newInstallText, newVersionText, dailyText } from './messages.js';
+import { KEYBOARD, commandFromText } from './format.js';
 
 export const WEEKLY_CRON = '0 12 * * 1';
+export const DAILY_CRON = '0 1 * * *';          // 01:00 UTC = 22:00 em Brasília
 export const COOLDOWN_S = 6 * 3600;
 const day = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
 
-const total = (rows, name, key) => rows.filter((r) => r.name === name && (key === undefined || r.key === key)).reduce((a, r) => a + r.n, 0);
-const byKey = (rows, name) => { const m = {}; for (const r of rows) if (r.name === name) m[r.key] = (m[r.key] || 0) + r.n; return m; };
-const pct = (a, b) => (b ? Math.round((100 * a) / b) : 0);
-const list = (m) => Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ');
+export const evaluate = alerts;
+export const weeklyText = weekText;
 
-/** Regras de alerta sobre os contadores de UM dia. rows: [{name, key, n}]. Devolve [{kind, text}]. */
-export function evaluate(rows) {
-  const out = [];
-  const tried = total(rows, 'pair_try'), pairFails = total(rows, 'pair_fail');
-  if (tried >= 5 && pairFails / tried >= 0.4) {
-    out.push({ kind: 'pair_fail_rate', text: `⚠️ Pareamento falhando: ${pairFails} falhas em ${tried} tentativas hoje (${pct(pairFails, tried)}%).\nOnde: ${list(byKey(rows, 'pair_fail'))}.` });
-  }
-  const calls = total(rows, 'call_started'), voiceFails = total(rows, 'voice_failed');
-  if ((calls >= 5 && voiceFails / calls >= 0.4) || voiceFails >= 8) {
-    out.push({ kind: 'voice_fail_rate', text: `⚠️ Voz falhando: ${voiceFails} falhas de voz hoje para ${calls} chamadas iniciadas.` });
-  }
-  const q = byKey(rows, 'voice_quality'), qTotal = (q.good || 0) + (q.fair || 0) + (q.poor || 0);
-  if (qTotal >= 5 && (q.poor || 0) / qTotal >= 0.4) {
-    out.push({ kind: 'voice_poor', text: `⚠️ Qualidade da voz ruim: ${q.poor} de ${qTotal} chamadas medidas hoje (${pct(q.poor, qTotal)}%).` });
-  }
-  const errs = byKey(rows, 'app_error'), errTotal = Object.values(errs).reduce((a, n) => a + n, 0);
-  if (errTotal >= 10 || Object.values(errs).some((n) => n >= 5)) {
-    out.push({ kind: 'app_errors', text: `\u{1F6A8} Erros do app hoje: ${errTotal} no total.\nPor tipo: ${list(errs)}.` });
-  }
-  return out;
-}
+const stripHtml = (t) => String(t).replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
-/** Resumo da semana a partir de summary(db, 7, now). */
-export function weeklyText(sum, panelUrl = '') {
-  const rows = sum.counters || [];
-  const tried = total(rows, 'pair_try'), joined = total(rows, 'pair_joined');
-  const q = byKey(rows, 'voice_quality'), qTotal = (q.good || 0) + (q.fair || 0) + (q.poor || 0);
-  const newInstalls = (sum.newByDay || []).reduce((a, r) => a + r.n, 0);
-  const errs = byKey(rows, 'app_error');
-  const versions = (sum.versions || []).slice(0, 3).map((v) => `${v.app} (${v.n})`).join(', ') || 'sem dados';
-  const lines = [
-    '\u{1F4CA} Dalari Cine — resumo da semana',
-    `Pessoas ativas (7 dias): ${sum.wau || 0} · novas instalações: ${newInstalls} · total: ${sum.total || 0}`,
-    `Salas criadas: ${total(rows, 'room_created')} · chamadas iniciadas: ${total(rows, 'call_started')}`,
-    tried ? `Pareamento por código curto: ${pct(joined, tried)}% chegaram à sala (${joined} de ${tried})` : 'Pareamento por código curto: sem tentativas',
-    qTotal ? `Qualidade da voz: ${pct(q.good || 0, qTotal)}% boa, ${pct(q.fair || 0, qTotal)}% média, ${pct(q.poor || 0, qTotal)}% ruim` : 'Qualidade da voz: sem medições',
-    `Falhas de voz: ${total(rows, 'voice_failed')} · erros do app: ${Object.values(errs).reduce((a, n) => a + n, 0)}${Object.keys(errs).length ? ' (' + list(errs) + ')' : ''}`,
-    `Versões em uso: ${versions}`,
-  ];
-  if (panelUrl) lines.push(panelUrl);
-  return lines.join('\n');
-}
-
-export async function sendTelegram(env, text, fetchImpl = globalThis.fetch) {
+/** Envia ao seu chat. HTML do Telegram + teclado de botões sempre visível; se o Telegram recusar o HTML, reenvia como texto simples. */
+export async function sendTelegram(env, text, fetchImpl = globalThis.fetch, { keyboard = true } = {}) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return { ok: false, skipped: 'not_configured' };
+  const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const post = (body) => fetchImpl(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const base = { chat_id: env.TELEGRAM_CHAT_ID, disable_web_page_preview: true, ...(keyboard ? { reply_markup: KEYBOARD } : {}) };
   try {
-    const res = await fetchImpl(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: String(text).slice(0, 3500), disable_web_page_preview: true }),
-    });
+    let res = await post({ ...base, text: String(text).slice(0, 3800), parse_mode: 'HTML' });
+    if (res.status === 400) res = await post({ ...base, text: stripHtml(text).slice(0, 3800) });   // HTML recusado: manda sem formatação, nunca perde o aviso
     return { ok: res.ok, status: res.status };
   } catch { return { ok: false, error: 'network' }; }   // nunca registra a URL: ela contém o token
 }
@@ -72,8 +34,13 @@ export async function sendTelegram(env, text, fetchImpl = globalThis.fetch) {
 /** Chamado pelo agendamento. cron = a expressão que disparou (event.cron). Devolve o que foi enviado (para testes e logs). */
 export async function runScheduled(env, cron, now, fetchImpl = globalThis.fetch) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return { skipped: 'not_configured', sent: [] };
+  if (cron === DAILY_CRON) {
+    const cf = cfConfigured(env) ? await cloudflareStats(env, now, fetchImpl) : null;
+    const r = await sendTelegram(env, dailyText(await summary(env.DB, 1, now), cf, env.PANEL_URL || ''), fetchImpl);
+    return { sent: r.ok ? ['daily'] : [], failed: r.ok ? [] : ['daily'] };
+  }
   if (cron === WEEKLY_CRON) {
-    const r = await sendTelegram(env, weeklyText(await summary(env.DB, 7, now), env.PANEL_URL || ''), fetchImpl);
+    const r = await sendTelegram(env, weekText(await summary(env.DB, 7, now), env.PANEL_URL || ''), fetchImpl);
     return { sent: r.ok ? ['weekly'] : [], failed: r.ok ? [] : ['weekly'] };
   }
   const rows = (await env.DB.prepare('SELECT name, key, n FROM counters WHERE day = ?1').bind(day(now)).all()).results || [];
@@ -83,7 +50,7 @@ export async function runScheduled(env, cron, now, fetchImpl = globalThis.fetch)
   for (const a of all) {
     const last = await env.DB.prepare('SELECT last_at FROM alerts WHERE kind = ?1').bind(a.kind).first();
     if (last && now - last.last_at < COOLDOWN_S) continue;                      // já avisou há pouco
-    const r = await sendTelegram(env, a.text + (env.PANEL_URL ? '\n' + env.PANEL_URL : ''), fetchImpl);
+    const r = await sendTelegram(env, a.text + (env.PANEL_URL ? '\n\n' + env.PANEL_URL : ''), fetchImpl);
     if (r.ok) {
       await env.DB.prepare('INSERT INTO alerts (kind, last_at) VALUES (?1, ?2) ON CONFLICT(kind) DO UPDATE SET last_at = ?2').bind(a.kind, now).run();
       sent.push(a.kind);
@@ -92,56 +59,24 @@ export async function runScheduled(env, cron, now, fetchImpl = globalThis.fetch)
   return { sent, failed };
 }
 
-// ---------- comandos no Telegram: você pergunta, o bot responde com os números do painel ----------
-const HELP = [
-  'Comandos do Dalari Cine:',
-  '/agora \u2014 quem est\u00E1 com o app aberto neste momento e o resumo de hoje',
-  '/hoje \u2014 todos os contadores de hoje (UTC)',
-  '/semana \u2014 resumo dos \u00FAltimos 7 dias',
-  '/erros \u2014 erros do app hoje e nesta semana',
-  '/cloudflare \u2014 uso da sua conta Cloudflare hoje (Workers e D1) em rela\u00e7\u00e3o aos limites do plano gr\u00e1tis',
-  '/ajuda \u2014 esta lista',
-].join('\n');
-
-/** Texto de /agora: presença ao vivo (último aviso nos últimos 5 min) + o dia de hoje. */
-export function nowText(sum, panelUrl = '') {
-  const t = sum.now || { active: 0, idle: 0, room: 0, call: 0 };
-  const rows = sum.counters || [];
-  const tried = total(rows, 'pair_try'), joined = total(rows, 'pair_joined');
-  const today = (sum.dailyActive || []).at(-1)?.n || 0;
-  const errs = byKey(rows, 'app_error'), errTotal = Object.values(errs).reduce((a, n) => a + n, 0);
-  const lines = [
-    '\u{1F7E2} Agora (\u00FAltimos 5 min)',
-    `Com o app aberto: ${t.active} \u00B7 em sala: ${t.room} \u00B7 em chamada: ${t.call}`,
-    '',
-    'Hoje (UTC)',
-    `Pessoas ativas: ${today} \u00B7 salas criadas: ${total(rows, 'room_created')} \u00B7 chamadas iniciadas: ${total(rows, 'call_started')}`,
-    tried ? `Pareamento: ${joined} de ${tried} chegaram \u00E0 sala (${pct(joined, tried)}%)` : 'Pareamento: sem tentativas',
-    `Falhas de voz: ${total(rows, 'voice_failed')} \u00B7 erros do app: ${errTotal}`,
-  ];
-  if (panelUrl) lines.push('', panelUrl);
-  return lines.join('\n');
-}
-export function todayText(sum) {
-  const rows = (sum.counters || []).slice().sort((a, b) => (a.name + a.key).localeCompare(b.name + b.key));
-  if (!rows.length) return 'Hoje ainda n\u00E3o chegou nenhum contador.';
-  return ['\u{1F4C5} Contadores de hoje (UTC)', ...rows.map((r) => `${r.name}${r.key ? ' [' + r.key + ']' : ''}: ${r.n}`)].join('\n');
-}
-export function errorsText(day1, week) {
-  const a = byKey(day1.counters || [], 'app_error'), b = byKey(week.counters || [], 'app_error');
-  const fmt = (m) => (Object.keys(m).length ? list(m) : 'nenhum');
-  return `\u{1F6A8} Erros do app\nHoje: ${fmt(a)}\nSemana: ${fmt(b)}`;
-}
-
-/** Resposta ao comando recebido. Devolve o texto ou null (não é um comando que a gente conhece). */
+// ---------- comandos e botões ----------
+/** Resposta ao comando (ou botão). Devolve o texto em HTML ou null se não for um comando conhecido. */
 export async function commandReply(env, text, now, fetchImpl = globalThis.fetch) {
-  const cmd = String(text || '').trim().split(/\s+/)[0].toLowerCase().replace(/@\w+$/, '');
-  if (cmd === '/start' || cmd === '/ajuda' || cmd === '/help') return HELP;
-  if (cmd === '/agora') return nowText(await summary(env.DB, 1, now), env.PANEL_URL || '');
+  const cmd = commandFromText(text);
+  if (!cmd) return null;
+  const panel = env.PANEL_URL || '';
+  if (cmd === '/start') return WELCOME;
+  if (cmd === '/ajuda' || cmd === '/help' || cmd === '/menu') return helpText();
+  if (cmd === '/status' || cmd === '/tudo' || cmd === '/ok') {
+    const cf = cfConfigured(env) ? await cloudflareStats(env, now, fetchImpl) : null;
+    return statusText(await summary(env.DB, 1, now), cf, panel);
+  }
+  if (cmd === '/agora') return nowText(await summary(env.DB, 1, now), panel);
   if (cmd === '/hoje') return todayText(await summary(env.DB, 1, now));
-  if (cmd === '/semana') return weeklyText(await summary(env.DB, 7, now), env.PANEL_URL || '');
-  if (cmd === '/cloudflare' || cmd === '/infra' || cmd === '/limites') return cloudflareText(await cloudflareStats(env, now, fetchImpl), env.PANEL_URL || '');
+  if (cmd === '/semana') return weekText(await summary(env.DB, 7, now), panel);
   if (cmd === '/erros') return errorsText(await summary(env.DB, 1, now), await summary(env.DB, 7, now));
+  if (cmd === '/versoes' || cmd === '/versao') return versionsText(await summary(env.DB, 7, now));
+  if (cmd === '/cloudflare' || cmd === '/infra' || cmd === '/limites') return cloudflareText(await cloudflareStats(env, now, fetchImpl), panel);
   return null;
 }
 
@@ -161,8 +96,22 @@ export async function handleTelegramWebhook(request, env, now, fetchImpl = globa
   try { update = JSON.parse(await request.text()); } catch { return { status: 400 }; }
   const msg = update?.message;
   if (!msg || String(msg.chat?.id) !== String(env.TELEGRAM_CHAT_ID) || typeof msg.text !== 'string') return { status: 200, ignored: true };
-  const reply = await commandReply(env, msg.text, now, fetchImpl);
-  if (reply === null) return { status: 200, ignored: true };
+  const reply = (await commandReply(env, msg.text, now, fetchImpl)) ?? UNKNOWN;       // dono digitou algo estranho: orienta em vez de calar
   const r = await sendTelegram(env, reply, fetchImpl);
   return { status: 200, replied: !!r.ok };
+}
+
+// ---------- avisos de novidade (chamados na hora em que um aviso do app chega) ----------
+const MAX_NEW_INSTALL_MESSAGES_PER_DAY = 10;      // acima disso o resumo do dia conta; evita enxurrada de mensagens
+/** info = { newInstall, previousApp, newVersion } devolvido por recordPing. Nunca lança: aviso é opcional. */
+export async function notifyActivity(env, p, info, now, fetchImpl = globalThis.fetch) {
+  try {
+    if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID || (!info.newInstall && !info.newVersion)) return { sent: false };
+    if (info.newVersion) return { sent: (await sendTelegram(env, newVersionText(p, info), fetchImpl)).ok === true, kind: 'version' };
+    const total = (await env.DB.prepare('SELECT COUNT(*) AS n FROM installs').bind().first())?.n || 0;
+    const startOfDay = Math.floor(now / 86400) * 86400;
+    const newToday = (await env.DB.prepare('SELECT COUNT(*) AS n FROM installs WHERE first_seen >= ?1').bind(startOfDay).first())?.n || 0;
+    if (newToday > MAX_NEW_INSTALL_MESSAGES_PER_DAY) return { sent: false, skipped: 'many_today' };
+    return { sent: (await sendTelegram(env, newInstallText(p, { total, newToday }), fetchImpl)).ok === true, kind: 'install' };
+  } catch { return { sent: false }; }
 }

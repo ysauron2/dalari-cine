@@ -6,6 +6,7 @@ const ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
 // Limites do plano grátis (conferidos na documentação da Cloudflare; podem mudar: veja o painel deles)
 export const LIMITS = { workersRequestsPerDay: 100000, d1RowsReadPerDay: 5000000, d1RowsWrittenPerDay: 100000, d1StorageBytes: 5 * 1024 ** 3 };
 
+import { esc, n, pctText, bar, worst } from './format.js';
 const dayOf = (ts) => new Date(ts * 1000).toISOString().slice(0, 10);
 
 export function configured(env) { return !!(env.CF_API_TOKEN && env.CF_ACCOUNT_ID); }
@@ -43,6 +44,7 @@ const D1_STORAGE_QUERY = `query ($acc: string!, $db: string!, $from: Date!, $to:
   viewer { accounts(filter: { accountTag: $acc }) {
     d1StorageAdaptiveGroups(limit: 5, filter: { date_geq: $from, date_leq: $to, databaseId: $db }, orderBy: [date_DESC]) {
       max { databaseSizeBytes }
+      dimensions { date }
     }
   } }
 }`;
@@ -87,42 +89,70 @@ export async function cloudflareStats(env, now, fetchImpl = globalThis.fetch) {
   return out;
 }
 
-const n = (v) => Math.round(v).toLocaleString('pt-BR');
-const pct = (a, b) => (b ? (a * 100) / b : 0);
-const pctText = (a, b) => { const p = pct(a, b); return (p < 10 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))) + '%'; };
-const bytes = (v) => (v >= 1024 ** 3 ? (v / 1024 ** 3).toFixed(2).replace('.', ',') + ' GB' : (v / 1024 ** 2).toFixed(1).replace('.', ',') + ' MB');
 
+const bytes = (v) => (v >= 1024 ** 3 ? (v / 1024 ** 3).toFixed(1).replace('.', ',') + ' GB' : v >= 1024 ** 2 ? (v / 1024 ** 2).toFixed(1).replace('.', ',') + ' MB' : Math.round(v / 1024) + ' KB');
+const level = (p) => (p >= 70 ? 'bad' : p >= 50 ? 'warn' : 'ok');
+const usageLine = (label, used, limit, limitText) => {
+  const p = limit ? (used * 100) / limit : 0;
+  return `${label}  ${bar(used, limit)} <b>${pctText(used, limit)}</b>  (${n(used)} de ${limitText})`;
+};
+
+/** Mensagem do /cloudflare: veredito primeiro, barras de uso do limite grátis e o que fazer. */
 export function cloudflareText(stats, panelUrl = '') {
-  if (!stats.configured) return '☁️ Cloudflare não configurado: faltam os segredos CF_API_TOKEN e CF_ACCOUNT_ID (veja o README do stats-worker).';
-  const lines = ['☁️ Cloudflare — hoje (UTC, zera às 21h de Brasília)'];
-  const w = stats.workers;
-  if (w?.error) lines.push('Workers: indisponível (' + w.error + ')');
+  if (!stats.configured) return '☁️ <b>Cloudflare</b>\n\n⚪ Ainda não configurado: faltam os segredos CF_API_TOKEN e CF_ACCOUNT_ID.\n\n\u{1F449} Veja o passo a passo no README da pasta stats-worker.';
+  const w = stats.workers && !stats.workers.error ? stats.workers : null;
+  const d = stats.d1 && !stats.d1.error ? stats.d1 : null;
+  const pw = w ? (w.requests * 100) / LIMITS.workersRequestsPerDay : 0;
+  const pwr = d?.hasRows ? (d.rowsWritten * 100) / LIMITS.d1RowsWrittenPerDay : 0;
+  const prr = d?.hasRows ? (d.rowsRead * 100) / LIMITS.d1RowsReadPerDay : 0;
+  const ps = stats.storage?.bytes != null ? (stats.storage.bytes * 100) / LIMITS.d1StorageBytes : 0;
+  const overall = worst([level(pw), level(pwr), level(prr), level(ps)]);
+  const cpuHigh = w && w.cpuP99 / 1000 > 10;
+  const lines = ['☁️ <b>Cloudflare</b> — uso de hoje (zera às 21h de Brasília)', '',
+    overall === 'ok' ? '\u{1F7E2} <b>Tudo dentro do limite grátis</b>' : overall === 'warn' ? '\u{1F7E1} <b>Atenção: passando de metade do limite grátis</b>' : '\u{1F534} <b>Perto do limite grátis!</b>', ''];
+
+  lines.push('⚙️ <b>Painel (Workers)</b>');
+  if (stats.workers?.error) lines.push(`⚪ Indisponível agora (${esc(stats.workers.error)})`);
   else if (w) {
-    lines.push(`Workers: ${n(w.requests)} requisições (${pctText(w.requests, LIMITS.workersRequestsPerDay)} do limite grátis de ${n(LIMITS.workersRequestsPerDay)}/dia) · erros: ${n(w.errors)}`);
-    if (w.cpuP50 || w.cpuP99) lines.push(`Tempo de CPU do painel: mediana ${(w.cpuP50 / 1000).toFixed(1).replace('.', ',')} ms · p99 ${(w.cpuP99 / 1000).toFixed(1).replace('.', ',')} ms (limite grátis: 10 ms)`);
-    const top = Object.entries(w.scripts).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} ${n(v)}`).join(', ');
-    if (top) lines.push('Por Worker: ' + top);
+    lines.push(usageLine('Requisições', w.requests, LIMITS.workersRequestsPerDay, '100.000'));
+    lines.push(`Erros: <b>${n(w.errors)}</b>${w.errors ? ' \u{1F7E1}' : ''}`);
+    if (w.cpuP50 || w.cpuP99) lines.push(`CPU: normal ${(w.cpuP50 / 1000).toFixed(1).replace('.', ',')} ms · pico ${(w.cpuP99 / 1000).toFixed(1).replace('.', ',')} ms (limite 10 ms)${cpuHigh ? ' \u{1F7E1}' : ''}`);
   }
-  if (stats.d1) {
-    if (stats.d1.error) lines.push('D1: indisponível (' + stats.d1.error + ')');
-    else {
-      lines.push(`D1: ${n(stats.d1.readQueries)} consultas de leitura · ${n(stats.d1.writeQueries)} de gravação`);
-      if (stats.d1.hasRows) lines.push(`Linhas lidas: ${n(stats.d1.rowsRead)} (${pctText(stats.d1.rowsRead, LIMITS.d1RowsReadPerDay)} de ${n(LIMITS.d1RowsReadPerDay)}/dia) · gravadas: ${n(stats.d1.rowsWritten)} (${pctText(stats.d1.rowsWritten, LIMITS.d1RowsWrittenPerDay)} de ${n(LIMITS.d1RowsWrittenPerDay)}/dia)`);
-    }
-    if (stats.storage?.bytes != null) lines.push(`Banco: ${bytes(stats.storage.bytes)} de ${bytes(LIMITS.d1StorageBytes)} (${pctText(stats.storage.bytes, LIMITS.d1StorageBytes)})`);
-    else if (stats.storage?.error) lines.push('Tamanho do banco: indisponível (' + stats.storage.error + ')');
+  lines.push('', '\u{1F5C4} <b>Banco (D1)</b>');
+  if (stats.d1?.error) lines.push(`⚪ Indisponível agora (${esc(stats.d1.error)})`);
+  else if (d) {
+    if (d.hasRows) {
+      lines.push(usageLine('Linhas lidas   ', d.rowsRead, LIMITS.d1RowsReadPerDay, '5 milhões'));
+      lines.push(usageLine('Linhas gravadas', d.rowsWritten, LIMITS.d1RowsWrittenPerDay, '100.000'));
+    } else lines.push(`${n(d.readQueries)} leituras · ${n(d.writeQueries)} gravações`);
   }
-  if (panelUrl) lines.push('', panelUrl);
+  if (stats.storage?.bytes != null) lines.push(`Tamanho: <b>${bytes(stats.storage.bytes)}</b> de 5 GB (${pctText(stats.storage.bytes, LIMITS.d1StorageBytes)})`);
+  else if (stats.storage?.error) lines.push(`Tamanho: indisponível (${esc(stats.storage.error)})`);
+
+  lines.push('', '\u{1F449} <b>O que fazer</b>');
+  const todo = [];
+  if (overall === 'bad') todo.push('Está perto do limite grátis: reduza o uso ou considere o plano pago antes de o painel parar.');
+  else if (overall === 'warn') todo.push('Fique de olho. Eu aviso de novo se passar de 70%.');
+  if (cpuHigh) todo.push('O pico de CPU passou de 10 ms. Se aparecerem erros no painel, me peça para otimizar.');
+  if (todo.length) for (const t of todo) lines.push('• ' + esc(t)); else lines.push('Nada por agora. \u{1F44D}');
+  if (panelUrl) lines.push('', esc(panelUrl));
   return lines.join('\n');
 }
 
-/** Alertas de uso perto do limite grátis (70% ou mais). Devolve [{kind, text}]. */
+/** Avisos de uso perto do limite grátis (70% ou mais). Devolve [{kind, text}]. */
 export function usageAlerts(stats, threshold = 0.7) {
   const out = [];
   if (!stats?.configured) return out;
-  const add = (kind, label, used, limit) => { if (limit && used / limit >= threshold) out.push({ kind, text: `⚠️ Cloudflare: ${label} em ${pctText(used, limit)} do limite grátis diário (${n(used)} de ${n(limit)}).` }); };
-  if (stats.workers && !stats.workers.error) add('cf_requests', 'requisições dos Workers', stats.workers.requests, LIMITS.workersRequestsPerDay);
-  if (stats.d1 && !stats.d1.error && stats.d1.hasRows) { add('cf_d1_writes', 'linhas gravadas no D1', stats.d1.rowsWritten, LIMITS.d1RowsWrittenPerDay); add('cf_d1_reads', 'linhas lidas no D1', stats.d1.rowsRead, LIMITS.d1RowsReadPerDay); }
-  if (stats.storage?.bytes != null) add('cf_d1_storage', 'tamanho do banco D1', stats.storage.bytes, LIMITS.d1StorageBytes);
+  const add = (kind, label, used, limit, limitText) => {
+    if (limit && used / limit >= threshold) {
+      out.push({ kind, text: `\u{1F534} <b>Cloudflare: ${esc(label)} perto do limite</b>\n${bar(used, limit)} <b>${pctText(used, limit)}</b> do limite grátis de hoje (${n(used)} de ${limitText}).\n\n\u{1F449} <b>O que fazer:</b> reduza o uso hoje ou considere o plano pago. O contador zera às 21h de Brasília.` });
+    }
+  };
+  if (stats.workers && !stats.workers.error) add('cf_requests', 'requisições do painel', stats.workers.requests, LIMITS.workersRequestsPerDay, '100.000');
+  if (stats.d1 && !stats.d1.error && stats.d1.hasRows) {
+    add('cf_d1_writes', 'linhas gravadas no banco', stats.d1.rowsWritten, LIMITS.d1RowsWrittenPerDay, '100.000');
+    add('cf_d1_reads', 'linhas lidas no banco', stats.d1.rowsRead, LIMITS.d1RowsReadPerDay, '5 milhões');
+  }
+  if (stats.storage?.bytes != null) add('cf_d1_storage', 'tamanho do banco', stats.storage.bytes, LIMITS.d1StorageBytes, '5 GB');
   return out;
 }
