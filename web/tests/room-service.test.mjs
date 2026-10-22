@@ -618,3 +618,12 @@ test('cliente: https obrigatório fora do loopback; credencial não vaza por JSO
     assert.equal(host.toJSON().insecureTransport, true);
   } finally { await env.stop(); }
 });
+
+test('hash da CSP do script inline é o mesmo com finais de linha LF ou CRLF (checkout no Windows)', async () => {
+  const { inlineScriptSource } = await import('../server/room-service.js');
+  const lf = '<html><script>\nconst a = 1;\nconst b = 2;\n</script><script src="x.js"></script></html>';
+  const crlf = lf.replace(/\n/g, '\r\n');
+  assert.match(inlineScriptSource(lf), /^ 'sha256-[A-Za-z0-9+/]+=*'$/);
+  assert.equal(inlineScriptSource(crlf), inlineScriptSource(lf));
+  assert.equal(inlineScriptSource('<script src="x.js"></script>'), '');
+});

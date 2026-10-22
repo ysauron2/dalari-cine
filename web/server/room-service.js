@@ -793,8 +793,7 @@ function createRoomService(userOpts = {}) {
       throw e;
     });
     const mime = rel.endsWith('.html') ? 'text/html' : rel.endsWith('.js') ? 'text/javascript' : rel.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
-    const inlineScript = rel === 'index.html' ? data.toString('utf8').match(/<script>([\s\S]*?)<\/script>/)?.[1] : null;
-    const inlineHash = inlineScript === null || inlineScript === undefined ? '' : ` 'sha256-${crypto.createHash('sha256').update(inlineScript).digest('base64')}'`;
+    const inlineHash = rel === 'index.html' ? inlineScriptSource(data.toString('utf8')) : '';
     res.writeHead(200, { 'Content-Type': mime + (mime.startsWith('text/') ? '; charset=utf-8' : ''), 'Content-Length': data.length,
       'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': rel === 'index.html' ? 'strict-origin-when-cross-origin' : 'no-referrer',
       'Content-Security-Policy': `default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com${inlineHash}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://image.tmdb.org https://www.themoviedb.org https://i.ytimg.com; connect-src 'self' ${opts.relayOrigins.join(' ')}${opts.statsOrigin ? ' ' + opts.statsOrigin : ''}; frame-src https://www.youtube.com https://www.youtube-nocookie.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` });
@@ -913,4 +912,13 @@ function createRoomService(userOpts = {}) {
   return { server, listen, close, sweep, stats: () => ({ rooms: rooms.size, waiters: waiterCount }) };
 }
 
-module.exports = { createRoomService, DEFAULTS, PROTOCOL_VERSION };
+// Fonte CSP do script inline do index.html. O navegador normaliza CRLF para LF dentro do <script>; se o arquivo vier com CRLF
+// (checkout no Windows com autocrlf, como no GitHub Actions), o hash do texto cru não bate e a CSP bloqueia o script (a tela
+// fica sem menu). Por isso o texto é normalizado antes de calcular o hash.
+function inlineScriptSource(html) {
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  if (script === undefined) return '';
+  return ` 'sha256-${crypto.createHash('sha256').update(script.replace(/\r\n?/g, '\n')).digest('base64')}'`;
+}
+
+module.exports = { createRoomService, DEFAULTS, PROTOCOL_VERSION, inlineScriptSource };
