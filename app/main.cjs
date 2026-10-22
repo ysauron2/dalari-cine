@@ -8,7 +8,7 @@ const { app, components, BaseWindow, WebContentsView, dialog, session, ipcMain, 
 const { createUpdater } = require('./src/updater.cjs');
 const { isAllowedExternal } = require('./src/external-links.cjs');
 const settingsStore = require('./src/settings-store.cjs');
-const { NETFLIX_URL, netflixNavigationAllowed, parseDuoTelaUrl, sameDuoTelaOrigin, insecureOriginToTreatAsSecure } = require('./src/url-policy.cjs');
+const { NETFLIX_URL, netflixNavigationAllowed, netflixSearchUrl, parseJoinUrl, findJoinCode, parseDuoTelaUrl, sameDuoTelaOrigin, insecureOriginToTreatAsSecure } = require('./src/url-policy.cjs');
 const { workspaceBounds } = require('./src/layout.cjs');
 const { resolveProfileDir, readDuoTelaUrlSetting, readAllowLanSetting, readAllowRemoteSetting, migrateLegacyProfile } = require('./src/runtime-paths.cjs');
 
@@ -22,6 +22,43 @@ let netflixLoaded = false;
 let netflixRoomState = null;
 let bundledServer = null;
 let pttCode = null;   // tecla de push-to-talk escolhida na interface (KeyboardEvent.code)
+
+// Uma instância só: um link dalari://entrar/XXXX-XXXX clicado com o app aberto vai para a janela que já existe
+const gotInstanceLock = app.requestSingleInstanceLock();
+if (!gotInstanceLock) app.quit();
+// Convite com um toque: o código fica pendente até a interface avisar que está pronta (duotela:join-ready); só então é entregue
+let pendingJoin = findJoinCode(process.argv);
+let joinReady = false;
+const flushJoin = () => {
+  if (pendingJoin && joinReady && duoView && !duoView.webContents.isDestroyed()) {
+    duoView.webContents.send('duotela:join-link', pendingJoin);
+    pendingJoin = null;
+  }
+};
+const focusWindow = () => {
+  if (window && !window.isDestroyed()) {
+    if (window.isMinimized()) window.restore();
+    window.show();
+    window.focus();
+  }
+};
+const handleJoinCode = code => {
+  if (!code) return;
+  pendingJoin = code;
+  focusWindow();
+  flushJoin();
+};
+app.on('second-instance', (_event, argv) => {
+  const code = findJoinCode(argv);
+  if (code) handleJoinCode(code);
+  else focusWindow();
+});
+app.on('open-url', (event, url) => {   // macOS entrega o link por aqui (também antes de o app ficar pronto)
+  event.preventDefault();
+  handleJoinCode(parseJoinUrl(url));
+});
+// Registra o dalari:// neste usuário (o instalador do Windows e o Info.plist do Mac também declaram). Só no app instalado, para não sequestrar o link no desenvolvimento.
+if (app.isPackaged) app.setAsDefaultProtocolClient('dalari');
 
 const profileDir = resolveProfileDir({ env: process.env, bundleDir: __dirname, appDataDir: app.getPath('appData'), packaged: app.isPackaged, devDir: path.join(__dirname, '.runtime-profile') });
 migrateLegacyProfile({ appDataDir: app.getPath('appData'), profileDir, fs });   // preserva os dados de quem usou o nome antigo
@@ -289,6 +326,14 @@ function createWindow(duoUrl) {
   ipcMain.on('duotela:ptt-key', acceptPttKey);
   const acceptOpenExternal = (event, url) => { if (fromDuo(event) && isAllowedExternal(url)) shell.openExternal(url).catch(() => {}); };
   ipcMain.on('duotela:open-external', acceptOpenExternal);
+  const acceptJoinReady = event => { if (fromDuo(event)) { joinReady = true; flushJoin(); } };
+  ipcMain.on('duotela:join-ready', acceptJoinReady);
+  // Descobrir → "Procurar na Netflix": a janela da Netflix abre a busca com o nome do título (só a interface do Dalari Cine pode pedir)
+  const acceptNetflixSearch = (event, title) => {
+    const url = fromDuo(event) ? netflixSearchUrl(title) : null;
+    if (url && !netflixView.webContents.isDestroyed()) netflixView.webContents.loadURL(url).catch(() => {});
+  };
+  ipcMain.on('duotela:netflix-search', acceptNetflixSearch);
   // Cópia de segurança das configurações: o preload restaura na abertura (síncrono, antes dos scripts da página) e envia mudanças.
   const settingsLoad = event => { event.returnValue = event.sender === duoView?.webContents ? settingsStore.readBackup({ fs, dir: profileDir }) : {}; };
   const settingsSave = (event, data) => { if (event.sender === duoView?.webContents) settingsStore.writeBackup({ fs, dir: profileDir, data }); };
@@ -381,6 +426,9 @@ function createWindow(duoUrl) {
     ipcMain.removeListener('duotela:duck', acceptDuck);
     ipcMain.removeListener('duotela:ptt-key', acceptPttKey);
     ipcMain.removeListener('duotela:open-external', acceptOpenExternal);
+    ipcMain.removeListener('duotela:join-ready', acceptJoinReady);
+    joinReady = false;
+    ipcMain.removeListener('duotela:netflix-search', acceptNetflixSearch);
     ipcMain.removeListener('duotela:settings-load', settingsLoad);
     ipcMain.removeListener('duotela:settings-save', settingsSave);
     for (const channel of ['duotela:update-get', 'duotela:update-check', 'duotela:update-install', 'duotela:update-auto']) ipcMain.removeHandler(channel);
@@ -401,6 +449,7 @@ function createWindow(duoUrl) {
 }
 
 app.whenReady().then(async () => {
+  if (!gotInstanceLock) return;
   let duoUrl;
   try {
     if (configuredDuoUrlError) throw configuredDuoUrlError;

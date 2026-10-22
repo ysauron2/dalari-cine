@@ -121,6 +121,11 @@
     .stage-empty h4{font-size:clamp(22px,3.1vw,38px);letter-spacing:-.05em;line-height:1.1;max-width:26ch}
     .stage-empty p{max-width:46ch;color:#d3d9e4;font-size:13px}
     .stage-empty .rb{margin-top:6px;min-height:44px;padding-inline:22px;font-size:13px}
+    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .break-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid #2f5b4a;background:#10261f;color:#c9f3dd;font-size:14px}
+    .break-banner[hidden]{display:none}.break-banner .break-text{flex:1;min-width:160px}.break-banner .break-time{font-variant-numeric:tabular-nums}.break-banner small{display:block;color:#8fc4aa;font-size:12px}.break-banner button{min-width:0;min-height:34px;padding:6px 14px}
+    .lag-banner{display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid #6b4a2f;background:#2a1f16;color:#ffd9b8;font-size:13px}
+    .lag-banner[hidden]{display:none}.lag-banner .lag-text{flex:1;min-width:0}.lag-banner .rb-main{min-width:0;min-height:34px;padding:6px 14px}
     .stage-bar{display:flex;align-items:center;gap:14px;padding:16px 20px;border-top:1px solid var(--line);background:#121926;min-height:78px;min-width:0}
     .stage-bar .rb-main{min-width:132px;min-height:46px}
     .stage-bar .clock{color:#cfd6e2;font-size:12px;font-variant-numeric:tabular-nums;min-width:42px}
@@ -310,6 +315,8 @@
             <div class="stage-empty" id="stage-empty"></div>
             <div class="sync-overlay" id="sync-overlay" role="status" aria-live="assertive" hidden></div>
           </div>
+          <div class="break-banner" id="break-banner" role="status" aria-live="polite" hidden></div>
+          <div class="lag-banner" id="lag-banner" role="status" aria-live="polite" hidden></div>
           <div class="stage-bar" id="stage-bar" role="group" aria-label="Controles do vídeo"></div>
         </section>
         <div class="stage-after" id="stage-after"></div>
@@ -335,6 +342,8 @@
   const lobby = $('#online-lobby'), content = $('#online-content'), message = $('#online-message'), rv3 = $('#rv3');
   const stageView = $('#stage-view'), stageEmpty = $('#stage-empty'), stageBar = $('#stage-bar'), stageBadge = $('#stage-badge');
   const syncOverlay = $('#sync-overlay'), sessionCard = $('#session-card');
+  // Mini chat: botão no canto, painel só quando a pessoa abre e aviso discreto de mensagem nova (chat.js)
+  const chatDock = window.DuoChat?.createDock({ doc: document, send: (text) => client.sendChat(text), nameFor: (role) => nameFor(role) });
   const reactionLayer = document.createElement('div'); reactionLayer.className = 'reaction-layer'; reactionLayer.setAttribute('aria-hidden', 'true'); document.body.append(reactionLayer);
   const inviteDialog = $('#rv3-invite-dialog'), menu = $('#rv3-menu'), menuBtn = $('#rv3-menu-btn'), ctxWrap = $('#rv3-ctx-wrap');
   // Nó estável do iframe: fica fora das regiões que são redesenhadas a cada snapshot.
@@ -343,6 +352,7 @@
   stageView.insertBefore(playerPanel, stageEmpty);
   const youtube = window.DuoYouTubePlayer?.create(playerPanel, {
     onAction: (id, action, seconds) => run(async () => { await client.playback(id, action, seconds); apply(client.snapshot); }),
+    onEnded: (videoId) => advanceQueue(videoId),
     onError: (error) => { say(error); if (Date.now() - lastPlayerFailAt > 30000) { lastPlayerFailAt = Date.now(); noteProblem('player_fail'); } },
   });
   let lastPlayerFailAt = 0;
@@ -432,6 +442,11 @@
     room_full: 'A sala está cheia.',
     no_media: 'Abra um vídeo na sala antes de sincronizar.',
     countdown_active: 'Já tem uma contagem em andamento.',
+    queue_full: 'A fila está cheia (no máximo 10 vídeos).',
+    already_queued: 'Esse vídeo já está na fila.',
+    queue_empty: 'A fila está vazia.',
+    queue_changed: 'A fila mudou. Tente de novo.',
+    not_in_queue: 'Esse vídeo já saiu da fila.',
   }[e?.code] || null);
   const P2P_ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
   let hostLink = null, hostLinks = [], guestLink = null, guestLinkOpen = null, p2pAnswerDraft = '', p2pNote = '';
@@ -592,7 +607,7 @@
   }
   /* ---------- pronto, contagem 3-2-1 e reações ---------- */
   const REACTION_EMOJI = { heart: '❤️', laugh: '\u{1F602}', wow: '\u{1F62E}', clap: '\u{1F44F}', cry: '\u{1F622}', popcorn: '\u{1F37F}' };
-  let seenReactionId = null, countdownId = 0, countdownTimer = null, lastReactAt = 0;
+  let snapOffset = 0, seenReactionId = null, countdownId = 0, countdownTimer = null, lastReactAt = 0;
   function floatReaction(emoji, who) {
     const fly = make('div', undefined, { class: 'reaction-fly' });
     fly.style.setProperty('--x', (8 + Math.round(Math.random() * 80)) + 'vw'); fly.style.setProperty('--r', (Math.round(Math.random() * 30) - 15) + 'deg');
@@ -628,7 +643,8 @@
     tick(); countdownTimer = setInterval(tick, 60);
   }
   function syncEffects(s) {
-    if (!s || s.status !== 'active' || !client) { stopCountdown(); seenReactionId = null; return; }
+    if (!s || s.status !== 'active' || !client) { stopCountdown(); seenReactionId = null; chatDock?.update({ active: false }); return; }
+    chatDock?.update({ active: true, you: client.role, messages: s.chat || [] });
     const list = s.reactions || [], maxId = list.reduce((m, r) => Math.max(m, r.id), 0);
     if (seenReactionId === null) seenReactionId = maxId;                        // primeira vez nesta sala: não repete o passado
     for (const r of list) if (r.id > seenReactionId && r.slot !== client.role && REACTION_EMOJI[r.emoji]) floatReaction(REACTION_EMOJI[r.emoji], nameFor(r.slot));
@@ -646,7 +662,7 @@
     const s = snapshot, ids = members(), ready = s.ready || {};
     const canSync = !!s.media && !!s.playback && !s.countdown;
     const everyone = ids.length > 1 && ids.every((r) => ready[r]);
-    paint(sessionCard, [ids.map(nameFor), ids.map((r) => !!ready[r]), !!s.media, !!s.playback, !!s.countdown, client.role, cinemaOn], (el) => {
+    paint(sessionCard, [ids.map(nameFor), ids.map((r) => !!ready[r]), !!s.media, !!s.playback, !!s.countdown, !!s.break, client.role, cinemaOn], (el) => {
       el.append(make('h4', 'Quem está pronto?'));
       const list = make('div', undefined, { class: 'ready-list', role: 'list' });
       for (const r of ids) list.append(make('span', `${ready[r] ? '@check ' : '@circle '}${r === client.role ? 'Você' : nameFor(r)}`, { class: 'ready-chip' + (ready[r] ? ' is-on' : ''), role: 'listitem' }));
@@ -654,6 +670,7 @@
       const actions = make('div', undefined, { class: 'session-actions' });
       actions.append(
         button(mine ? '@check Estou pronto' : 'Estou pronto', 'ready-toggle', { class: mine ? 'rb-main' : '', 'aria-pressed': String(mine) }),
+        button('☕ Intervalo 5 min', 'break-start', canSync && !s.break ? {} : { disabled: '', title: s.break ? 'Já estão em intervalo' : s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }),
         button('@sync Sincronizar agora', 'sync-now', canSync ? { class: everyone ? 'rb-main' : '' } : { disabled: '', title: s.countdown ? 'Contagem em andamento' : 'Abra um vídeo na sala primeiro' }));
       const note = make('p', everyone ? 'Todos prontos! Cliquem em Sincronizar agora: todo mundo pausa no mesmo ponto, conta 3, 2, 1 e dá play junto.' : 'Marque quando estiver pronto. Se alguém ficou para trás, Sincronizar agora alinha todo mundo.', { class: 'session-note' });
       const react = make('div', undefined, { class: 'react-row', role: 'group', 'aria-label': 'Reações rápidas' });
@@ -665,6 +682,7 @@
   function apply(s) {
     if (!s) return;
     snapshot = s;
+    snapOffset = (Number.isFinite(s.serverTime) ? s.serverTime : Date.now()) - Date.now();
     syncEffects(s);
     updateCinema(s); updateAmbient(s);
     window.duoDesktop?.setPlatform(s.status === 'active' ? s.platform : null);
@@ -973,8 +991,8 @@
     state.listener.result.then(() => { if (shortHost === state && !state.note.startsWith('Conexão aberta')) { state.note = 'Código usado. Abrindo a conexão…'; refresh(); } },
       (e) => { if (shortHost === state) { state.note = e.message || 'Não foi possível usar o serviço de encontro.'; refresh(); } });
     buildInviteDialog();
-    const copied = await copyText(code, { navigator, document, container: inviteDialog });
-    say(copied === 'copied' ? 'Código copiado. Envie ao convidado.' : 'Código gerado: ' + code);
+    const copied = await copyText(R.inviteMessage(code, adapter.getProfileName()), { navigator, document, container: inviteDialog });
+    say(copied === 'copied' ? 'Convite copiado, com o link. Cole na conversa e envie ao convidado.' : 'Código gerado: ' + code);
   }
   async function p2pConnect() {
     if (!hostLink) return;
@@ -1126,7 +1144,7 @@
       }
     });
     const nfb = nfState();
-    paint(stageBar, [yt, platform, !!s.selectedMatch, platform === 'netflix' ? [!!s.media, s.playback?.state, !!nfb.bound, nfb.status, nfb.detected, desktopNetflixState?.status] : 0], (el) => {
+    paint(stageBar, [yt, platform, !!s.selectedMatch, (s.queue || []).length, platform === 'netflix' ? [!!s.media, s.playback?.state, !!nfb.bound, nfb.status, nfb.detected, desktopNetflixState?.status] : 0], (el) => {
       barRefs = null;
       if (!yt && platform === 'netflix') {
         const status = desktopNetflix ? (!s.selectedMatch ? 'Votem para escolher o título' : !s.media ? 'Abra o título na Netflix e associe uma vez' : desktopNetflixState?.status === 'autoplay-blocked' ? 'Clique em Reproduzir no player para liberar o áudio neste computador' : `Netflix na sala · ${s.playback?.state === 'playing' ? 'tocando' : 'pausado'}`) : !s.selectedMatch ? 'Votem para escolher o título' : !s.media ? 'Abra o título na Netflix e associe a aba' : nfb.bound ? (nfStatusText[nfb.status] || `Aba da Netflix sincronizada · ${s.playback?.state === 'playing' ? 'tocando' : 'pausado'}`) : 'Abra o link da Netflix e sincronize esta aba';
@@ -1142,7 +1160,7 @@
       const seek = make('input', undefined, { type: 'range', min: '0', max: '1000', step: '1', value: '0', class: 'stage-seek', id: 'rv3-seek', 'aria-label': 'Posição do vídeo', disabled: '' });
       const sync = make('span', 'Carregando…', { class: 'stage-sync', role: 'status' }); sync.hidden = true;
       const full = button('@fullscreen', 'fullscreen', { class: 'rb-icon', 'aria-label': 'Tela cheia' });
-      el.append(toggle, now, seek, end, sync, full, button('Trocar vídeo', 'tab-search', { class: 'rb-accent' }));
+      el.append(toggle, now, seek, end, sync, full, ...(s.queue?.length ? [button('Próximo ▶', 'queue-next', { class: 'rb-accent', title: 'Tocar o próximo da fila: ' + s.queue[0].title })] : []), button('Trocar vídeo', 'tab-search', { class: 'rb-accent' }));
       barRefs = { toggle, now, end, seek, sync };
     });
     updateBar();
@@ -1198,11 +1216,12 @@
   function renderPanel() {
     const el = $('#rv3-tabpanel'), s = snapshot;
     el.setAttribute('aria-labelledby', `rv3-tab-${tab}`);
-    const key = [tab, s.platform, !!s.youtubeSearchEnabled, s.selectedMatch, s.round, !!s.media, s.media?.videoId, client.role, youtubeResults, youtubeQuery.length > 0, recents, linkOpen, uiVersion, members().map(nameFor), nfState()];
+    const key = [tab, s.platform, !!s.youtubeSearchEnabled, s.selectedMatch, s.round, !!s.media, s.media?.videoId, client.role, youtubeResults, youtubeQuery.length > 0, recents, linkOpen, uiVersion, JSON.stringify(s.queue || []), members().map(nameFor), nfState()];
     const changed = paint(el, key, () => { if (tab === 'search') buildSearchPanel(el); else buildMatchPanel(el); });
     if (changed && lastTab !== null && lastTab !== tab && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.classList.remove('is-swap'); void el.offsetWidth; el.classList.add('is-swap'); }
     lastTab = tab;
   }
+  const actions = (...buttons) => { const w = make('span', undefined, { class: 'item-actions' }); w.append(...buttons); return w; };
   function resultItem({ thumb, poster, name, sub, action }) {
     const card = make('div', undefined, { class: 'item' });
     const t = make('span', thumb ? undefined : '▶', { class: 'thumb' + (poster ? ' poster' : ''), 'aria-hidden': 'true' });
@@ -1235,8 +1254,16 @@
     link.hidden = s.youtubeSearchEnabled && !linkOpen;
     const lf = make('input', undefined, { id: 'online-youtube-url', type: 'url', placeholder: 'https://www.youtube.com/watch?v=…', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Link do vídeo do YouTube' });
     lf.value = youtubeLink;
-    link.append(lf, button('Abrir na sala', 'youtube-open', { class: 'rb-main' }));
+    link.append(lf, button('Abrir na sala', 'youtube-open', { class: 'rb-main' }), button('Adicionar à fila', 'youtube-queue-add', { class: 'rb-accent' }));
     el.append(link);
+    const queue = s.queue || [];
+    if (queue.length) {
+      el.append(make('span', `Fila (${queue.length})`, { class: 'rv3-kicker' }));
+      const qlist = make('div', undefined, { class: 'results' });
+      queue.forEach((q, i) => qlist.append(resultItem({ thumb: `https://i.ytimg.com/vi/${q.videoId}/mqdefault.jpg`, name: q.title, sub: (i === 0 ? 'Próximo · ' : '') + (q.by === client.role ? 'Você' : nameFor(q.by)) + ' adicionou',
+          action: actions(button('Tocar agora', 'youtube-result', { 'data-video-id': q.videoId, 'data-video-title': q.title, 'aria-label': `Tocar ${q.title} agora` }), button('Remover', 'queue-remove', { 'data-queue-id': String(q.id), 'aria-label': `Remover ${q.title} da fila` })) })));
+      el.append(qlist);
+    }
     if (recents.length) {
       el.append(make('span', 'Recentes na sala', { class: 'rv3-kicker' }));
       const list = make('div', undefined, { class: 'results' });
@@ -1319,7 +1346,7 @@
   function renderYouTubeResults(target) {
     target.replaceChildren();
     for (const item of youtubeResults) {
-      target.append(resultItem({ thumb: item.thumbnail, name: item.title, sub: item.channel, action: button('Abrir', 'youtube-result', { 'data-video-id': item.videoId, 'data-video-title': item.title, 'aria-label': `Abrir ${item.title} na sala` }) }));
+      target.append(resultItem({ thumb: item.thumbnail, name: item.title, sub: item.channel, action: actions(button('Abrir', 'youtube-result', { 'data-video-id': item.videoId, 'data-video-title': item.title, 'aria-label': `Abrir ${item.title} na sala` }), button('+ Fila', 'queue-add', { 'data-video-id': item.videoId, 'data-video-title': item.title, 'aria-label': `Adicionar ${item.title} à fila` })) }));
     }
     if (!youtubeResults.length && youtubeSearched) target.append(make('p', 'Nenhum vídeo encontrado. Tente outros termos ou cole o link direto.'));
   }
@@ -1604,11 +1631,11 @@
     const sec = make('div', undefined, { class: 'p2p-section' });
     sec.append(make('h5', 'Convidar de outra casa'));
     if (R && globalThis.crypto?.subtle) {
-      sec.append(make('p', 'Gere um código curto e envie ao convidado. Ele digita o código no Dalari Cine e a conexão abre sozinha. O código vale para uma pessoa e expira em 15 minutos.'));
+      sec.append(make('p', 'Gere um código curto e envie o convite com link ao convidado: ele toca no link, o Dalari Cine abre e entra sozinho (ou digita o código, se preferir). O código vale para uma pessoa e expira em 15 minutos.'));
       if (!shortHost) sec.append(row(button('Gerar código', 'short-offer', { class: 'rb-main' })));
       else {
         sec.append(make('div', shortHost.code, { class: 'short-code', id: 'short-code', tabindex: '0', 'aria-label': 'Código de convite ' + shortHost.code }),
-          row(button('Copiar código', 'short-copy', { class: 'rb-main' }), button('Novo código', 'short-offer')),
+          row(button('Copiar convite com link', 'short-copy-invite', { class: 'rb-main' }), button('Copiar só o código', 'short-copy'), button('Novo código', 'short-offer')),
           make('p', shortHost.note, { role: 'status' }));
       }
     }
@@ -1682,6 +1709,32 @@
       say(youtubeResults.length ? `${youtubeResults.length} vídeos encontrados.` : 'Nenhum vídeo encontrado. Tente outros termos ou cole o link direto.');
     });
   }
+  // Fila: acrescenta um vídeo para tocar depois. Quando o vídeo atual termina, o próximo da fila toca sozinho.
+  async function queueAdd(videoId, title) {
+    await run(async () => {
+      await client.queueAdd(videoId, title || 'Vídeo do YouTube');
+      apply(client.snapshot);
+      say('Adicionado à fila.');
+    });
+  }
+  async function queueFromLink() {
+    const field = panel.querySelector('#online-youtube-url');
+    const videoId = window.DuoYouTubePlayer?.parseVideoId(field.value);
+    if (!videoId) { say('Cole um link válido do YouTube para adicionar à fila.'); return; }
+    youtubeLink = '';
+    await run(async () => {
+      const title = (await client.youtubeTitle(videoId)) || 'Vídeo do YouTube';
+      await client.queueAdd(videoId, title);
+      apply(client.snapshot);
+      say('Adicionado à fila: ' + title);
+    });
+  }
+  // O vídeo acabou: toca o próximo da fila (se vários players avisarem juntos, o servidor só aceita o primeiro pedido)
+  function advanceQueue(endedVideoId) {
+    const head = snapshot?.queue?.[0];
+    if (!client || !head || snapshot.media?.videoId !== endedVideoId) return;
+    return client.queueNext(head.videoId).then(() => apply(client.snapshot)).catch(() => { /* outro player já avançou */ });
+  }
   function openYouTubeLink() {
     const videoId = window.DuoYouTubePlayer?.parseVideoId(panel.querySelector('#online-youtube-url').value);
     if (!videoId) { say('Cole um link válido do YouTube para o vídeo exato.'); return; }
@@ -1754,6 +1807,7 @@
     if (act === 'p2p-offer') return void run(p2pOffer);
     if (act === 'short-offer') return void run(shortOffer);
     if (act === 'short-copy') return void p2pCopy(shortHost?.code, inviteDialog.querySelector('#short-code'));
+    if (act === 'short-copy-invite') return void p2pCopy(R.inviteMessage(shortHost?.code, adapter.getProfileName()), inviteDialog.querySelector('#short-code'));
     if (act === 'p2p-copy-offer') return void p2pCopy(hostLink?.code, inviteDialog.querySelector('#p2p-offer-out'));
     if (act === 'p2p-connect') return void run(p2pConnect);
     if (act === 'p2p-copy-answer') return void p2pCopy(guestLink?.answer, panel.querySelector('#p2p-answer-out'));
@@ -1798,6 +1852,8 @@
     if (act === 'react') return void sendReaction(b.dataset.emoji);
     if (act === 'cinema-toggle') { cinemaOn = !cinemaOn; try { localStorage.setItem('duotela-cinema', cinemaOn ? '1' : '0'); } catch { /* sem armazenamento */ } updateCinema(snapshot); renderSession(); return; }
     if (act === 'ready-toggle') return void run(async () => { await client.setReady(!snapshot?.ready?.[client.role]); apply(client.snapshot); });
+    if (act === 'break-start' || act === 'break-more') return void run(async () => { await client.startBreak(5); apply(client.snapshot); });
+    if (act === 'break-end') return void run(async () => { await client.endBreak(); apply(client.snapshot); });
     if (act === 'sync-now') return void run(async () => { await client.syncNow(); apply(client.snapshot); });
     if (act === 'sync-cancel') return void run(async () => { await client.cancelSync(); stopCountdown(); apply(client.snapshot); });
     if (act === 'suggest-title') return void run(async () => { await client.pickManually(b.dataset.id); apply(client.snapshot); });
@@ -1824,6 +1880,10 @@
     if (act === 'nf-sync') { try { nfLink.sync(Number(b.dataset.tab), b.dataset.watch); say('Sincronizando esta aba da Netflix.'); } catch { say('Essa aba não é o título da sala.'); } return; }
     if (act === 'nf-unsync') { nfLink.unsync(); say('Sincronização desligada nesta aba.'); return; }
     if (act === 'youtube-open') return void openYouTubeLink();
+    if (act === 'youtube-queue-add') return void queueFromLink();
+    if (act === 'queue-add') return void queueAdd(b.dataset.videoId, b.dataset.videoTitle);
+    if (act === 'queue-remove') return void run(async () => { await client.queueRemove(Number(b.dataset.queueId)); apply(client.snapshot); });
+    if (act === 'queue-next') return void run(async () => { const head = snapshot.queue?.[0]; if (!head) return; await client.queueNext(head.videoId); apply(client.snapshot); });
     if (act === 'youtube-search') return void runYouTubeSearch();
     if (act === 'youtube-result') return void submitYouTube(b.dataset.videoId, b.dataset.videoTitle);
     if (act === 'fullscreen') return void youtube?.fullscreen?.();
@@ -1837,6 +1897,55 @@
       await client.playback(snapshot.media.titleId, action, seconds); apply(client.snapshot);
     });
   });
-  setInterval(() => { if (client && isYouTube()) updateBar(); }, 500);
+  setInterval(() => { if (client && isYouTube()) { updateBar(); updateLagBanner(); } }, 500);
+  // Intervalo: faixa com a contagem regressiva, "+5 min" e "Voltar agora"; ao zerar, a sala dispara a contagem 3-2-1 sozinha
+  const breakEl = $('#break-banner'); let breakShownId = 0, breakTimeEl = null;
+  function updateBreakBanner() {
+    if (!breakEl) return;
+    const b = client && snapshot?.status === 'active' ? snapshot.break : null;
+    if (!b) { if (breakShownId) { breakShownId = 0; breakTimeEl = null; breakEl.hidden = true; breakEl.replaceChildren(); } return; }
+    if (breakShownId !== b.id) {
+      breakShownId = b.id; breakTimeEl = make('b', '', { class: 'break-time' });
+      const text = make('span', undefined, { class: 'break-text' });
+      text.append('☕ Intervalo · ', breakTimeEl, make('small', (b.by === client.role ? 'Você pediu' : nameFor(b.by) + ' pediu') + '. A voz continua ligada; o vídeo está pausado para todos.'));
+      breakEl.replaceChildren(text, button('+5 min', 'break-more', { class: 'rb-accent' }), button('Voltar agora', 'break-end', { class: 'rb-main' }));
+      breakEl.hidden = false;
+    }
+    const remain = Math.max(0, Math.ceil((b.endsAt - (Date.now() + snapOffset)) / 1000));
+    breakTimeEl.textContent = remain > 0 ? 'volta em ' + clock(remain) : 'voltando…';
+  }
+  setInterval(() => { if (client) updateBreakBanner(); }, 500);
+  // Convite com um toque (app instalado): o link dalari://entrar/XXXX-XXXX chega aqui como código e a entrada começa sozinha
+  function joinFromLink(code) {
+    document.querySelector('[data-view="room"]')?.click();
+    if (client) { say('Você já está em uma sala. Saia dela antes de usar outro convite.'); return; }
+    const field = panel.querySelector('#online-invite-input');
+    if (field) field.value = code;
+    const name = adapter.getProfileName();
+    if (!name) { say('Convite recebido (' + code + '). Escreva o seu nome e clique em Entrar.'); panel.querySelector('#online-display-name')?.focus(); return; }
+    void run(async () => { await shortJoin(code, name); });
+  }
+  window.duoDesktop?.onJoinLink?.((code) => joinFromLink(code));
+  // "O filme se perdeu": eu aviso a sala o quanto estou fora do ponto dela, e mostro quando outra pessoa ficou para trás
+  const lagReporter = window.DuoLagWatch?.createReporter(), lagBanner = window.DuoLagWatch?.createBanner();
+  const lagEl = $('#lag-banner');
+  function updateLagBanner() {
+    if (!lagBanner || !lagEl) return;
+    const s = snapshot;
+    const b = client && isYouTube() && !s.countdown && s.playback?.state === 'playing' ? lagBanner.update(s.lags, client.role, nameFor, Date.now()) : lagBanner.update({}, client?.role, nameFor, Date.now());
+    const key = b ? b.text : '';
+    if (lagEl.dataset.key === key) return;
+    lagEl.dataset.key = key; lagEl.textContent = ''; lagEl.hidden = !b;
+    if (!b) return;
+    lagEl.append(make('span', b.text, { class: 'lag-text' }), button('@sync Alinhar todos', 'sync-now', { class: 'rb-main', title: 'Todos pausam no mesmo ponto, contam 3, 2, 1 e dão play juntos' }));
+  }
+  setInterval(() => {
+    if (!client || !isYouTube() || !youtube || !lagReporter) return;
+    const playing = snapshot.playback?.state === 'playing' && !snapshot.countdown;
+    const blocked = playing && !!youtube.needsLocalStart?.();
+    const lag = window.DuoLagWatch.myLag({ playing, dur: youtube.duration() || 0, blocked, local: youtube.currentPosition() || 0, wanted: youtube.syncedPosition() || 0 });
+    const v = lagReporter.next(lag, Date.now());
+    if (v !== null) client.reportLag(v).catch(() => { /* é só um aviso: se falhar, o próximo cobre */ });
+  }, 2000);
   render();
 })();

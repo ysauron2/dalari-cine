@@ -61,6 +61,11 @@ Section "Instalar"
   CreateShortcut "$SMPROGRAMS\DalariCine\Dalari Cine.lnk" "$INSTDIR\DalariCine.exe" "" "$INSTDIR\resources\app\assets\icon.ico"
   CreateShortcut "$DESKTOP\Dalari Cine.lnk" "$INSTDIR\DalariCine.exe" "" "$INSTDIR\resources\app\assets\icon.ico"
   WriteRegStr HKCU "Software\DalariCine" "InstallDir" "$INSTDIR"
+  ; Convite com um toque: links dalari://entrar/XXXX-XXXX abrem o Dalari Cine (só neste usuário)
+  WriteRegStr HKCU "Software\Classes\dalari" "" "URL:Dalari Cine"
+  WriteRegStr HKCU "Software\Classes\dalari" "URL Protocol" ""
+  WriteRegStr HKCU "Software\Classes\dalari\DefaultIcon" "" "$INSTDIR\DalariCine.exe,0"
+  WriteRegStr HKCU "Software\Classes\dalari\shell\open\command" "" '"$INSTDIR\DalariCine.exe" "%1"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DalariCine" "DisplayName" "Dalari Cine"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DalariCine" "DisplayVersion" "${VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DalariCine" "UninstallString" '"$INSTDIR\Desinstalar.exe"'
@@ -77,4 +82,5 @@ Section "Uninstall"
   RMDir /r "$INSTDIR"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DalariCine"
   DeleteRegKey HKCU "Software\DalariCine"
+  DeleteRegKey HKCU "Software\Classes\dalari"
 SectionEnd

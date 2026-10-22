@@ -167,5 +167,22 @@
     return got;
   }
 
-  return { newCode, normalizeCode, looksLikeShortCode, deriveKeys, deriveReconnectCode, seal, open, Relay, hostListen, guestPair, DEFAULT_RELAY, TTL_MS, ALPHABET };
+  // Convite com um toque: um link https (página docs/entrar do repositório, no GitHub Pages) que abre o app. O código vai só depois do "#",
+  // parte que o navegador nunca envia a servidor nenhum.
+  const INVITE_PAGE = 'https://ysauron2.github.io/dalari-cine/entrar/';
+  const DOWNLOAD_PAGE = 'https://github.com/ysauron2/dalari-cine/releases/latest';
+  const inviteLink = (code) => { const n = normalizeCode(code); return n ? INVITE_PAGE + '#' + n.slice(0, 4) + '-' + n.slice(4) : null; };
+  /** A mensagem pronta para colar no WhatsApp ou onde for: link, código para digitar e onde baixar o app. */
+  function inviteMessage(code, hostName) {
+    const link = inviteLink(code);
+    if (!link) return null;
+    const n = normalizeCode(code), shown = n.slice(0, 4) + '-' + n.slice(4);
+    const who = typeof hostName === 'string' && hostName.trim() ? hostName.trim().slice(0, 32) + ' te chamou' : 'Te chamaram';
+    return who + ' para ver um filme juntos no Dalari Cine! ' + String.fromCodePoint(0x1F3AC) + '\n\n'
+      + 'Toque para entrar: ' + link + '\n\n'
+      + 'Se o app pedir, o código é ' + shown + ' (vale 15 minutos).\n'
+      + 'Ainda não tem o app? Baixe aqui: ' + DOWNLOAD_PAGE;
+  }
+
+  return { newCode, normalizeCode, looksLikeShortCode, inviteLink, inviteMessage, INVITE_PAGE, DOWNLOAD_PAGE, deriveKeys, deriveReconnectCode, seal, open, Relay, hostListen, guestPair, DEFAULT_RELAY, TTL_MS, ALPHABET };
 });

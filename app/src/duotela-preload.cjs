@@ -44,6 +44,16 @@ contextBridge.exposeInMainWorld('duoDesktop', Object.freeze({
   },
   // Abre no navegador padrão, e só se o endereço estiver na lista do processo principal (src/external-links.cjs)
   openExternal: url => { if (typeof url === 'string' && url.length < 200) ipcRenderer.send('duotela:open-external', url); },
+  // Procurar um título na janela da Netflix (só o nome; o processo principal monta e valida o endereço)
+  openNetflixSearch: title => { if (typeof title === 'string' && title.length <= 200) ipcRenderer.send('duotela:netflix-search', title); },
+  // Convite com um toque: o app principal valida o link dalari://entrar/XXXX-XXXX e entrega só o código; ao registrar, avisa que a interface está pronta
+  onJoinLink: callback => {
+    if (typeof callback !== 'function') return () => {};
+    const listener = (_event, code) => { if (typeof code === 'string' && /^[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(code)) callback(code); };
+    ipcRenderer.on('duotela:join-link', listener);
+    ipcRenderer.send('duotela:join-ready');
+    return () => ipcRenderer.removeListener('duotela:join-link', listener);
+  },
   syncNetflix: state => ipcRenderer.send('duotela:netflix-room-state', state),
   // Ducking: fator de volume (0..1) que o vídeo da Netflix deve ter enquanto alguém fala
   setDuck: gain => { if (typeof gain === 'number' && Number.isFinite(gain) && gain >= 0 && gain <= 1) ipcRenderer.send('duotela:duck', gain); },

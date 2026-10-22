@@ -14,6 +14,41 @@ function netflixNavigationAllowed(raw) {
   }
 }
 
+// Busca da Netflix com o nome de um título (a janela da Netflix abre aqui; o título é só texto, sem caracteres de controle e com tamanho limitado)
+const CONTROL_CHARS = new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + ']', 'g');
+function netflixSearchUrl(title) {
+  if (typeof title !== 'string') return null;
+  const clean = title.replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+  return clean ? NETFLIX_URL + 'search?q=' + encodeURIComponent(clean) : null;
+}
+
+// Convite com um toque: dalari://entrar/XXXX-XXXX (o código curto do Host, alfabeto Crockford, igual ao de web/server/p2p-rendezvous.js).
+// Só esse formato é aceito: nada de outro endereço, parâmetro, porta ou credencial.
+const JOIN_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function normalizeJoinCode(text) {
+  const raw = String(text === undefined || text === null ? '' : text).toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+  return raw.length === 8 && [...raw].every(c => JOIN_ALPHABET.includes(c)) ? raw.slice(0, 4) + '-' + raw.slice(4) : null;
+}
+function parseJoinUrl(raw) {
+  if (typeof raw !== 'string' || raw.length > 100) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'dalari:' || url.hostname !== 'entrar' || url.username || url.password || url.port || url.search || url.hash) return null;
+    const m = /^\/([^/]+)\/?$/.exec(url.pathname);
+    return m ? normalizeJoinCode(decodeURIComponent(m[1])) : null;
+  } catch {
+    return null;
+  }
+}
+// Entre os argumentos de linha de comando (Windows/Linux entregam o link assim), o primeiro convite válido
+function findJoinCode(argv) {
+  for (const arg of Array.isArray(argv) ? argv : []) {
+    const code = parseJoinUrl(arg);
+    if (code) return code;
+  }
+  return null;
+}
+
 const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost'];
 
 // Somente IPv4 literal nas faixas privadas RFC 1918 (10/8, 172.16/12, 192.168/16).
@@ -57,4 +92,4 @@ function sameDuoTelaOrigin(raw, allowedOrigin) {
   }
 }
 
-module.exports = { NETFLIX_URL, netflixNavigationAllowed, parseDuoTelaUrl, sameDuoTelaOrigin, isPrivateLanHost, insecureOriginToTreatAsSecure };
+module.exports = { NETFLIX_URL, netflixNavigationAllowed, netflixSearchUrl, normalizeJoinCode, parseJoinUrl, findJoinCode, parseDuoTelaUrl, sameDuoTelaOrigin, isPrivateLanHost, insecureOriginToTreatAsSecure };

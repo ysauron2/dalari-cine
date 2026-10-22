@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Entrar na sala do Dalari Cine</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#0f1420;color:#f5f2f5;font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(520px,100%);padding:28px;border:1px solid #344050;border-radius:24px;background:#171E2B;box-shadow:0 30px 80px #000a}
+h1{margin:0 0 6px;font-size:26px;letter-spacing:-.02em}
+p{margin:0 0 14px;color:#cfd6e2}
+.lead{color:#a9b2c2}
+.code{display:block;margin:14px 0;padding:14px 10px;border:1px dashed #FFAC8F;border-radius:16px;text-align:center;font:800 32px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;user-select:all}
+.btn{display:block;width:100%;padding:14px 18px;border-radius:999px;border:1px solid transparent;font:inherit;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+.main{background:#FFAC8F;color:#2b1519}
+.alt{margin-top:10px;background:#202838;border-color:#344050;color:#f2f4f8}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+h2{margin:24px 0 6px;font-size:15px;color:#FFAC8F}
+small{color:#a9b2c2}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Entrar na sala</h1>
+  <p class="lead">Alguém te chamou para ver um filme juntos no Dalari Cine.</p>
+
+  <section id="with-code" hidden>
+    <span class="code" id="code" aria-label="Código do convite"></span>
+    <a class="btn main" id="open" href="#">Abrir no Dalari Cine</a>
+    <p id="status" role="status" style="margin-top:12px"><small>Se o app abrir, é só esperar: ele entra sozinho. Se nada acontecer, ele ainda não está instalado neste aparelho (veja abaixo) ou o navegador bloqueou. Toque no botão de novo.</small></p>
+    <h2>O app pede o código?</h2>
+    <p>Digite o código acima em <b>Nossa sala → Entrar como Convidado</b>. Ele vale para uma pessoa e expira em 15 minutos.</p>
+  </section>
+
+  <section id="no-code" hidden>
+    <p>Este link está sem o código do convite. Peça a quem te chamou para enviar o convite de novo, pelo botão <b>Copiar convite com link</b> do app.</p>
+  </section>
+
+  <h2>Ainda não tem o app?</h2>
+  <p>O Dalari Cine é gratuito, sem anúncios e sem cadastro. Funciona no Windows e no Mac.</p>
+  <a class="btn alt" href="https://github.com/ysauron2/dalari-cine/releases/latest" rel="noopener noreferrer">Baixar o Dalari Cine</a>
+  <p style="margin-top:18px"><small>O código do convite fica só depois do "#" do endereço, parte que o seu navegador não envia a nenhum servidor. Esta página não usa cookies nem rastreamento.</small></p>
+</main>
+<script>
+(function () {
+  'use strict';
+  var ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  function normalize(text) {
+    var raw = String(text || '').toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+    if (raw.length !== 8) return null;
+    for (var i = 0; i < raw.length; i++) if (ALPHABET.indexOf(raw.charAt(i)) < 0) return null;
+    return raw.slice(0, 4) + '-' + raw.slice(4);
+  }
+  var code = normalize(decodeURIComponent((location.hash || '').replace(/^#/, '')));
+  var withCode = document.getElementById('with-code'), noCode = document.getElementById('no-code');
+  if (!code) { noCode.hidden = false; return; }
+  var link = 'dalari://entrar/' + code;
+  document.getElementById('code').textContent = code;
+  document.getElementById('open').setAttribute('href', link);
+  withCode.hidden = false;
+  // Tenta abrir o app uma vez, sem insistir; o botão serve para tentar de novo
+  setTimeout(function () { location.href = link; }, 500);
+})();
+</script>
+</body>
+</html>

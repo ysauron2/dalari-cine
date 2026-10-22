@@ -184,6 +184,21 @@ class DuoRoomClient {
   /** Sincronizar agora: todos pausam no mesmo ponto, contagem 3-2-1 e play junto. */
   syncNow() { return this.send('sync.start', {}); }
   cancelSync() { return this.send('sync.cancel', {}); }
+  /** Quanto o meu player está adiantado (+) ou atrasado (-) em segundos em relação à sala; os outros veem o aviso "ficou X s atrás". */
+  reportLag(lagSec) { return this.send('lag.report', { lagSec }); }
+  /** Intervalo: todos pausam no mesmo ponto; no fim (ou em "Voltar agora") vem a contagem 3-2-1 e o play juntos. Pedir de novo estende. */
+  /** Fila do YouTube: vídeos para tocar em sequência. queueNext só vale se o primeiro da fila ainda for o que se viu (vários players avisam o fim do vídeo ao mesmo tempo). */
+  /** Mini chat da sala: uma linha de texto (até 300 caracteres); as últimas 30 mensagens ficam na sala. */
+  sendChat(text) { return this.send('chat.send', { text }); }
+  queueAdd(videoId, title) { return this.send('queue.add', { videoId, title }); }
+  queueRemove(id) { return this.send('queue.remove', { id }); }
+  queueNext(videoId) { return this.send('queue.next', { videoId }); }
+  /** Título do vídeo (sem chave de API); null se não deu para saber. */
+  async youtubeTitle(videoId) {
+    try { const d = await this.#call('GET', `/v1/rooms/${this.#code}/youtube/title?id=${encodeURIComponent(videoId)}`); return typeof d.title === 'string' ? d.title : null; } catch { return null; }
+  }
+  startBreak(minutes) { return this.send('break.start', { minutes }); }
+  endBreak() { return this.send('break.end', {}); }
   /** Reação rápida (heart, laugh, wow, clap, cry, popcorn) que aparece para todos. */
   sendReaction(emoji) { return this.send('reaction.send', { emoji }); }
   voiceReady(ready) { return this.send('voice.ready', { ready }); }

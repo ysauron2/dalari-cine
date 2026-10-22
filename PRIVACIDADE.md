@@ -12,7 +12,7 @@ Nome de exibição, preferências, histórico, progresso e a sessão da Netflix 
 
 ## Dados que saem do seu computador
 
-1) Conexão com a outra pessoa: um canal direto criptografado (WebRTC). Nele passam o estado da sala (votos, reprodução) e, pela voz, o áudio da conversa, que não passa por nenhum servidor nosso. 2) Código curto: mensagens cifradas de conexão enviadas ao serviço ntfy.sh, que vê o texto cifrado, o tamanho e o endereço de rede de quem conecta, mas não o conteúdo. 3) Descoberta de rota: consulta a um servidor STUN do Google, que vê o endereço de rede público do seu aparelho. 4) Catálogo de títulos e capas: consulta ao TMDB. 5) Vídeos do YouTube e a Netflix: carregados diretamente dos serviços deles, sob os termos e a política de cada um.
+1) Conexão com a outra pessoa: um canal direto criptografado (WebRTC). Nele passam o estado da sala (votos, reprodução, a fila de vídeos e as mensagens do chat da sala, só as últimas 30, que ficam na memória e somem quando a sala fecha) e, pela voz, o áudio da conversa, que não passa por nenhum servidor nosso. 2) Código curto: mensagens cifradas de conexão enviadas ao serviço ntfy.sh, que vê o texto cifrado, o tamanho e o endereço de rede de quem conecta, mas não o conteúdo. 3) Descoberta de rota: consulta a um servidor STUN do Google, que vê o endereço de rede público do seu aparelho. 4) Catálogo de títulos e capas: consulta ao TMDB. 5) Vídeos do YouTube e a Netflix: carregados diretamente dos serviços deles, sob os termos e a política de cada um.
 
 ## Dados que não coletamos
 

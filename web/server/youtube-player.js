@@ -50,7 +50,7 @@
     return apiPromise;
   }
 
-  function create(container, { onAction, onError } = {}) {
+  function create(container, { onAction, onError, onEnded } = {}) {
     if (!container || !root.document) throw new TypeError('container obrigatório');
     container.classList.add('duo-youtube-player');
     const heading = root.document.createElement('b');
@@ -106,6 +106,7 @@
             onStateChange: (event) => {
               if (event.data === YT.PlayerState.PLAYING) { autoplayBlocked = false; startButton.hidden = true; }
               if (mine !== generation || Date.now() < suppressedUntil || !latest?.media) return;
+              if (event.data === YT.PlayerState.ENDED) { Promise.resolve(onEnded?.(latest.media.videoId)).catch(() => { /* a fila é um extra: se falhar, nada quebra */ }); return; }
               let action = null;
               if (event.data === YT.PlayerState.PLAYING) action = 'play';
               if (event.data === YT.PlayerState.PAUSED) action = 'pause';

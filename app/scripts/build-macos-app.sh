@@ -50,6 +50,13 @@ ditto "$PREVIEW/extension-bridge/src" "$RES/preview/extension-bridge/src"
 /usr/libexec/PlistBuddy -c "Set :CFBundleName Dalari Cine" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Dalari Cine" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier br.dalari.cine" "$PLIST"
+# Convite com um toque: o Mac abre o Dalari Cine para links dalari://entrar/XXXX-XXXX
+/usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string br.dalari.cine" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string dalari" "$PLIST"
 # Ícone do Dalari Cine no Dock e no Finder (gerado por scripts/make-icons.cjs)
 cp "$ROOT/assets/icon.icns" "$APP/Contents/Resources/DalariCine.icns"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile DalariCine.icns" "$PLIST"

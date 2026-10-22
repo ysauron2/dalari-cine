@@ -43,7 +43,12 @@ const DEFAULTS = {
   maxWaitSec: 25,
   presenceMs: 45 * 1000,
   countdownMs: 3500,             // "Sincronizar agora": pausa todos no mesmo ponto e dá play junto depois deste tempo (3, 2, 1)
-  reactionGapMs: 600,            // intervalo mínimo entre reações da mesma pessoa
+  chatMax: 30,                   // mensagens que a sala guarda (só na memória, some quando a sala fecha)
+  chatGapMs: 700,                // intervalo mínimo entre mensagens da mesma pessoa
+  queueMax: 10,                  // vídeos na fila do YouTube
+  breakMaxMs: 30 * 60000,        // o intervalo mais longo que a sala aceita (também o teto ao estender)
+  lagTtlMs: 20000,               // um relato de atraso some sozinho depois disso (quem fechou o vídeo ou perdeu a conexão não fica "atrasado" para sempre)
+  reactionGapMs: 600,           // intervalo mínimo entre reações da mesma pessoa
   rateLimits: { create: 10, join: 20, general: 600, youtubeSearch: 12 }, // por IP de socket e por minuto
   logger: null,                  // (evento) => void; só recebe método/rota-modelo/status
   servePrototype: false,         // serve a interface no mesmo origin durante desenvolvimento local
@@ -201,9 +206,34 @@ function createRoomService(userOpts = {}) {
     if (room.countdownTimer.unref) room.countdownTimer.unref();
   }
 
+  // ---------- intervalo: pausa todos no mesmo ponto; no fim (ou em "Voltar agora") roda a contagem 3-2-1 e todos dão play juntos ----------
+  function cancelBreak(room) {
+    if (room.breakTimer) { clearTimeout(room.breakTimer); room.breakTimer = null; }
+    room.breakInfo = null;
+  }
+  function scheduleBreak(room) {
+    if (room.breakTimer) clearTimeout(room.breakTimer);
+    room.breakTimer = setTimeout(() => { room.breakTimer = null; if (rooms.get(room.code) === room && room.breakInfo && now() >= room.breakInfo.endsAt) { endBreak(room, room.breakInfo.by); bump(room); } }, Math.max(0, room.breakInfo.endsAt - now()) + 30);
+    if (room.breakTimer.unref) room.breakTimer.unref();
+  }
+  /** Fim do intervalo: sai do modo pausa e abre a mesma contagem de "Sincronizar agora", a partir do ponto em que pararam. */
+  function endBreak(room, by) {
+    const b = room.breakInfo;
+    if (!b) return;
+    cancelBreak(room);
+    if (!room.media || !room.playback) return;
+    const t = now();
+    room.syncSeq += 1;
+    room.countdown = { id: room.syncSeq, by, startsAt: t + opts.countdownMs, positionSec: b.positionSec };
+    room.playback = { ...room.playback, state: 'paused', positionSec: b.positionSec, updatedBy: by, updatedAt: t, version: room.playback.version + 1, syncId: room.syncSeq };
+    for (const r of ROLES) room.ready[r] = false;
+    scheduleCountdown(room);
+  }
+
   /** Aplica expirações de forma preguiçosa. */
   function tick(room) {
     const t = now();
+    if (room.breakInfo && t >= room.breakInfo.endsAt) endBreak(room, room.breakInfo.by);
     if (room.countdown && t >= room.countdown.startsAt) runCountdown(room);
     if (room.status === 'open' && t >= room.expiresAt) { room.status = 'expired'; room.endedAt = t; bump(room); }
     if (room.status === 'open') {
@@ -300,6 +330,11 @@ function createRoomService(userOpts = {}) {
     snap.ready = {};
     for (const r of approved) snap.ready[r] = !!room.ready[r];
     snap.countdown = room.countdown ? { id: room.countdown.id, by: room.countdown.by, startsAt: room.countdown.startsAt, positionSec: room.countdown.positionSec } : null;
+    snap.chat = room.chat.map((m) => ({ id: m.id, slot: m.slot, text: m.text, at: m.at }));
+    snap.queue = room.queue.map((q) => ({ id: q.id, videoId: q.videoId, title: q.title, by: q.by }));
+    snap.break = room.breakInfo ? { id: room.breakInfo.id, by: room.breakInfo.by, startsAt: room.breakInfo.startsAt, endsAt: room.breakInfo.endsAt, positionSec: room.breakInfo.positionSec } : null;
+    snap.lags = {};
+    for (const r of approved) { const l = room.lags[r]; if (l && now() - l.at < opts.lagTtlMs) snap.lags[r] = l.lagSec; }
     snap.reactions = room.reactions.map((r) => ({ id: r.id, slot: r.slot, emoji: r.emoji, at: r.at }));
     snap.voice = voiceView(room, role, approved);
     snap.viewing = { host: { ...room.viewing.host }, guest: { ...room.viewing.guest } };
@@ -471,6 +506,15 @@ function createRoomService(userOpts = {}) {
     'playback.netflix': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['titleId', 'watchId', 'action', 'positionSec']) && typeof p.titleId === 'string' && typeof p.watchId === 'string' && NETFLIX_WATCH_ID_RE.test(p.watchId) && ['play', 'pause', 'seek'].includes(p.action) && typeof p.positionSec === 'number' && Number.isFinite(p.positionSec) && p.positionSec >= 0 && p.positionSec <= 86400 },
     viewing: { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['titleId', 'progress', 'rating', 'listed']) && typeof p.titleId === 'string' && intIn(p.progress, 0, 100) && (p.rating === -1 || p.rating === 0 || p.rating === 1) && typeof p.listed === 'boolean' },
     'ready.set': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['ready']) && typeof p.ready === 'boolean' },
+    // Cada player diz o quanto está adiantado (+) ou atrasado (-) em relação à posição da sala; só um número, e vale por poucos segundos.
+    'chat.send': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['text']) && typeof p.text === 'string' && p.text.length >= 1 && p.text.length <= 300 && p.text.trim() === p.text && !/[\x00-\x1f\x7f]/.test(p.text) },
+    'queue.add': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['videoId', 'title']) && YOUTUBE_ID_RE.test(p.videoId) && typeof p.title === 'string' && p.title.trim() === p.title && p.title.length >= 2 && p.title.length <= 160 && !/[\x00-\x1f\x7f<>]/.test(p.title) },
+    'queue.remove': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['id']) && intIn(p.id, 1, 1e9) },
+    // o videoId é o primeiro da fila que quem pediu estava vendo: se vários players avisarem que o vídeo acabou, só o primeiro pedido vale
+    'queue.next': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['videoId']) && YOUTUBE_ID_RE.test(p.videoId) },
+    'break.start': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['minutes']) && intIn(p.minutes, 1, 30) },
+    'break.end': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
+    'lag.report': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['lagSec']) && intIn(p.lagSec, -3600, 3600) },
     'sync.start': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
     'sync.cancel': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, []) },
     'reaction.send': { roles: ROLES, check: (p) => isPlain(p) && exactKeys(p, ['emoji']) && typeof p.emoji === 'string' && REACTIONS.includes(p.emoji) },
@@ -486,7 +530,9 @@ function createRoomService(userOpts = {}) {
     // Durante a contagem, pausas e posições vindas dos players (efeito de pausar/ajustar para todos) são ignoradas;
     // dar play à mão cancela a contagem; trocar de vídeo ou de plataforma também.
     if (room.countdown && (type === 'playback' || type === 'playback.netflix')) { if (p.action === 'play') cancelCountdown(room); else return; }
-    if (room.countdown && ['platform.select', 'round.start', 'round.manual', 'media.youtube', 'media.netflix', 'video.open'].includes(type)) cancelCountdown(room);
+    if (room.breakInfo && (type === 'playback' || type === 'playback.netflix')) { if (p.action === 'play') cancelBreak(room); else return; }
+    if (room.breakInfo && ['platform.select', 'round.start', 'round.manual', 'media.youtube', 'media.netflix', 'video.open', 'queue.next'].includes(type)) cancelBreak(room);
+    if (room.countdown && ['platform.select', 'round.start', 'round.manual', 'media.youtube', 'media.netflix', 'video.open', 'queue.next'].includes(type)) cancelCountdown(room);
     switch (type) {
       case 'platform.select':
         if (room.platform !== p.platform) {
@@ -495,6 +541,7 @@ function createRoomService(userOpts = {}) {
           room.notice = null;
           room.media = null;
           room.playback = null;
+          room.queue = [];
         }
         break;
       case 'round.start':
@@ -551,9 +598,44 @@ function createRoomService(userOpts = {}) {
       case 'video.open':
         if (room.platform !== 'youtube') throw new HttpError(409, 'wrong_platform');
         room.round = null;
+        room.queue = room.queue.filter((q) => q.videoId !== p.videoId);   // abrir agora um vídeo que estava na fila tira ele de lá
         room.media = { provider: 'youtube', titleId: `youtube:${p.videoId}`, videoId: p.videoId, title: p.title };
         room.playback = { titleId: room.media.titleId, videoId: p.videoId, state: 'playing', positionSec: 0, updatedBy: role, updatedAt: now(), version: (room.playback?.version || 0) + 1 };
         break;
+      case 'chat.send': {
+        const t = now();
+        if (t - room.lastChatAt[role] < opts.chatGapMs) throw new HttpError(429, 'rate_limited');
+        room.lastChatAt[role] = t;
+        room.chatSeq += 1;
+        room.chat.push({ id: room.chatSeq, slot: role, text: p.text, at: t });
+        if (room.chat.length > opts.chatMax) room.chat.shift();
+        break;
+      }
+      case 'queue.add': {
+        if (room.platform !== 'youtube') throw new HttpError(409, 'wrong_platform');
+        if (room.queue.length >= opts.queueMax) throw new HttpError(409, 'queue_full');
+        if (room.queue.some((q) => q.videoId === p.videoId)) throw new HttpError(409, 'already_queued');
+        room.queueSeq += 1;
+        room.queue.push({ id: room.queueSeq, videoId: p.videoId, title: p.title, by: role });
+        break;
+      }
+      case 'queue.remove': {
+        const i = room.queue.findIndex((q) => q.id === p.id);
+        if (i < 0) throw new HttpError(409, 'not_in_queue');
+        room.queue.splice(i, 1);
+        break;
+      }
+      case 'queue.next': {
+        if (room.platform !== 'youtube') throw new HttpError(409, 'wrong_platform');
+        const head = room.queue[0];
+        if (!head) throw new HttpError(409, 'queue_empty');
+        if (head.videoId !== p.videoId) throw new HttpError(409, 'queue_changed');
+        room.queue.shift();
+        room.round = null;
+        room.media = { provider: 'youtube', titleId: `youtube:${head.videoId}`, videoId: head.videoId, title: head.title };
+        room.playback = { titleId: room.media.titleId, videoId: head.videoId, state: 'playing', positionSec: 0, updatedBy: role, updatedAt: now(), version: (room.playback?.version || 0) + 1 };
+        break;
+      }
       case 'playback': {
         const res = MatchEngine.resolveRound(room.round);
         const directVideo = room.platform === 'youtube' && p.titleId === `youtube:${p.videoId}` && room.media?.titleId === p.titleId && room.media?.videoId === p.videoId;
@@ -569,10 +651,37 @@ function createRoomService(userOpts = {}) {
       case 'ready.set':
         room.ready[role] = p.ready;
         break;
+      case 'break.start': {
+        if (!room.media || !room.playback) throw new HttpError(409, 'no_media');
+        if (room.countdown) throw new HttpError(409, 'countdown_active');
+        const t = now();
+        if (room.breakInfo) {                                     // já em intervalo: estende (no máximo 30 min a partir de agora)
+          room.breakInfo.endsAt = Math.min(t + opts.breakMaxMs, room.breakInfo.endsAt + p.minutes * 60000);
+          scheduleBreak(room);
+          break;
+        }
+        const pb = room.playback;
+        const estimate = pb.state === 'playing' ? pb.positionSec + Math.max(0, (t - pb.updatedAt) / 1000) : pb.positionSec;
+        const position = Math.min(86400, Math.max(0, estimate));
+        room.syncSeq += 1;
+        room.breakInfo = { id: room.syncSeq, by: role, startsAt: t, endsAt: Math.min(t + opts.breakMaxMs, t + p.minutes * 60000), positionSec: position };
+        room.playback = { ...pb, state: 'paused', positionSec: position, updatedBy: role, updatedAt: t, version: pb.version + 1, syncId: room.syncSeq };
+        for (const r of ROLES) room.ready[r] = false;
+        scheduleBreak(room);
+        break;
+      }
+      case 'break.end':
+        if (!room.breakInfo) throw new HttpError(409, 'no_break');
+        endBreak(room, role);
+        break;
+      case 'lag.report':
+        room.lags[role] = p.lagSec === 0 && !room.lags[role] ? null : { lagSec: p.lagSec, at: now() };
+        break;
       case 'sync.start': {
         if (!room.media || !room.playback) throw new HttpError(409, 'no_media');
         if (room.countdown) throw new HttpError(409, 'countdown_active');
         const pb = room.playback, t = now();
+        cancelBreak(room);                                          // sincronizar durante um intervalo encerra o intervalo e já conta 3-2-1
         const estimate = pb.state === 'playing' ? pb.positionSec + Math.max(0, (t - pb.updatedAt) / 1000) : pb.positionSec;
         const position = Math.min(86400, Math.max(0, estimate));
         room.syncSeq += 1;
@@ -669,7 +778,7 @@ function createRoomService(userOpts = {}) {
       lastSeq: slotMap(0), lastActionHash: slotMap(null), lastSeen: slotMap((r) => (r === 'host' ? t : 0)),
       round: null, platform: null, media: null, playback: null, viewing: slotMap(() => ({})),
       voice: { ready: slotMap(false), pairs: {} },
-      ready: slotMap(false), countdown: null, countdownTimer: null, syncSeq: 0, reactions: [], reactionSeq: 0, lastReactionAt: slotMap(0),
+      lags: slotMap(null), breakInfo: null, breakTimer: null, queue: [], queueSeq: 0, chat: [], chatSeq: 0, lastChatAt: slotMap(0), ready: slotMap(false), countdown: null, countdownTimer: null, syncSeq: 0, reactions: [], reactionSeq: 0, lastReactionAt: slotMap(0),
     };
     const inviteSecret = newInvite(room);
     rooms.set(code, room);
@@ -788,6 +897,7 @@ function createRoomService(userOpts = {}) {
     if (room.status === 'open') {
       room.status = 'closed'; room.endedAt = now();
       cancelCountdown(room);
+      cancelBreak(room);
       room.voice.pairs = {};
       bump(room);
     }
@@ -837,6 +947,24 @@ function createRoomService(userOpts = {}) {
     return { ok: true, results };
   }
 
+  /** Título de um vídeo a partir do id (oEmbed do YouTube, sem chave). Falha silenciosa: quem chama usa um título genérico. */
+  async function youtubeTitle(req, code, url, ip) {
+    const { room } = authedRoom(req, code);
+    if (roomStatus(room) !== 'active') throw new HttpError(409, 'room_not_active');
+    if ([...url.searchParams.keys()].some((k) => k !== 'id') || url.searchParams.getAll('id').length !== 1) throw new HttpError(400, 'bad_query');
+    const id = url.searchParams.get('id');
+    if (!YOUTUBE_ID_RE.test(id)) throw new HttpError(400, 'bad_query');
+    rateLimit(ip, 'youtubeSearch');
+    const endpoint = new URL('https://www.youtube.com/oembed');
+    endpoint.searchParams.set('url', 'https://www.youtube.com/watch?v=' + id); endpoint.searchParams.set('format', 'json');
+    let title = '';
+    try {
+      const response = await fetchImpl(endpoint.toString(), { signal: AbortSignal.timeout(4000), cache: 'no-store' });
+      if (response.ok) title = String((await response.json())?.title || '').replace(/[\x00-\x1f\x7f<>]/g, '').trim().slice(0, 160);
+    } catch { /* sem título: o app usa o genérico */ }
+    return { ok: true, title: title.length >= 2 ? title : null };
+  }
+
   // ---------- Origin / CORS ----------
   function corsFor(req) {
     const origin = req.headers.origin;
@@ -850,8 +978,8 @@ function createRoomService(userOpts = {}) {
 
   const staticFiles = new Map([
     ['/', 'index.html'], ['/index.html', 'index.html'],
-    ['/src/catalog.js', 'src/catalog.js'], ['/src/match-engine.js', 'src/match-engine.js'],
-    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
+    ['/src/catalog.js', 'src/catalog.js'], ['/src/match-engine.js', 'src/match-engine.js'], ['/src/tonight.js', 'src/tonight.js'],
+    ['/server/client.js', 'server/client.js'], ['/server/online-ui.js', 'server/online-ui.js'], ['/server/youtube-player.js', 'server/youtube-player.js'], ['/server/voice.js', 'server/voice.js'], ['/server/p2p-link.js', 'server/p2p-link.js'], ['/server/p2p-rendezvous.js', 'server/p2p-rendezvous.js'], ['/server/nerd-stats.js', 'server/nerd-stats.js'], ['/server/first-run.js', 'server/first-run.js'], ['/server/tribute.js', 'server/tribute.js'], ['/server/icons.js', 'server/icons.js'], ['/server/ambient.js', 'server/ambient.js'], ['/server/reconnect.js', 'server/reconnect.js'], ['/server/audio-check.js', 'server/audio-check.js'], ['/server/updates-ui.js', 'server/updates-ui.js'], ['/server/ducking.js', 'server/ducking.js'], ['/server/telemetry.js', 'server/telemetry.js'], ['/server/feedback.js', 'server/feedback.js'], ['/server/lag-watch.js', 'server/lag-watch.js'], ['/server/chat.js', 'server/chat.js'], ['/stats-config.json', 'stats-config.json'], ['/server/netflix-bridge.js', 'server/netflix-bridge.js'], ['/extension-bridge/src/bridge-protocol.js', 'extension-bridge/src/bridge-protocol.js'],
   ]);
   async function serveFile(p, res) {
     let rel = staticFiles.get(p);
@@ -913,6 +1041,11 @@ function createRoomService(userOpts = {}) {
         route = '/v1/rooms/:code/youtube/search';
         if (req.method !== 'GET') throw new HttpError(405, 'method_not_allowed');
         return sendJson(res, 200, await searchYouTube(req, m[1], url, ip), cors);
+      }
+      if ((m = /^\/v1\/rooms\/(\d{6})\/youtube\/title$/.exec(p))) {
+        route = '/v1/rooms/:code/youtube/title';
+        if (req.method !== 'GET') throw new HttpError(405, 'method_not_allowed');
+        return sendJson(res, 200, await youtubeTitle(req, m[1], url, ip), cors);
       }
       if ((m = /^\/v1\/rooms\/(\d{6})\/(state|actions|join|admission|invite|close|profile|leave)$/.exec(p))) {
         const code = m[1], what = m[2];
