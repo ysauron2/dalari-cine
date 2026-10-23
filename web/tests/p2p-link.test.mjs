@@ -216,3 +216,21 @@ test('com SDP real o convidado entra só com o código compacto: o Host injeta o
     host.close(); guest.close();
   } finally { await svc.close(); }
 });
+
+test('código compacto com retransmissor: os candidatos locais e o relay não são expulsos por vários srflx', () => {
+  const { encodeCompact } = require('../server/p2p-link.js');
+  const cand = (n, type, addr, port) => `a=candidate:${n} 1 udp ${1000 - n} ${addr} ${port} typ ${type}${type === 'host' ? '' : ' raddr 0.0.0.0 rport 0'} generation 0 network-cost 999`;
+  const build = (lines) => ['v=0', 'o=- 1 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0', ...lines,
+    'a=ice-ufrag:abcd', 'a=ice-pwd:' + 'p'.repeat(24), 'a=fingerprint:sha-256 ' + Array(32).fill('AB').join(':'), 'a=setup:actpass', 'a=mid:0', 'a=sctp-port:5000', ''].join('\r\n');
+  const types = (sdp) => decodeCode(encodeCompact('offer', sdp)).sdp.match(/typ \w+/g).map((t) => t.slice(4));
+  const crowded = build([cand(1, 'host', '192.168.0.10', 50001), cand(2, 'host', '10.0.0.5', 50002), cand(3, 'host', '172.16.0.9', 50003),
+    ...[1, 2, 3, 4, 5].map((i) => cand(3 + i, 'srflx', '200.1.1.1', 41000 + i)), ...[1, 2, 3].map((i) => cand(8 + i, 'relay', '162.159.1.1', 51000 + i))]);
+  const out = types(crowded);
+  assert.equal(out.length, 5);
+  assert.ok(out.includes('host') && out.includes('relay') && out.includes('srflx'), out.join());
+  assert.equal(out.filter((t) => t === 'relay').length, 1);
+  // sem espaço disputado, nada muda: srflx primeiro, depois host
+  assert.deepEqual(types(build([cand(1, 'host', '192.168.0.10', 50001), cand(2, 'srflx', '200.1.1.1', 41000)])), ['srflx', 'host']);
+  // só relay (conexão forçada pelo retransmissor): usa o espaço todo
+  assert.equal(types(build([1, 2, 3, 4, 5, 6].map((i) => cand(i, 'relay', '162.159.1.1', 51000 + i)))).length, 5);
+});

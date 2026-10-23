@@ -59,6 +59,18 @@
     const groups = [...h, ...Array(8 - h.length - t.length).fill('0'), ...t];
     return groups.every((g) => /^[0-9a-fA-F]{1,4}$/.test(g)) ? groups.map((g) => parseInt(g, 16)) : null;
   };
+  // Cabem 5 candidatos no código. Com o retransmissor (TURN) a lista traz vários srflx e relay; se ordenássemos só por tipo, eles
+  // expulsariam os candidatos locais (host) e o próprio relay. Por isso: até 2 de cada tipo (relay: 1), IPv4 primeiro, e o que sobrar
+  // de espaço é preenchido na ordem srflx, host, relay.
+  const MAX_CANDS = 5, QUOTA = { srflx: 2, host: 2, relay: 1 };
+  function pickCandidates(cands) {
+    const by = (type) => cands.filter((c) => c.type === type).sort((a, b) => b.v4 - a.v4);
+    const groups = { srflx: by('srflx'), host: by('host'), relay: by('relay') };
+    const chosen = new Set();
+    for (const type of ['srflx', 'host', 'relay']) groups[type].slice(0, QUOTA[type]).forEach((c) => chosen.add(c));
+    for (const type of ['host', 'srflx', 'relay']) for (const c of groups[type]) if (chosen.size < MAX_CANDS) chosen.add(c);
+    return ['srflx', 'host', 'relay'].flatMap((type) => groups[type].filter((c) => chosen.has(c))).slice(0, MAX_CANDS);
+  }
   function parseSdpEssentials(sdp) {
     const one = (re) => { const m = re.exec(sdp); return m ? m[1].trim() : null; };
     const ufrag = one(/^a=ice-ufrag:(.+)$/m), pwd = one(/^a=ice-pwd:(.+)$/m), fp = one(/^a=fingerprint:sha-256 ([0-9A-Fa-f:]+)$/m);
@@ -76,9 +88,8 @@
       if (v6 && /^fe80:/i.test(addr)) continue;          // link-local não serve a outro aparelho
       seen.add(key); cands.push({ addr, port: Number(port), type, v4, v6: !!v6 });
     }
-    cands.sort((a, b) => (b.type === 'srflx') - (a.type === 'srflx') || b.v4 - a.v4);
     if (!cands.length) return null;
-    return { ufrag, pwd, fingerprint, cands: cands.slice(0, 5) };
+    return { ufrag, pwd, fingerprint, cands: pickCandidates(cands) };
   }
   function encodeCompact(type, sdp, extra) {
     const e = parseSdpEssentials(sdp);
