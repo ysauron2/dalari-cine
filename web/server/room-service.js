@@ -54,6 +54,7 @@ const DEFAULTS = {
   servePrototype: false,         // serve a interface no mesmo origin durante desenvolvimento local
   youtubeApiKey: null,           // opcional; fica somente no processo Node
   iceServers: [],                // STUN/TURN estáticos para a voz: [{urls, username?, credential?}]
+  remoteFlags: null,                 // { get(): Promise<{netflix, message}> } chave do criador (veja remote-flags.js); null = tudo ligado
   remoteIce: null,                   // { get(): Promise<lista> } com servidores TURN temporários (veja remote-ice.js); null = só STUN
   statsOrigin: '',                   // origem do serviço de estatísticas anônimas (opcional); entra no connect-src da CSP
   relayOrigins: ['https://ntfy.sh'], // serviços de encontro (código curto) que a página pode contatar: entram no connect-src da CSP
@@ -1052,6 +1053,15 @@ function createRoomService(userOpts = {}) {
         if (!opts.servePrototype || !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) throw new HttpError(403, 'local_only');
         if (url.search) throw new HttpError(400, 'bad_query');
         return sendJson(res, 200, { ok: true, iceServers: await iceListFor('guest') }, { ...cors, 'Cache-Control': 'no-store' });
+      }
+      if (p === '/v1/local/flags') {                    // só no próprio computador: a chave do criador (por exemplo, Netflix desligada)
+        route = '/v1/local/flags';
+        if (req.method !== 'GET') throw new HttpError(405, 'method_not_allowed');
+        if (!opts.servePrototype || !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) throw new HttpError(403, 'local_only');
+        if (url.search) throw new HttpError(400, 'bad_query');
+        let flags = { netflix: true, message: '' };
+        if (opts.remoteFlags) { try { const f = await opts.remoteFlags.get(); if (f && typeof f.netflix === 'boolean') flags = f; } catch { /* sem chave: tudo ligado */ } }
+        return sendJson(res, 200, { ok: true, netflix: flags.netflix, ...(flags.netflix === false && flags.message ? { message: flags.message } : {}) }, { ...cors, 'Cache-Control': 'no-store' });
       }
       if ((m = /^\/v1\/rooms\/(\d{6})\/youtube\/search$/.exec(p))) {
         route = '/v1/rooms/:code/youtube/search';

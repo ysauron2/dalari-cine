@@ -483,9 +483,61 @@
   const hostPairs = new Map(), hostRcs = new Map();     // link -> { code, room, listener }; código -> reconector
   let client = null, snapshot = null, invite = '', inviteShown = false, status = 'desconectado', busy = false, shownMatch = null, searchQuery = '', youtubeQuery = '', youtubeLink = '', youtubeResults = [], youtubeSearched = false, linkOpen = false, tab = 'search', ctxOpen = false, closeArmed = false, removeArmed = null, lastNoticeAt = 0, scrubbing = false, recents = [], uiVersion = 0, preferredPlatform = null, autoSelectInFlight = false;
   let desktopNetflixState = null;
+  // Trava da Netflix: a opção de Netflix na sala fica indisponível quando (1) o player interno da Netflix some, (2) a Netflix mostra o
+  // erro M7375 que a sincronização causa, (3) a posição do filme não consegue ser alinhada 3 vezes seguidas ou (4) a chave remota do
+  // criador desliga a Netflix. A trava local dura 30 min e some quando o player volta a responder; a remota segue a chave (sem rede, nada trava).
+  const NF_LOCK_KEY = 'duotela-netflix-lock', NF_LOCK_MS = 30 * 60 * 1000;
+  let nfRemote = { netflix: true, message: '' }, nfSeekFails = 0, nfRemoteAt = 0, nfOpened = false;
+  const nfLock = {
+    read() { try { const v = JSON.parse(localStorage.getItem(NF_LOCK_KEY) || 'null'); return v && Number(v.until) > Date.now() && typeof v.reason === 'string' ? v : null; } catch { return null; } },
+    write(reason) { try { localStorage.setItem(NF_LOCK_KEY, JSON.stringify({ until: Date.now() + NF_LOCK_MS, reason })); } catch { /* sem armazenamento: a trava vale só até fechar */ } },
+    clear() { try { localStorage.removeItem(NF_LOCK_KEY); } catch { /* nada a limpar */ } },
+  };
+  function netflixLockReason() {
+    if (!window.duoDesktop) return '';
+    if (nfRemote.netflix === false) return nfRemote.message || 'A Netflix na sala está desligada temporariamente. Use o YouTube por enquanto.';
+    const l = nfLock.read();
+    return l ? `A Netflix não está respondendo ao controle da sala neste computador (${l.reason}). Use o YouTube por enquanto; tentamos de novo em alguns minutos.` : '';
+  }
+  async function refreshNetflixFlag(force = false) {
+    if (!window.duoDesktop || (!force && Date.now() - nfRemoteAt < 5 * 60000)) return;
+    nfRemoteAt = Date.now();
+    try {
+      const res = await fetch(location.origin + '/v1/local/flags', { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(2500) });
+      const d = res.ok ? await res.json() : null;
+      if (d && d.ok === true && typeof d.netflix === 'boolean') nfRemote = { netflix: d.netflix, message: typeof d.message === 'string' ? d.message.slice(0, 200) : '' };
+    } catch { /* sem resposta: não trava */ }
+  }
+  function noteNetflixHealth(status) {
+    if (typeof status !== 'string') return;
+    let reason = '';
+    if (status === 'api-missing') reason = 'o player da Netflix não respondeu';
+    else if (/^netflix-error:M7375/.test(status)) reason = 'erro M7375 da Netflix';
+    else if (status === 'seek-unavailable') { if (++nfSeekFails >= 3) reason = 'não foi possível alinhar o ponto do filme'; }
+    else if (status === 'api-ok' || status === 'applied') { nfSeekFails = 0; if (status === 'api-ok') nfLock.clear(); }
+    if (reason) { const fresh = !nfLock.read(); nfLock.write(reason); if (fresh) noteProblem('player_fail'); }
+  }
+  if (window.duoDesktop) { void refreshNetflixFlag(true); setInterval(() => { void refreshNetflixFlag(true); }, 10 * 60000); }
+  // Associação do título: o /watch que o Host abre e começa a tocar vira o título da sala, sem confirmação (o match já foi votado). Os outros
+  // abrem o mesmo link sozinhos. Se o Host abrir outro título depois, o painel oferece "Usar este título na sala".
+  const nfAutoTried = new Set();
+  async function associateNetflix(titleId, watchId, st) {
+    await client.selectNetflixTitle(titleId, watchId);
+    if (Number.isFinite(st?.positionSec)) await client.playbackNetflix(titleId, watchId, st.playing ? 'play' : 'pause', st.positionSec);
+    apply(client.snapshot);
+  }
+  async function autoAssociateNetflix(event) {
+    if (!window.duoDesktop || !client || client.role !== 'host' || snapshot?.status !== 'active' || snapshot.platform !== 'netflix' || snapshot.media || !snapshot.selectedMatch) return;
+    if (!/^[0-9]{1,12}$/.test(String(event?.watchId)) || event.playing !== true || nfAutoTried.has(event.watchId)) return;
+    nfAutoTried.add(event.watchId);
+    try { await associateNetflix(snapshot.selectedMatch, event.watchId, event); say('Título associado automaticamente: os outros abrem o mesmo filme sozinhos. Se não for o filme certo, abra o correto e use "Usar este título na sala".'); }
+    catch { nfAutoTried.delete(event.watchId); say('Não foi possível associar o título automaticamente. Use "Associar à sala" no painel da Netflix.'); }
+  }
   window.duoDesktop?.onNetflixEvent?.((event) => {
     if (!event || !['detected', 'play', 'pause', 'seek', 'status'].includes(event.type)) return;
     desktopNetflixState = event;
+    if (event.type === 'status') noteNetflixHealth(event.status);
+    void autoAssociateNetflix(event);
     if (client && snapshot?.status === 'active' && snapshot.platform === 'netflix') {
       uiVersion++; renderStage(); renderPanel();
       const media = snapshot.media;
@@ -503,6 +555,7 @@
     get snapshot() { return snapshot; },
     preparePlatform(platform) {
       if (!['youtube', 'netflix'].includes(platform)) return;
+      if (platform === 'netflix' && netflixLockReason()) { say(netflixLockReason()); return; }
       preferredPlatform = platform;
       if (client?.role === 'host' && snapshot?.status === 'active' && snapshot.platform !== platform) {
         void run(async () => { await client.selectPlatform(platform); apply(client.snapshot); });
@@ -744,7 +797,11 @@
     snapOffset = (Number.isFinite(s.serverTime) ? s.serverTime : Date.now()) - Date.now();
     syncEffects(s);
     updateCinema(s); updateAmbient(s);
-    window.duoDesktop?.setPlatform(s.status === 'active' ? s.platform : null);
+    // Sala em Netflix com a trava ligada: a janela da Netflix não abre (se já estava aberta nesta sessão, segue; só o aviso aparece)
+    const nfBlocked = s.status === 'active' && s.platform === 'netflix' && !nfOpened && !!netflixLockReason();
+    if (s.status === 'active' && s.platform === 'netflix' && !nfBlocked) nfOpened = true;
+    if (s.status !== 'active') { nfOpened = false; nfAutoTried.clear(); }
+    window.duoDesktop?.setPlatform(s.status === 'active' && !nfBlocked ? s.platform : null);
     window.duoDesktop?.syncNetflix(s.status === 'active' && s.platform === 'netflix' ? {
       status: s.status, platform: s.platform, code: s.code, you: s.you, revision: s.revision,
       selectedMatch: s.selectedMatch, media: s.media?.provider === 'netflix' ? s.media : null,
@@ -1165,10 +1222,11 @@
     });
   }
   function renderChips() {
-    paint($('#rv3-chips'), [snapshot.platform, client.role], (el) => {
+    paint($('#rv3-chips'), [snapshot.platform, client.role, netflixLockReason()], (el) => {
       for (const [key, label] of Object.entries(shortPlatform)) {
         const chip = button(key === 'youtube' ? `@play ${label}` : label, 'platform', { 'data-platform': key, 'aria-pressed': String(snapshot.platform === key), id: `rv3-chip-${key}` });
         if (client.role !== 'host') { chip.disabled = true; chip.title = `${nameFor('host')} escolhe a plataforma`; }
+        else if (key === 'netflix' && snapshot.platform !== 'netflix' && netflixLockReason()) { chip.disabled = true; chip.title = netflixLockReason(); }
         el.append(chip);
       }
       el.append(make('span', !snapshot.platform ? (client.role === 'host' ? 'Escolha uma plataforma para começar' : `${nameFor('host')} escolhe a plataforma`) : snapshot.platform === 'youtube' ? 'YouTube pronto · demais serviços: catálogo' : (snapshot.platform === 'netflix' ? (window.duoDesktop ? 'Netflix nesta janela · controle conjunto em desenvolvimento' : 'Netflix: match e sincronização experimental (Chrome/Edge com a extensão de teste)') : `${shortPlatform[snapshot.platform]}: catálogo e match por enquanto · a integração está em desenvolvimento`), { class: 'rv3-hint' }));
@@ -1352,6 +1410,7 @@
     const s = snapshot, b = nfState(), matched = s.selectedMatch ? itemFor(s.selectedMatch) : null, bridgeOk = !!nfBridge;
     if (window.duoDesktop) {
       el.append(make('h4', 'Netflix no Dalari Cine'), make('p', 'Cada pessoa usa sua própria conta nesta janela. Áudio, legendas e volume do filme são escolhas individuais. A voz da sala tem seu próprio controle.'));
+      if (netflixLockReason()) { el.append(make('p', netflixLockReason(), { class: 'online-msg', role: 'alert' })); if (!nfOpened) return; }
       if (!matched) { el.append(make('p', 'Votem em um título na aba Match. A Netflix pode ficar aberta enquanto vocês decidem.')); return; }
       el.append(make('p', `Escolha da sala: ${matched.title}.`));
       if (!s.media) {
@@ -1364,6 +1423,10 @@
         } else el.append(make('p', 'Aguardando a Netflix abrir um título em /watch/…', { class: 'rv3-hint' }));
       } else {
         el.append(make('p', `Título associado: /watch/${s.media.watchId}. O Dalari Cine abre esse link para os demais e compartilha play, pausa e posição.`));
+        const other = desktopNetflixState?.watchId;
+        if (client.role === 'host' && other && other !== s.media.watchId) {
+          el.append(make('p', `Você abriu outro título (/watch/${other}).`, { class: 'rv3-hint' }), button('Usar este título na sala', 'nf-desktop-swap', { class: 'rb-main', 'data-watch': other }));
+        }
         if (desktopNetflixState?.status === 'autoplay-blocked') el.append(make('p', 'Clique em Reproduzir no player da Netflix neste computador para liberar o áudio.', { class: 'online-msg', role: 'status' }));
         else if (desktopNetflixState?.status === 'player-failed') el.append(make('p', 'O player não aceitou o controle automático. Use os controles da Netflix e teste novamente.', { class: 'online-msg', role: 'status' }));
         else if (desktopNetflixState?.status === 'seek-unavailable') el.append(make('p', 'Não foi possível alinhar o ponto do filme automaticamente. Play e pausa seguem sincronizados; avance pela barra da Netflix até o mesmo ponto.', { class: 'online-msg', role: 'status' }));
@@ -1911,6 +1974,7 @@
     if (act === 'invite') return void run(async () => { const d = await client.newInvite(); invite = d.invite; inviteShown = false; inviteManual = false; render(); say('Novo convite gerado.'); });
     if (act === 'platform') return void run(async () => {
       if (b.dataset.platform === snapshot.platform) return;
+      if (b.dataset.platform === 'netflix') { await refreshNetflixFlag(true); if (netflixLockReason()) { say(netflixLockReason()); return; } }
       await client.selectPlatform(b.dataset.platform); searchQuery = ''; uiVersion++; apply(client.snapshot);
     });
     if (act === 'tab') { tab = b.dataset.tab; renderTabs(); renderPanel(); return; }
@@ -1958,6 +2022,12 @@
       }
       apply(client.snapshot);
       say('Título associado. Play e pausa passam a acompanhar a sala.');
+    });
+    if (act === 'nf-desktop-swap') return void run(async () => {
+      const watchId = b.dataset.watch;
+      if (!window.duoDesktop || client?.role !== 'host' || !snapshot?.selectedMatch || !/^[0-9]{1,12}$/.test(watchId) || desktopNetflixState?.watchId !== watchId) return;
+      await associateNetflix(snapshot.selectedMatch, watchId, desktopNetflixState);
+      say('Título trocado. Os outros abrem o novo filme sozinhos.');
     });
     if (act === 'nf-sync') { try { nfLink.sync(Number(b.dataset.tab), b.dataset.watch); say('Sincronizando esta aba da Netflix.'); } catch { say('Essa aba não é o título da sala.'); } return; }
     if (act === 'nf-unsync') { nfLink.unsync(); say('Sincronização desligada nesta aba.'); return; }

@@ -181,6 +181,16 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000), 
     return json(r.body, r.status, CORS);
   }
 
+  // Chave do criador para travar recursos sem publicar versão nova: NETFLIX_OFF=1 desliga a Netflix na sala (NETFLIX_OFF_MESSAGE é o aviso, opcional).
+  // Pelo terminal: `npx wrangler secret put NETFLIX_OFF` (valor 1) liga a trava; `npx wrangler secret delete NETFLIX_OFF` desliga. Sem rede, o app não trava nada.
+  if (url.pathname === '/v1/flags') {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (request.method !== 'GET') return json({ ok: false }, 405, CORS);
+    const off = String(env.NETFLIX_OFF || '').trim() === '1';
+    const message = typeof env.NETFLIX_OFF_MESSAGE === 'string' ? env.NETFLIX_OFF_MESSAGE.replace(/[^\p{L}\p{N} .,:;!?()\-–/]/gu, ' ').trim().slice(0, 200) : '';
+    return json({ ok: true, netflix: !off, ...(off && message ? { message } : {}) }, 200, { ...CORS, 'Cache-Control': 'no-store' });
+  }
+
   // Feedback vindo do app (só quando a pessoa clica em Enviar): vai direto ao Telegram do criador, sem ser guardado
   if (url.pathname === '/v1/feedback') {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });

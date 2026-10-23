@@ -53,15 +53,25 @@ function report(type, video, status) {
   const positionSec = video && Number.isFinite(video.currentTime) ? video.currentTime : 0;
   ipcRenderer.send('duotela:netflix-report', { type, watchId: id, positionSec, playing: !!video && !video.paused && !video.ended, status });
 }
-// Ir a um ponto do filme: o player da Netflix dá erro (M7375) quando o <video>.currentTime é atribuído de fora, então a busca
-// é pedida ao player interno do próprio site (o mesmo que a barra de progresso usa). Roda no mundo da página; só passa um número.
-// Sem esse player não se força nada: play e pausa continuam, e a posição fica por conta de cada um (aviso "seek-unavailable").
-async function seekViaNetflix(sec) {
-  if (!webFrame || typeof webFrame.executeJavaScript !== 'function' || !Number.isFinite(sec)) return false;
-  const ms = Math.round(Math.max(0, Math.min(86400, sec)) * 1000);
+// Comandos ao player: o player da Netflix dá erro (M7375) quando o <video>.currentTime é atribuído de fora, e também quando há
+// saltos muito seguidos; por isso play, pausa e busca são pedidos ao player interno do próprio site (o mesmo que a barra de
+// progresso usa), com intervalo mínimo entre buscas. Roda no mundo da página e só passa uma ação fixa e um número.
+// Sem esse player não se força a posição: play e pausa caem no <video>, e a posição fica por conta de cada um ("seek-unavailable").
+const SEEK_GAP_MS = 2500;
+let lastApiSeekAt = 0;
+let retryTimer = null;
+const ACTIONS = { probe: 'return typeof p.seek === "function" && typeof p.play === "function" && typeof p.pause === "function";', play: 'p.play(); return true;', pause: 'p.pause(); return true;' };
+async function viaPlayer(action, sec) {
+  if (!webFrame || typeof webFrame.executeJavaScript !== 'function') return false;
+  let body = ACTIONS[action];
+  if (action === 'seek') {
+    if (!Number.isFinite(sec)) return false;
+    body = 'p.seek(' + Math.round(Math.max(0, Math.min(86400, sec)) * 1000) + '); return true;';
+  }
+  if (!body) return false;
   const code = '(() => { try { const vp = window.netflix && window.netflix.appContext && window.netflix.appContext.state.playerApp.getAPI().videoPlayer;'
     + ' if (!vp) return false; const ids = vp.getAllPlayerSessionIds(); if (!ids || !ids.length) return false;'
-    + ' const p = vp.getVideoPlayerBySessionId(ids[ids.length - 1]); if (!p || typeof p.seek !== "function") return false; p.seek(' + ms + '); return true; } catch (e) { return false; } })()';
+    + ' const p = vp.getVideoPlayerBySessionId(ids[ids.length - 1]); if (!p) return false; ' + body + ' } catch (e) { return false; } })()';
   try { return (await webFrame.executeJavaScript(code)) === true; } catch { return false; }
 }
 function localEvent(type) {
@@ -107,19 +117,23 @@ async function applyRoom() {
   const state = room;
   const video = player();
   if (!state?.media || !state.playback || !video || state.media.watchId !== watchId() || applying || state.playback.version <= lastVersion) return;
+  const pb = state.playback;
+  const elapsed = pb.state === 'playing' ? Math.max(0, Math.min(14400, (state.serverTime - pb.updatedAt) / 1000)) : 0;
+  const target = Math.max(0, Math.min(86400, pb.positionSec + elapsed));
+  // "Sincronizar agora": na primeira vez que vê uma nova sincronização, vai exatamente ao ponto combinado (sem a folga de 2,5 s)
+  const freshSync = Number(pb.syncId) > 0 && pb.syncId !== lastSyncId;
+  const needSeek = Number.isFinite(video.currentTime) && (freshSync || Math.abs(video.currentTime - target) > 2.5);
+  // saltos muito seguidos são bloqueados pela Netflix: espera o intervalo e aplica o estado mais recente
+  const wait = needSeek && !freshSync ? SEEK_GAP_MS - (Date.now() - lastApiSeekAt) : 0;
+  if (wait > 0) { clearTimeout(retryTimer); retryTimer = setTimeout(() => { void applyRoom(); }, wait + 50); return; }
   applying = true;
   suppressedUntil = Date.now() + 2000;
   try {
-    const pb = state.playback;
-    const elapsed = pb.state === 'playing' ? Math.max(0, Math.min(14400, (state.serverTime - pb.updatedAt) / 1000)) : 0;
-    const target = Math.max(0, Math.min(86400, pb.positionSec + elapsed));
     remote = { at: Date.now(), target, playing: pb.state === 'playing' };
-    // "Sincronizar agora": na primeira vez que vê uma nova sincronização, vai exatamente ao ponto combinado (sem a folga de 2,5 s)
-    const freshSync = Number(pb.syncId) > 0 && pb.syncId !== lastSyncId;
     let seekFailed = false;
-    if (Number.isFinite(video.currentTime) && (freshSync || Math.abs(video.currentTime - target) > 2.5)) seekFailed = !(await seekViaNetflix(target));
-    if (pb.state === 'playing' && video.paused) await video.play();
-    if (pb.state === 'paused' && !video.paused) video.pause();
+    if (needSeek) { lastApiSeekAt = Date.now(); seekFailed = !(await viaPlayer('seek', target)); }
+    if (pb.state === 'playing' && video.paused && !(await viaPlayer('play'))) await video.play();
+    if (pb.state === 'paused' && !video.paused && !(await viaPlayer('pause'))) video.pause();
     if (room === state) { lastVersion = pb.version; if (freshSync) lastSyncId = pb.syncId; }
     report('status', video, seekFailed ? 'seek-unavailable' : 'applied');
   } catch (error) {
@@ -137,3 +151,27 @@ ipcRenderer.on('duotela:netflix-state', (_event, state) => {
   void applyRoom();
 });
 setInterval(attach, 700);
+
+// Saúde do player: em /watch, avisa se o player interno da Netflix não aparece (dois testes seguidos, ~10 s com o vídeo na tela)
+// ou se a página mostra um código de erro da Netflix. Só estas palavras de status saem daqui: "api-ok", "api-missing" e
+// "netflix-error:<código>". O texto da página só é lido para achar o código (letra + 4 dígitos); nada dele é enviado além do código.
+const ERROR_CODE = /\b([MF]\d{4}(?:-\d{3,5}){0,2})\b/;
+let healthMisses = 0, healthLast = null, noVideoTicks = 0;
+async function healthTick() {
+  if (!watchId()) { healthMisses = 0; healthLast = null; noVideoTicks = 0; return; }
+  const video = player();
+  if (!video) {
+    if (++noVideoTicks >= 2) {
+      const text = String(document.body && document.body.innerText || '').slice(0, 4000);
+      const code = /erro|error|problem/i.test(text) ? ERROR_CODE.exec(text)?.[1] : null;
+      if (code && healthLast !== 'netflix-error:' + code) { healthLast = 'netflix-error:' + code; report('status', null, healthLast); }
+    }
+    return;
+  }
+  noVideoTicks = 0;
+  const ok = await viaPlayer('probe');
+  healthMisses = ok ? 0 : healthMisses + 1;
+  const next = ok ? 'api-ok' : healthMisses >= 2 ? 'api-missing' : healthLast;
+  if (next && next !== healthLast) { healthLast = next; report('status', video, next); }
+}
+setInterval(healthTick, 5000);

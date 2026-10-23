@@ -4,6 +4,7 @@ const { createRoomService } = require('./room-service.js');
 const { loadTmdbCatalog } = require('./tmdb-catalog.js');
 const { loadRemoteCatalog } = require('./catalog-source.js');
 const { createRemoteIce } = require('./remote-ice.js');
+const { createRemoteFlags } = require('./remote-flags.js');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
@@ -61,9 +62,11 @@ async function start() {
   // Retransmissor (TURN) do serviço do criador, só como reserva quando a conexão direta não abre; DUOTELA_NO_RELAY=1 desliga
   const origin = statsOrigin();
   const remoteIce = origin && process.env.DUOTELA_NO_RELAY !== '1' ? createRemoteIce({ url: origin + '/v1/ice' }) : null;
-  service = createRoomService({ remoteIce, allowedOrigins, allowNonLoopback: process.env.ALLOW_NON_LOOPBACK === '1', servePrototype: true, catalog, catalogSource: catalog ? 'tmdb' : 'demo', youtubeApiKey: process.env.YOUTUBE_DATA_API_KEY || null, iceServers: ice.iceServers, turn: ice.turn, statsOrigin: statsOrigin(), ...(process.env.DUOTELA_RELAY_ORIGINS ? { relayOrigins: process.env.DUOTELA_RELAY_ORIGINS.split(',').map((x) => x.trim()).filter(Boolean) } : {}) });
+  const remoteFlags = origin ? createRemoteFlags({ url: origin + '/v1/flags' }) : null;
+  service = createRoomService({ remoteIce, remoteFlags, allowedOrigins, allowNonLoopback: process.env.ALLOW_NON_LOOPBACK === '1', servePrototype: true, catalog, catalogSource: catalog ? 'tmdb' : 'demo', youtubeApiKey: process.env.YOUTUBE_DATA_API_KEY || null, iceServers: ice.iceServers, turn: ice.turn, statsOrigin: statsOrigin(), ...(process.env.DUOTELA_RELAY_ORIGINS ? { relayOrigins: process.env.DUOTELA_RELAY_ORIGINS.split(',').map((x) => x.trim()).filter(Boolean) } : {}) });
   const a = await service.listen(port, host);
   remoteIce?.warm();
+  remoteFlags?.warm();
   console.log(`Dalari Cine room service em http://${a.address}:${a.port} (HTTP puro, sem TLS: só desenvolvimento local).`);
   console.log(`Voz: ${ice.iceServers.length} servidor(es) STUN/ICE${ice.turn ? ' + TURN com credenciais temporárias' : ', sem TURN (algumas redes não conectarão a voz)'}.`);
   console.log(`Interface de teste: http://127.0.0.1:${a.port}/`);

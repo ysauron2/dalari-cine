@@ -212,3 +212,15 @@ O segundo comando abre `http://127.0.0.1:8790/` (senha `teste`) com dados de exe
 - Qualquer pessoa pode enviar avisos falsos ao endereço público (o app é de código aberto, não há como esconder o formato). O Worker só aceita o formato exato e limita a taxa por IP (em memória, melhor esforço), mas os números não são à prova de fraude.
 - Os números somam só quem aceitou enviar estatísticas: representam uma parte do uso real.
 - A Cloudflare, como provedora do serviço, vê o IP de quem conecta; o Worker não o grava.
+
+## Chave para travar a Netflix (`/v1/flags`)
+
+Se a Netflix mudar o player e a sincronização quebrar, dá para desligar a Netflix na sala de todo mundo sem publicar versão nova:
+
+```powershell
+npx wrangler secret put NETFLIX_OFF            # valor: 1  (liga a trava)
+npx wrangler secret put NETFLIX_OFF_MESSAGE    # opcional: o aviso que aparece no app (até 200 caracteres)
+npx wrangler secret delete NETFLIX_OFF         # desliga a trava
+```
+
+Os apps consultam a chave ao abrir e a cada 10 minutos. Sem rede ou sem resposta, o app não trava nada (se a chave estava ligada, ela vale por no máximo 1 hora sem confirmação nova).

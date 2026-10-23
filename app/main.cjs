@@ -386,7 +386,7 @@ function createWindow(duoUrl) {
     if (routeWatch !== report.watchId) return;
     if (!['detected', 'play', 'pause', 'seek', 'status'].includes(report.type)) return;
     if (report.type !== 'detected' && report.type !== 'status' && (!netflixRoomState?.media || report.watchId !== netflixRoomState.media.watchId || !Number.isFinite(report.positionSec) || report.positionSec < 0 || report.positionSec > 86400)) return;
-    duoView.webContents.send('duotela:netflix-event', { type: report.type, watchId: report.watchId, positionSec: report.positionSec, playing: report.playing === true, status: typeof report.status === 'string' ? report.status.slice(0, 40) : undefined });
+    duoView.webContents.send('duotela:netflix-event', { type: report.type, watchId: report.watchId, positionSec: report.positionSec, playing: report.playing === true, status: typeof report.status === 'string' ? report.status.replace(/[^A-Za-z0-9:_-]/g, '').slice(0, 40) : undefined });
   };
   ipcMain.on('duotela:netflix-report', relayNetflixEvent);
   const toolbarSession = session.fromPartition('duotela-toolbar-spike');
