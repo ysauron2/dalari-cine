@@ -75,7 +75,7 @@ Não existe conta nem login: a conexão é direta entre os aparelhos. O código 
 ## Privacidade
 
 - Sem cadastro, sem login, sem anúncios. Nome de exibição, preferências e histórico ficam só no seu computador.
-- A voz e o estado da sala vão **direto** entre os aparelhos, criptografados. Não passam por servidor do Dalari Cine, porque não existe um.
+- A voz e o estado da sala vão **direto** entre os aparelhos, criptografados. Não passam por servidor do Dalari Cine, porque não existe um. Só quando a conexão direta é impossível (redes que bloqueiam), os mesmos dados cifrados passam pelo retransmissor da Cloudflare, que não consegue lê-los.
 - O **catálogo de títulos** é baixado de um serviço do criador (Cloudflare, que guarda a chave do TMDB). O pedido não leva nada seu, mas a Cloudflare vê o endereço de rede, como em qualquer site. Sem internet, o app usa a lista que vem junto.
 - **Estatísticas anônimas são opcionais** e só são enviadas se você aceitar na primeira abertura (dá para mudar em Perfil). O que é enviado, e o que nunca é, está explicado no app e em [PRIVACIDADE.md](PRIVACIDADE.md). Nunca vão nome, o que você assiste, conversas, códigos ou participantes das salas.
 - O app não lê sua senha da Netflix: o login acontece na própria página da Netflix, dentro da janela do app.
@@ -84,7 +84,7 @@ Não existe conta nem login: a conexão é direta entre os aparelhos. O código 
 
 - **Netflix:** só funciona nas versões oficiais, assinadas com a assinatura de conteúdo protegido da Castlabs (VMP). Se você compilar por conta própria sem essa assinatura, a Netflix dá erro `E100`. A sincronização da Netflix ainda está em teste e pode mudar se a Netflix alterar o player; use uma conta sua e respeite os termos do serviço.
 - **Prime Video e Crunchyroll** estão sendo integrados ao app. Por enquanto só há catálogo e match (decidir o que assistir), sem reprodução sincronizada.
-- **Voz entre redes difíceis** (CGNAT, redes corporativas ou de universidade) pode não conectar: ainda não há servidor TURN embutido.
+- **Voz e sala entre redes difíceis** (CGNAT, redes corporativas ou de universidade): quando a conexão direta não abre, o app usa um **retransmissor (TURN) da Cloudflare**, com os dados sempre cifrados. Ele depende do serviço do criador estar no ar; sem ele, só funciona a conexão direta.
 - **macOS:** o pacote é gerado e verificado automaticamente, mas ainda foi pouco testado num Mac real.
 - O instalador não é assinado pela Microsoft/Apple (ver avisos acima).
 

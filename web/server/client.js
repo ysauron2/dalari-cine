@@ -21,7 +21,10 @@ class DuoRoomClient {
   #base; #fetch; #token = null; #role = null; #code = null;
   #seq = 0; #queue = Promise.resolve(); #revision = 0; #running = false; #abort = null; #snapshot = null;
 
-  constructor({ serviceUrl, allowInsecure = false, fetchImpl } = {}) {
+  #requestTimeoutMs = 20000;
+
+  constructor({ serviceUrl, allowInsecure = false, fetchImpl, requestTimeoutMs } = {}) {
+    if (Number.isFinite(requestTimeoutMs) && requestTimeoutMs > 0) this.#requestTimeoutMs = requestTimeoutMs;
     const u = new URL(serviceUrl);
     if (u.search || u.hash || u.username || u.password) throw new Error('serviceUrl não pode ter query, fragmento ou credenciais.');
     if (u.protocol !== 'https:' && !(u.protocol === 'http:' && (LOOPBACK.has(u.hostname) || allowInsecure))) {
@@ -69,7 +72,9 @@ class DuoRoomClient {
       if (!this.#token) throw new Error('Sem sessão.');
       headers.Authorization = 'Bearer ' + this.#token;
     }
-    const res = await this.#fetch(this.#base + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+    // a espera longa (/state?) tem o próprio sinal; todo o resto desiste depois de #requestTimeoutMs
+    const timed = !signal && !path.includes('/state?') && typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(this.#requestTimeoutMs) : undefined;
+    const res = await this.#fetch(this.#base + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: signal || timed, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
     let data = null;
     try { data = await res.json(); } catch (e) { /* corpo inválido */ }
     if (!res.ok || !data || data.ok !== true) throw new RoomError(res.status, data && typeof data.error === 'string' ? data.error : 'bad_response');

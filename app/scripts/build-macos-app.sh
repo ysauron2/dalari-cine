@@ -57,6 +57,9 @@ ditto "$PREVIEW/extension-bridge/src" "$RES/preview/extension-bridge/src"
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string br.dalari.cine" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string dalari" "$PLIST"
+# macOS 15 ou mais novo pede permissao para o app falar com outros aparelhos da rede local; a conexao direta usa isso quando as duas pessoas estao na mesma casa
+/usr/libexec/PlistBuddy -c "Delete :NSLocalNetworkUsageDescription" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :NSLocalNetworkUsageDescription string 'O Dalari Cine usa a rede local para conectar direto com a outra pessoa quando voces estao na mesma casa.'" "$PLIST"
 # Ícone do Dalari Cine no Dock e no Finder (gerado por scripts/make-icons.cjs)
 cp "$ROOT/assets/icon.icns" "$APP/Contents/Resources/DalariCine.icns"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile DalariCine.icns" "$PLIST"

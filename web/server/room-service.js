@@ -54,6 +54,7 @@ const DEFAULTS = {
   servePrototype: false,         // serve a interface no mesmo origin durante desenvolvimento local
   youtubeApiKey: null,           // opcional; fica somente no processo Node
   iceServers: [],                // STUN/TURN estáticos para a voz: [{urls, username?, credential?}]
+  remoteIce: null,                   // { get(): Promise<lista> } com servidores TURN temporários (veja remote-ice.js); null = só STUN
   statsOrigin: '',                   // origem do serviço de estatísticas anônimas (opcional); entra no connect-src da CSP
   relayOrigins: ['https://ntfy.sh'], // serviços de encontro (código curto) que a página pode contatar: entram no connect-src da CSP
   turn: null,                    // {urls, secret, ttlSec?}: credenciais TURN temporárias (REST/HMAC, coturn use-auth-secret)
@@ -440,6 +441,11 @@ function createRoomService(userOpts = {}) {
   // ---------- ICE (STUN/TURN) para a voz ----------
   // Entregue só a participantes autenticados. Com `turn`, gera usuário/credencial temporários (padrão coturn
   // use-auth-secret): o segredo do TURN nunca sai do processo Node e as credenciais expiram sozinhas.
+  async function iceListFor(role) {
+    const base = iceServersFor(role);
+    if (!opts.remoteIce) return base;
+    try { return base.concat(await opts.remoteIce.get()); } catch { return base; }
+  }
   function iceServersFor(role) {
     const list = opts.iceServers.map((s) => ({ ...s }));
     if (opts.turn) {
@@ -1038,7 +1044,14 @@ function createRoomService(userOpts = {}) {
         if (url.search) throw new HttpError(400, 'bad_query');
         const { room, role } = authedRoom(req, m[1]);
         if (role !== 'host' && room.members[role]?.state !== 'approved') throw new HttpError(403, 'not_approved');   // pendente não recebe TURN
-        return sendJson(res, 200, { ok: true, iceServers: iceServersFor(role) }, cors);
+        return sendJson(res, 200, { ok: true, iceServers: await iceListFor(role) }, cors);
+      }
+      if (p === '/v1/local/ice') {                      // só no próprio computador: o convidado ainda não tem sala para pedir a lista
+        route = '/v1/local/ice';
+        if (req.method !== 'GET') throw new HttpError(405, 'method_not_allowed');
+        if (!opts.servePrototype || !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress)) throw new HttpError(403, 'local_only');
+        if (url.search) throw new HttpError(400, 'bad_query');
+        return sendJson(res, 200, { ok: true, iceServers: await iceListFor('guest') }, { ...cors, 'Cache-Control': 'no-store' });
       }
       if ((m = /^\/v1\/rooms\/(\d{6})\/youtube\/search$/.exec(p))) {
         route = '/v1/rooms/:code/youtube/search';

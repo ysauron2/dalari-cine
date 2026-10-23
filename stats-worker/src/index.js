@@ -8,6 +8,7 @@ import { DASHBOARD_HTML } from './dashboard.js';
 import { runScheduled, sendTelegram, handleTelegramWebhook, notifyActivity } from './alerts.js';
 import { handleFeedback } from './feedback.js';
 import { readCatalog, refreshCatalog } from './catalog.js';
+import { handleIce } from './ice.js';
 
 const ENUMS = {
   os: ['win', 'mac', 'linux', 'other'],
@@ -170,6 +171,14 @@ export async function handle(request, env, now = Math.floor(Date.now() / 1000), 
     try { c = await readCatalog(env.DB); } catch { return json({ ok: false, error: 'storage' }, 503, CORS); }
     if (!c) { await after(ctx, refreshCatalog(env, now).catch(() => {})); return json({ ok: false, error: 'not_ready' }, 503, CORS); }
     return new Response(JSON.stringify({ v: 1, updatedAt: c.updatedAt, titles: c.titles }), { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=3600', ...CORS } });
+  }
+
+  // Credenciais TURN temporárias (retransmissor da Cloudflare, só para quando a conexão direta não abre). O token da chave nunca sai do Worker.
+  if (url.pathname === '/v1/ice') {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (request.method !== 'GET') return json({ ok: false }, 405, CORS);
+    const r = await handleIce(request, env, now);
+    return json(r.body, r.status, CORS);
   }
 
   // Feedback vindo do app (só quando a pessoa clica em Enviar): vai direto ao Telegram do criador, sem ser guardado

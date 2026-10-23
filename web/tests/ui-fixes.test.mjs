@@ -29,3 +29,14 @@ test('modo cinema avisa quando ele age: só ao dar play', () => {
   const ui = read('../server/online-ui.js');
   assert.ok(ui.includes("'@moon Modo cinema: ligado (age ao dar play)'"));
 });
+
+test('Perfil → Aparência: o seletor segue o mesmo estilo dos campos do Perfil (escuro, borda e raio iguais, seta própria)', () => {
+  const html = read('../index.html');
+  const sel = /\.profile-card select\{([^}]*)\}/.exec(html)?.[1] || '';
+  const inp = /\.profile-card input\{([^}]*)\}/.exec(html)?.[1] || '';
+  for (const part of ['border:1px solid #51596b', 'border-radius:11px', 'color:#fff', 'max-width:400px']) assert.ok(sel.includes(part) && inp.includes(part), part);
+  assert.ok(sel.includes('background:#101622 url("data:image/svg+xml') && sel.includes('appearance:none'));
+  assert.ok(html.includes('#profile-appearance h3{margin:0 0 14px;'));
+  assert.ok(html.includes('.profile-card select option{background:#101622;color:#fff}'));
+  assert.ok(html.includes('#motion-note{margin:10px 0 0;'));
+});

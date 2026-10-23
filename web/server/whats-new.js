@@ -12,6 +12,10 @@
   const BASELINE = '0.3.1';          // quem nunca viu a janela é tratado como estando nesta versão
   // [ícone, título, texto curto]. Do mais novo para o mais antigo dentro de cada versão.
   const NEWS = {
+    '0.4.1': [
+      ['\u{1F310}', 'Conexão entre redes diferentes', 'Quando a conexão direta não abre (Mac e Windows em redes diferentes, 4g, redes fechadas), o app passa a usar um retransmissor seguro e a sala conecta.'],
+      ['\u{1F6AA}', 'Sair e fechar a sala sempre funcionam', 'Corrigido o travamento ao fechar a sala: agora ela fecha e o painel some, mesmo sem internet.'],
+    ],
     '0.4.0': [
       ['\u{1F39E}️', 'Movimento sob o seu controle', 'Em Perfil → Aparência você escolhe Completo, Reduzido ou Desligado. As reações voltam a aparecer mesmo com o "reduzir movimento" do sistema ligado.'],
       ['\u{1F524}', 'Base visual nova', 'A fonte Inter agora vem junto com o app e há um conjunto de cores e medidas único, preparando a nova tela inicial.'],

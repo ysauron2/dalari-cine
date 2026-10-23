@@ -181,6 +181,22 @@ npx wrangler deploy
 
 Como funciona: a cada 30 minutos o Worker confere se o catálogo está em dia. O plano grátis da Cloudflare só permite cerca de 50 chamadas externas por execução, então os detalhes de cada título (duração, trailer, onde assistir) são buscados aos poucos e guardados; em 2 ou 3 rodadas o catálogo de 60 títulos fica completo, e depois é renovado uma vez por dia (detalhes com mais de 7 dias são refeitos). Só entram títulos com **assinatura ou grátis confirmados no Brasil**. Se o catálogo ficar parado por mais de 2 dias, o resumo do dia no Telegram avisa.
 
+## Retransmissor TURN (conexão entre redes difíceis)
+
+O Worker entrega ao app **credenciais temporárias** do Cloudflare Realtime TURN em `GET /v1/ice`. O app só usa o retransmissor quando a conexão direta entre as duas pessoas não abre (redes que bloqueiam, CGNAT); os dados continuam cifrados.
+
+1. No painel da Cloudflare: **Realtime → TURN Server → Create**. Anote o **Turn Token ID** e o **API Token** (só aparece uma vez).
+2. Guarde os dois como segredos (a digitação fica oculta):
+
+```powershell
+npx wrangler secret put TURN_KEY_ID
+npx wrangler secret put TURN_KEY_API_TOKEN
+```
+
+3. Publique: `npx wrangler deploy`.
+
+Custo e proteção: a Cloudflare cobra o tráfego que **sai** do TURN (1 000 GB grátis; depois US$ 0,05/GB). As credenciais valem 4 horas, cada endereço pode pedir no máximo 30 por hora e o Worker emite no máximo 3 000 por dia (contador `ice_issued`). O token da chave nunca vai para o app.
+
 ## Testar sem Cloudflare
 
 ```powershell

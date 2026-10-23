@@ -66,3 +66,9 @@ test('instaladores: o Windows registra dalari:// só para o usuário (e remove a
   assert.match(mac, /CFBundleURLTypes:0:CFBundleURLSchemes:0 string dalari/);
   assert.match(mac, /CFBundleURLName string br\.dalari\.cine/);
 });
+
+test('macOS: o app declara por que usa a rede local (permissão do sistema para a conexão direta na mesma casa)', () => {
+  const mac = read('scripts', 'build-macos-app.sh');
+  assert.match(mac, /Add :NSLocalNetworkUsageDescription string '/);
+  assert.match(mac, /Delete :NSLocalNetworkUsageDescription/);
+});

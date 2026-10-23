@@ -71,6 +71,7 @@
 
     /* cabeçalho */
     .rv3{display:grid;gap:18px;min-width:0}
+    .rv3[hidden]{display:none}
     .rv3-head{display:flex;align-items:flex-start;gap:14px 18px;flex-wrap:wrap}
     .rv3-titles{flex:1 1 260px;min-width:0;display:grid;grid-template-columns:max-content max-content;column-gap:18px;align-items:center}
     .rv3-titles h3{font-size:clamp(26px,3vw,34px);letter-spacing:-.05em;line-height:1.1}
@@ -453,6 +454,17 @@
     not_in_queue: 'Esse vídeo já saiu da fila.',
   }[e?.code] || null);
   const P2P_ICE = [{ urls: 'stun:stun.l.google.com:19302' }];
+  // Servidores da conexão do convidado: o serviço local junta o STUN com o retransmissor (TURN) temporário, para quando a conexão direta não abre
+  let localIceCache = null;
+  async function localIce() {
+    if (localIceCache && Date.now() < localIceCache.until) return localIceCache.list;
+    try {
+      const res = await fetch(location.origin + '/v1/local/ice', { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(3500) });
+      const d = res.ok ? await res.json() : null;
+      if (d && d.ok && Array.isArray(d.iceServers) && d.iceServers.length) { localIceCache = { list: d.iceServers, until: Date.now() + 5 * 60000 }; return d.iceServers; }
+    } catch { /* sem o serviço: só o STUN */ }
+    return P2P_ICE;
+  }
   let hostLink = null, hostLinks = [], guestLink = null, guestLinkOpen = null, p2pAnswerDraft = '', p2pNote = '';
   // Reconexão automática: se a conexão direta cair, Host e convidado se reencontram sozinhos (código derivado do código original)
   const RC = window.DuoReconnect;
@@ -579,10 +591,12 @@
     }
     return true;
   }
+  const RUN_TIMEOUT_MS = 30000;
+  const withTimeout = (promise, ms, message) => { let t; return Promise.race([promise, new Promise((_, reject) => { t = setTimeout(() => reject(Object.assign(new Error(message), { code: 'timeout' })), ms); })]).finally(() => clearTimeout(t)); };
   async function run(task) {
     if (busy) return;
     busy = true; panel.setAttribute('aria-busy', 'true');
-    try { await task(); } catch (e) { say(friendlyError(e) || (e.code === 'no_titles_on_platform' ? 'O catálogo não tem títulos nesta plataforma. Escolha outra plataforma ou abra um vídeo do YouTube.' : `Não foi possível concluir: ${e.code || e.message || 'erro de rede'}.`)); }
+    try { await withTimeout(task(), RUN_TIMEOUT_MS, 'Demorou demais para responder. Tente de novo.'); } catch (e) { say(friendlyError(e) || (e.code === 'no_titles_on_platform' ? 'O catálogo não tem títulos nesta plataforma. Escolha outra plataforma ou abra um vídeo do YouTube.' : `Não foi possível concluir: ${e.code || e.message || 'erro de rede'}.`)); }
     finally { busy = false; panel.removeAttribute('aria-busy'); }
   }
   function toggleLocal() {
@@ -752,6 +766,16 @@
       render();
     } });
   }
+  // Sair ou fechar a sala SEMPRE funciona: tenta avisar a sala por no máximo 6 s, mas termina localmente de qualquer jeito (erro, sala já fechada, rede caída ou outra ação travada)
+  let exiting = false;
+  async function exitRoom(forEveryone) {
+    if (exiting) return;
+    exiting = true;
+    try { if (client) await withTimeout(forEveryone ? client.closeRoom() : client.leaveRoom(), 6000, 'sem resposta'); } catch { /* o resto da saída é local */ }
+    finally { exiting = false; busy = false; panel.removeAttribute('aria-busy'); }
+    disconnect();
+    say(forEveryone ? 'Sala fechada.' : 'Você saiu da sala.');
+  }
   function disconnect() {
     window.duoDesktop?.setPlatform(null);
     window.duoDesktop?.syncNetflix(null);
@@ -844,7 +868,7 @@
   async function p2pJoin(text, name) {
     if (!P2P) throw new Error('Este navegador não oferece conexão direta.');
     closeP2P();
-    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => { if (guestLink?.link === link && (st === 'failed' || st === 'closed')) { guestLink.note = 'A conexão direta não abriu. Peça um novo convite ao Host.'; if (!client) render(); } } });
+    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: await localIce(), onState: (st) => { if (guestLink?.link === link && (st === 'failed' || st === 'closed')) { guestLink.note = 'A conexão direta não abriu. Peça um novo convite ao Host.'; if (!client) render(); } } });
     const { answer, extra } = await link.acceptOffer(text);
     const inviteText = typeof extra?.invite === 'string' ? extra.invite : /^\d{6}$/.test(extra?.room || '') ? extra.room + '.' + 'A'.repeat(43) : null;
     if (!inviteText) { link.close(); throw new Error('Este código não identifica uma sala.'); }
@@ -865,7 +889,8 @@
       client = c; voice?.attach(c); guestLinkOpen = link; activeGuestLink = link; guestLink = null;
       apply(await client.getState({ after: 0 })); connect(); say('Pedido enviado. Aguarde a aprovação do Host.');
     } catch (e) {
-      if (short) tel?.event('pair_fail', e.message === 'timeout' ? 'link' : 'join');
+      // "join" só quando a sala respondeu e recusou (erro do servidor da sala); a conexão direta que não abre (ICE) e o tempo esgotado são "link"
+      if (short) tel?.event('pair_fail', e && e.name === 'RoomError' ? 'join' : 'link');
       if (guestLink?.link === link) { guestLink.note = e.message === 'timeout' ? 'A conexão direta não abriu a tempo. Peça um novo código ao Host.' : (friendlyError(e) || 'Não foi possível entrar: ' + (e.code || e.message || 'erro de rede') + '.'); if (!client) render(); }
       link.close();
     }
@@ -877,7 +902,7 @@
     closeP2P();
     tel?.event('pair_try');
     const code = R.normalizeCode(text);
-    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => onGuestLinkState(link, st) });
+    const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: await localIce(), onState: (st) => onGuestLinkState(link, st) });
     guestLink = { link, answer: null, note: '' };
     render(); say('Procurando o Host pelo código…');
     void (async () => {
@@ -915,7 +940,7 @@
       shouldContinue: () => !!client && guestPair === pair && !p2pClosing,
       attempt: async () => {
         const rcode = await R.deriveReconnectCode(pair.code, pair.room);
-        const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: P2P_ICE, onState: (st) => onGuestLinkState(link, st) });
+        const link = new P2P.P2PLink({ onLog: (m) => stats?.log(m), iceServers: await localIce(), onState: (st) => onGuestLinkState(link, st) });
         try {
           const offer = await link.createOffer();
           const { answer } = await R.guestPair({ code: rcode, relay: new R.Relay({ baseUrl: relayBase() }), offer, timeoutMs: 40000 });
@@ -1811,7 +1836,13 @@
     }
     if (e.key === 'Escape' && !menu.hidden) { setMenu(false); menuBtn.focus(); }
   });
-  document.addEventListener('click', (e) => { if (!menu.hidden && !e.target.closest?.('.rv3-menuwrap')) setMenu(false); });
+  // Clique fora do menu fecha o menu. O caminho do clique é lido do evento (e não do alvo): o botão "Fechar sala" é substituído ao pedir a confirmação,
+  // e com o alvo já removido da página o clique parecia "fora" e desfazia a confirmação, então a sala nunca fechava.
+  document.addEventListener('click', (e) => {
+    if (menu.hidden) return;
+    const inside = (typeof e.composedPath === 'function' ? e.composedPath() : []).some((n) => n.classList?.contains('rv3-menuwrap')) || !!e.target.closest?.('.rv3-menuwrap');
+    if (!inside) setMenu(false);
+  });
   inviteDialog.addEventListener('click', (e) => { if (e.target === inviteDialog) inviteDialog.close(); });
   inviteDialog.addEventListener('close', () => { inviteShown = false; inviteManual = false; });
   panel.addEventListener('click', (e) => {
@@ -1848,7 +1879,7 @@
     if (act === 'p2p-connect') return void run(p2pConnect);
     if (act === 'p2p-copy-answer') return void p2pCopy(guestLink?.answer, panel.querySelector('#p2p-answer-out'));
     if (act === 'p2p-cancel') { closeP2P(); render(); say('Conexão direta cancelada.'); return; }
-    if (act === 'leave') return void run(async () => { try { await client.leaveRoom(); } catch { /* sair sempre funciona localmente */ } disconnect(); say('Você saiu da sala.'); });
+    if (act === 'leave') return void exitRoom(false);
     if (act === 'remove') {
       const id = b.dataset.id;
       if (removeArmed !== id) { removeArmed = id; buildMenu(); menu.querySelector(`[data-id="${id}"]`)?.focus(); return; }
@@ -1856,7 +1887,7 @@
     }
     if (act === 'close') {
       if (!closeArmed) { closeArmed = true; buildMenu(); menu.querySelector('button')?.focus(); return; }
-      return void run(async () => { await client.closeRoom(); disconnect(); say('Sala fechada.'); });
+      return void exitRoom(true);
     }
     if (act === 'approve' || act === 'deny') return void run(async () => {
       const id = b.dataset.id, who = snapshot.pendingGuests?.find((p) => p.id === id)?.displayName || 'A pessoa';
