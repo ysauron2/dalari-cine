@@ -262,6 +262,8 @@
     body.room-v3-on:has(#view-room:not([hidden])) .shell{grid-template-columns:78px minmax(0,1fr)}
     body.room-v3-on:has(#view-room:not([hidden])) .topbar,body.room-v3-on:has(#view-room:not([hidden])) #view-room>.view-title{display:none}
     body.room-v3-on:has(#view-room:not([hidden])) .sidebar{padding-inline:13px}
+    body.room-v3-on:has(#view-room:not([hidden])) .sidebar .side-feedback{width:44px;height:44px;padding:0;margin:0 auto 8px;text-align:center;font-size:18px}
+    body.room-v3-on:has(#view-room:not([hidden])) .sidebar .side-feedback .sf-label{display:none}
     body.room-v3-on:has(#view-room:not([hidden])) .brand{justify-content:center}
     body.room-v3-on:has(#view-room:not([hidden])) :is(.brand-copy,.side-label,.nav .label,.couple-card,.side-footer){display:none}
     body.room-v3-on:has(#view-room:not([hidden])) .nav button{justify-content:center}

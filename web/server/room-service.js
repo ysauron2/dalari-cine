@@ -533,6 +533,14 @@ function createRoomService(userOpts = {}) {
     'voice.answer': { roles: ROLES, check: (p) => voiceSignal(p) },
   };
 
+  // Títulos que a sala pode sugerir. O catálogo (TMDB) diz em quais serviços cada título está; no YouTube grátis quase nenhum aparece ali
+  // (o vídeo é escolhido na busca depois do match). Sem nenhum título marcado para o YouTube, vale o catálogo todo: senão a lista fica
+  // vazia e "Me surpreenda" não sugere nada. Nas outras plataformas segue só o que está nela.
+  function providerPool(room) {
+    if (catalogSource !== 'tmdb' || !room.platform) return catalog;
+    const tagged = catalog.filter((item) => item.watchProviders?.includes(PLATFORMS[room.platform]));
+    return tagged.length || room.platform !== 'youtube' ? tagged : catalog;
+  }
   function applyAction(room, role, type, p) {
     if (has(p, 'titleId') && !titleIds.has(p.titleId) && !(type === 'playback' && p.titleId === `youtube:${p.videoId}`) && !((type === 'media.netflix' || type === 'playback.netflix') && isFreeNetflixTitle(p))) throw new HttpError(400, 'unknown_title');
     const eng = TO_ENGINE[role];
@@ -555,7 +563,7 @@ function createRoomService(userOpts = {}) {
         break;
       case 'round.start':
         {
-          const available = catalogSource === 'tmdb' && room.platform ? catalog.filter((item) => item.watchProviders?.includes(PLATFORMS[room.platform])) : catalog;
+          const available = providerPool(room);
           if (!available.length) throw new HttpError(409, 'no_titles_on_platform');
           room.round = MatchEngine.createRound(room.round, available, legacySaved(room), { mode: p.mode, people: approvedSlots(room).map((r) => TO_ENGINE[r]) });
         }
@@ -565,7 +573,7 @@ function createRoomService(userOpts = {}) {
         break;
       case 'round.manual':
         if (MatchEngine.resolveRound(room.round).status === 'match') throw new HttpError(409, 'round_locked');
-        if (catalogSource === 'tmdb' && room.platform && !catalog.find((item) => item.id === p.titleId)?.watchProviders?.includes(PLATFORMS[room.platform])) throw new HttpError(409, 'title_not_on_platform');
+        if (catalogSource === 'tmdb' && room.platform && !providerPool(room).some((item) => item.id === p.titleId)) throw new HttpError(409, 'title_not_on_platform');
         room.round = MatchEngine.manualRound(room.round, catalog, p.titleId, eng, approvedSlots(room).map((r) => TO_ENGINE[r]));
         room.notice = null;
         room.media = null;

@@ -68,3 +68,42 @@ test('app e tela aceitam o título livre e o painel não pede mais votação', (
   const at = ui.indexOf('async function autoAssociateNetflix(event)');
   assert.equal(ui.slice(at, at + 400).includes('selectedMatch'), false, 'a associação automática não depende de match');
 });
+
+test('"Me surpreenda" no YouTube: sem títulos marcados para o YouTube, sugere do catálogo todo; com títulos marcados, só eles; Netflix continua filtrando', async () => {
+  const item = (id, provider) => ({ id: `tmdb:movie:${id}`, title: `Filme ${id}`, kind: 'Filme', service: 'TMDB', genre: 'Drama', minutes: 90,
+    image: 'https://image.tmdb.org/t/p/w342/poster.jpg', description: 'Teste', tags: ['drama'], warmth: 2, adventure: 2,
+    watchProviders: [provider], watchUrl: `https://www.themoviedb.org/movie/${id}/watch?locale=BR` });
+  const make = async (catalog) => {
+    const svc = createRoomService({ now: () => 1_000_000, logger: () => {}, catalog, catalogSource: 'tmdb' });
+    const addr = await svc.listen(0, '127.0.0.1');
+    const url = `http://127.0.0.1:${addr.port}`;
+    const host = new DuoRoomClient({ serviceUrl: url }), guest = new DuoRoomClient({ serviceUrl: url });
+    const created = await host.createRoom(); await guest.joinRoom(created.invite); await host.approveGuest();
+    return { svc, host, guest };
+  };
+  // catálogo real hoje: nenhum título marcado como "YouTube grátis"
+  let r = await make([item(1, 'Netflix'), item(2, 'Prime Video'), item(3, 'Crunchyroll')]);
+  try {
+    await r.host.selectPlatform('youtube');
+    await r.host.startRound('surprise');
+    assert.ok(r.host.snapshot.round.picks.length >= 1, 'sugeriu algo no YouTube');
+    assert.ok(r.host.snapshot.round.picks.every((id) => /^tmdb:movie:[123]$/.test(id)));
+    await r.guest.pickManually(r.host.snapshot.round.picks[0]).catch((e) => { assert.notEqual(e.code, 'title_not_on_platform'); });
+    await r.host.selectPlatform('netflix');
+    await r.host.startRound('surprise');
+    assert.deepEqual(r.host.snapshot.round.picks, ['tmdb:movie:1'], 'na Netflix só o que está nela');
+  } finally { await r.svc.close(); }
+  // se algum título estiver marcado para o YouTube, só ele entra
+  r = await make([item(1, 'Netflix'), item(3, 'YouTube grátis')]);
+  try {
+    await r.host.selectPlatform('youtube');
+    await r.host.startRound('surprise');
+    assert.deepEqual(r.host.snapshot.round.picks, ['tmdb:movie:3']);
+  } finally { await r.svc.close(); }
+  // Netflix sem nenhum título nela continua recusando
+  r = await make([item(2, 'Prime Video')]);
+  try {
+    await r.host.selectPlatform('netflix');
+    await assert.rejects(r.host.startRound('surprise'), (e) => e.code === 'no_titles_on_platform');
+  } finally { await r.svc.close(); }
+});

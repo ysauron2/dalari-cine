@@ -12,6 +12,9 @@
   const BASELINE = '0.3.1';          // quem nunca viu a janela é tratado como estando nesta versão
   // [ícone, título, texto curto]. Do mais novo para o mais antigo dentro de cada versão.
   const NEWS = {
+    '0.4.6': [
+      ['\u{2728}', 'Me surpreenda no YouTube', 'O botão voltou a sugerir títulos quando a sala está no YouTube. Depois do match, é só buscar o vídeo.'],
+    ],
     '0.4.5': [
       ['\u{1F3AC}', 'Netflix sem votação', 'Para assistir na Netflix não precisa mais votar no Match: o Host abre o título, dá play, e a sala adota esse título. O convidado abre o mesmo filme sozinho.'],
     ],

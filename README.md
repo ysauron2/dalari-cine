@@ -8,7 +8,7 @@
 [![Instaladores](https://github.com/ysauron2/dalari-cine/actions/workflows/release.yml/badge.svg)](https://github.com/ysauron2/dalari-cine/actions/workflows/release.yml)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-informational)](LICENSE)
 
-[**Baixar a última versão**](https://github.com/ysauron2/dalari-cine/releases/latest) · [Privacidade](PRIVACIDADE.md) · [Avisos de terceiros](THIRD-PARTY-NOTICES.md)
+[**Site e guia de instalação**](https://ysauron2.github.io/dalari-cine/) · [**Baixar a última versão**](https://github.com/ysauron2/dalari-cine/releases/latest) · [Privacidade](PRIVACIDADE.md) · [Avisos de terceiros](THIRD-PARTY-NOTICES.md)
 
 </div>
 
