@@ -68,7 +68,8 @@ function verifyManifest(bytes, signatureB64, publicKeyB64) {
       || !Number.isSafeInteger(a.size) || a.size < 1 || a.size > MAX_INSTALLER) throw new Error('manifesto com arquivo inválido');
     assets[key] = { name: a.name, sha256: a.sha256, size: a.size };
   }
-  return { version: m.version, assets };
+  // minVersion (opcional, assinado junto): abaixo dela o app não cria nem entra em salas até atualizar
+  return { version: m.version, minVersion: parseVersion(m.minVersion) ? m.minVersion : null, assets };
 }
 
 async function readLimited(res, limit) {
@@ -100,10 +101,11 @@ async function checkForUpdate({ config, current, platform, arch, fetch: fetchImp
   const sig = await getBytes(fetchImpl, signatureUrl(cfg.repo), 4096);
   if (!sig) throw new Error('assinatura da atualização ausente');
   const manifest = verifyManifest(manifestBytes, sig.toString('utf8'), cfg.publicKey);
-  if (!isNewer(manifest.version, current)) return { status: 'current' };
+  const required = !!manifest.minVersion && isNewer(manifest.minVersion, current);
+  if (!isNewer(manifest.version, current)) return { status: 'current', required };
   const asset = manifest.assets[key];
-  if (!asset) return { status: 'current' };                                // esta versão não tem pacote para este sistema
-  return { status: 'available', version: manifest.version, asset: { ...asset, url: assetUrl(cfg.repo, manifest.version, asset.name) } };
+  if (!asset) return { status: 'current', required };                      // esta versão não tem pacote para este sistema
+  return { status: 'available', required, minVersion: manifest.minVersion, version: manifest.version, asset: { ...asset, url: assetUrl(cfg.repo, manifest.version, asset.name) } };
 }
 
 // Baixa para destDir, conferindo tamanho e SHA-256; só devolve o caminho de um arquivo íntegro.
@@ -143,11 +145,26 @@ const brief = (e) => String(e?.message || e || 'erro').replace(SAFE_MESSAGE, ' '
 
 // Máquina de estados da atualização. As dependências (rede, disco, instalar, sair) entram por parâmetro para testar.
 function createUpdater({ config, current, platform, arch, fetch: fetchImpl, tmpDir, launchInstaller, quit, emit, store, setTimer = setTimeout, clearTimer = clearTimeout }) {
-  let state = { status: 'idle', version: null, progress: 0, message: '', manual: false };
+  let state = { status: 'idle', version: null, progress: 0, message: '', manual: false, required: false };
   let pending = null, timer = null, busy = false;
   const auto = () => store.get('auto') !== false;
   const publish = (patch) => { state = { ...state, ...patch }; emit(snapshot()); };
-  const snapshot = () => ({ status: state.status, version: state.version, progress: state.progress, message: state.message, manual: state.manual, auto: auto(), current: parseVersion(current) ? current : '', enabled: !!readConfig(config) && !!parseVersion(current) && !!platformKey(platform, arch) });
+  const snapshot = () => ({ status: state.status, version: state.version, progress: state.progress, message: state.message, manual: state.manual, required: state.required === true, auto: auto(), current: parseVersion(current) ? current : '', enabled: !!readConfig(config) && !!parseVersion(current) && !!platformKey(platform, arch) });
+
+  // "Versão mínima": consulta o manifesto mesmo com a atualização automática desligada. Sem rede ou sem manifesto, não bloqueia nada.
+  async function requirement() {
+    if (!snapshot().enabled) return { required: false };
+    if (!busy && state.status !== 'downloading' && state.status !== 'installing') {
+      busy = true;
+      try {
+        const r = await checkForUpdate({ config, current, platform, arch, fetch: fetchImpl });
+        const required = r.required === true;
+        if (r.status === 'available' && (required || auto())) { pending = r; publish({ status: 'available', version: r.version, message: '', progress: 0, required }); }
+        else if (required !== state.required) publish({ required });
+      } catch { /* sem rede: mantém o que já sabia */ } finally { busy = false; }
+    }
+    return { required: state.required === true, current: parseVersion(current) ? current : '', status: state.status, version: state.version };
+  }
 
   async function check({ manual = false } = {}) {
     if (busy || state.status === 'downloading' || state.status === 'installing') return snapshot();
@@ -155,6 +172,7 @@ function createUpdater({ config, current, platform, arch, fetch: fetchImpl, tmpD
     if (manual) publish({ status: 'checking', message: '' });
     try {
       const r = await checkForUpdate({ config, current, platform, arch, fetch: fetchImpl });
+      if ((r.required === true) !== state.required) publish({ required: r.required === true });
       if (r.status === 'available') { pending = r; publish({ status: 'available', version: r.version, message: '', progress: 0 }); }
       else if (manual) publish({ status: r.status === 'disabled' ? 'disabled' : 'current', message: '' });
       else if (state.status === 'checking') publish({ status: 'idle' });
@@ -182,7 +200,7 @@ function createUpdater({ config, current, platform, arch, fetch: fetchImpl, tmpD
 
   function schedule(ms) {
     timer = setTimer(async () => {
-      if (auto()) await check();
+      if (auto()) await check();      // desligada: nenhuma consulta em segundo plano (a versão mínima só é checada ao criar ou entrar em sala)
       schedule(CHECK_EVERY_MS);
     }, ms);
     timer?.unref?.();
@@ -190,7 +208,7 @@ function createUpdater({ config, current, platform, arch, fetch: fetchImpl, tmpD
   function start() { if (!timer && snapshot().enabled) schedule(CHECK_FIRST_MS); }
   function stop() { if (timer) clearTimer(timer); timer = null; }
   function setAuto(on) { store.set('auto', on === true); publish({}); }
-  return { check, install, start, stop, setAuto, getState: snapshot };
+  return { check, install, start, stop, setAuto, requirement, getState: snapshot };
 }
 
 module.exports = { parseVersion, isNewer, platformKey, readConfig, verifyManifest, manifestUrl, signatureUrl, assetUrl, checkForUpdate, downloadAsset, createUpdater, NAME_RE, CHECK_FIRST_MS, CHECK_EVERY_MS };

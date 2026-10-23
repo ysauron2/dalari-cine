@@ -465,6 +465,17 @@
     } catch { /* sem o serviço: só o STUN */ }
     return P2P_ICE;
   }
+  // Versão mínima (só no app de desktop): se o manifesto assinado exige uma versão mais nova, criar e entrar em salas fica bloqueado
+  // até atualizar. Sem rede ou sem resposta em 5 s, não bloqueia (o app nunca fica trancado por falta de internet).
+  async function mustUpdate() {
+    const bridge = window.duoDesktop?.updates;
+    if (!bridge?.requirement) return false;
+    let r = null;
+    try { r = await Promise.race([bridge.requirement(), new Promise((resolve) => setTimeout(() => resolve(null), 5000))]); } catch { r = null; }
+    if (!r || r.required !== true) return false;
+    say('Esta versão do Dalari Cine não cria nem entra em salas: atualize para continuar. O aviso com o botão "Atualizar agora" está no canto da tela.');
+    return true;
+  }
   let hostLink = null, hostLinks = [], guestLink = null, guestLinkOpen = null, p2pAnswerDraft = '', p2pNote = '';
   // Reconexão automática: se a conexão direta cair, Host e convidado se reencontram sozinhos (código derivado do código original)
   const RC = window.DuoReconnect;
@@ -1355,6 +1366,7 @@
         el.append(make('p', `Título associado: /watch/${s.media.watchId}. O Dalari Cine abre esse link para os demais e compartilha play, pausa e posição.`));
         if (desktopNetflixState?.status === 'autoplay-blocked') el.append(make('p', 'Clique em Reproduzir no player da Netflix neste computador para liberar o áudio.', { class: 'online-msg', role: 'status' }));
         else if (desktopNetflixState?.status === 'player-failed') el.append(make('p', 'O player não aceitou o controle automático. Use os controles da Netflix e teste novamente.', { class: 'online-msg', role: 'status' }));
+        else if (desktopNetflixState?.status === 'seek-unavailable') el.append(make('p', 'Não foi possível alinhar o ponto do filme automaticamente. Play e pausa seguem sincronizados; avance pela barra da Netflix até o mesmo ponto.', { class: 'online-msg', role: 'status' }));
         else el.append(make('p', `Sala ${s.playback?.state === 'playing' ? 'reproduzindo' : 'pausada'}. Use os controles do vídeo; a outra pessoa acompanha automaticamente.`));
       }
       return;
@@ -1849,6 +1861,7 @@
     const b = e.target.closest('[data-online-act]'); if (!b) return;
     const act = b.dataset.onlineAct;
     if (act === 'create') return void run(async () => {
+      if (await mustUpdate()) return;
       const field = panel.querySelector('#online-display-name');
       if (!await adapter.saveProfileName(field.value, false)) { say('Defina um nome válido antes de criar a sala.'); field.focus(); return; }
       const c = new DuoRoomClient({ serviceUrl: location.origin, allowInsecure: isPrivateLanHttp() });
@@ -1856,6 +1869,7 @@
       apply(await client.getState({ after: 0 })); connect(); say('Sala criada. Use Convidar para copiar o convite e enviar apenas à pessoa desejada.');
     });
     if (act === 'join') return void run(async () => {
+      if (await mustUpdate()) return;
       const field = panel.querySelector('#online-display-name');
       if (!await adapter.saveProfileName(field.value, false)) { say('Defina um nome válido antes de entrar.'); field.focus(); return; }
       const text = panel.querySelector('#online-invite-input').value;
@@ -1872,7 +1886,7 @@
     if (act === 'invite-reveal') { inviteShown = !inviteShown; buildInviteDialog(); panel.querySelector('[data-online-act=invite-reveal]')?.focus(); return; }
     if (act === 'copy') return void copyInvite();
     if (act === 'p2p-offer') return void run(p2pOffer);
-    if (act === 'short-offer') return void run(shortOffer);
+    if (act === 'short-offer') return void run(async () => { if (await mustUpdate()) return; await shortOffer(); });
     if (act === 'short-copy') return void p2pCopy(shortHost?.code, inviteDialog.querySelector('#short-code'));
     if (act === 'short-copy-invite') return void p2pCopy(R.inviteMessage(shortHost?.code, adapter.getProfileName()), inviteDialog.querySelector('#short-code'));
     if (act === 'p2p-copy-offer') return void p2pCopy(hostLink?.code, inviteDialog.querySelector('#p2p-offer-out'));

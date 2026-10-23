@@ -53,3 +53,23 @@ test('stamp-build carimba versão e repositório sem sobrescrever um repositóri
     assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'update-config.json'), 'utf8')).repo, 'dono/app');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('versão mínima: vai assinada no manifesto, é opcional e só aceita número x.y.z', () => {
+  const { readMinVersion } = require('../scripts/make-update-manifest.cjs');
+  const dir = tmp();
+  try {
+    fs.writeFileSync(path.join(dir, 'DalariCine-Setup-0.4.3-x64.exe'), 'win');
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+    const pub = publicKey.export({ type: 'spki', format: 'der' }).toString('base64'), priv = privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64');
+    const withMin = buildManifest(dir, '0.4.3', '0.4.2');
+    assert.equal(verifyManifest(withMin, signManifest(withMin, priv), pub).minVersion, '0.4.2');
+    const without = buildManifest(dir, '0.4.3');
+    assert.equal(verifyManifest(without, signManifest(without, priv), pub).minVersion, null);
+    assert.equal(verifyManifest(Buffer.from(JSON.stringify({ version: '0.4.3', minVersion: 'abc', assets: {} })), signManifest(Buffer.from(JSON.stringify({ version: '0.4.3', minVersion: 'abc', assets: {} })), priv), pub).minVersion, null, 'valor inválido é ignorado');
+    const file = path.join(dir, 'policy.json');
+    assert.equal(readMinVersion(path.join(dir, 'nao-existe.json')), null);
+    fs.writeFileSync(file, '{"minVersion":"0.4.3"}'); assert.equal(readMinVersion(file), '0.4.3');
+    fs.writeFileSync(file, '{"minVersion":"banana"}'); assert.throws(() => readMinVersion(file), /inválida/);
+    assert.equal(readMinVersion(), '0.4.3', 'a política do repositório existe e vale 0.4.3');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});

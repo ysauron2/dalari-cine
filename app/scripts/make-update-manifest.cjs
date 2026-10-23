@@ -12,7 +12,17 @@ const KINDS = [
   [/^DalariCine-.+-mac-x64\.dmg$/, 'mac-x64']
 ];
 
-function buildManifest(dir, version) {
+// app/update-policy.json: { "minVersion": "x.y.z" }. Para travar versões quebradas, suba esse número e publique uma versão nova.
+// Só afeta apps que já têm este mecanismo (a partir da 0.4.3): abaixo do mínimo eles não criam nem entram em salas até atualizar.
+function readMinVersion(file = path.join(__dirname, '..', 'update-policy.json')) {
+  if (!fs.existsSync(file)) return null;
+  const v = JSON.parse(fs.readFileSync(file, 'utf8'))?.minVersion;
+  if (v === undefined || v === null || v === '') return null;
+  if (!/^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(String(v))) throw new Error('minVersion inválida em update-policy.json: ' + v);
+  return String(v);
+}
+
+function buildManifest(dir, version, minVersion = null) {
   const assets = {};
   for (const name of fs.readdirSync(dir).sort()) {
     const kind = KINDS.find(([re]) => re.test(name));
@@ -21,7 +31,7 @@ function buildManifest(dir, version) {
     assets[kind[1]] = { name, sha256: crypto.createHash('sha256').update(bytes).digest('hex'), size: bytes.length };
   }
   if (!Object.keys(assets).length) throw new Error('nenhum instalador encontrado em ' + dir);
-  return Buffer.from(JSON.stringify({ version, assets }, null, 2) + '\n');
+  return Buffer.from(JSON.stringify(minVersion ? { version, minVersion, assets } : { version, assets }, null, 2) + '\n');
 }
 
 function signManifest(bytes, privateKeyB64) {
@@ -36,11 +46,11 @@ if (require.main === module) {
   const [dir, version, out = dir] = process.argv.slice(2);
   if (!dir || !/^\d+\.\d+\.\d+$/.test(version || '')) { console.error('Uso: make-update-manifest.cjs <pasta> <x.y.z> [saída]'); process.exit(2); }
   if (!process.env.UPDATE_SIGNING_KEY) { console.error('UPDATE_SIGNING_KEY ausente: as atualizações automáticas não serão publicadas.'); process.exit(3); }
-  const bytes = buildManifest(dir, version);
+  const bytes = buildManifest(dir, version, readMinVersion());
   const sig = signManifest(bytes, process.env.UPDATE_SIGNING_KEY.trim());
   fs.writeFileSync(path.join(out, 'latest.json'), bytes);
   fs.writeFileSync(path.join(out, 'latest.json.sig'), sig);
   console.log(`latest.json (${version}) e latest.json.sig gerados em ${out}`);
 }
 
-module.exports = { buildManifest, signManifest };
+module.exports = { buildManifest, signManifest, readMinVersion };

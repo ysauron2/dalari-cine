@@ -54,3 +54,33 @@ test('a página carrega o script e o serviço da sala o entrega', () => {
   assert.match(readFileSync(new URL('../index.html', import.meta.url), 'utf8'), /<script src="server\/updates-ui\.js"><\/script>/);
   assert.match(readFileSync(new URL('../server/room-service.js', import.meta.url), 'utf8'), /'\/server\/updates-ui\.js', 'server\/updates-ui\.js'/);
 });
+
+test('versão obrigatória: avisa que criar e entrar em salas está bloqueado, com botão de atualizar quando há instalador', () => {
+  const s = { ...base, current: '0.4.1', status: 'available', version: '0.4.3', required: true };
+  const d = describe(s, '0.4.3');
+  assert.match(d.line, /Atualização necessária/);
+  assert.match(d.line, /não cria nem entra em salas/);
+  assert.ok(d.toast && d.toast.actions.join() === 'install', 'aviso fixo: não some com "Depois"');
+  assert.equal(d.canInstall, true);
+  const idle = describe({ ...base, current: '0.4.1', status: 'idle', required: true }, null);
+  assert.ok(idle.toast && idle.toast.actions.length === 0 && idle.canInstall === false);
+  assert.equal(describe({ ...base, status: 'current', required: false }, null).toast, null);
+});
+
+test('salas: criar, entrar e gerar código passam pela checagem de versão mínima, que nunca tranca sem resposta', () => {
+  const ui = readFileSync(new URL('../server/online-ui.js', import.meta.url), 'utf8');
+  assert.match(ui, /async function mustUpdate\(\)/);
+  assert.match(ui, /setTimeout\(\(\) => resolve\(null\), 5000\)/);
+  for (const act of ['create', 'join']) {
+    const at = ui.indexOf(`if (act === '${act}') return void run(async () => {`);
+    assert.ok(at > 0, act);
+    assert.ok(ui.slice(at, at + 160).includes('if (await mustUpdate()) return;'), `${act} checa a versão mínima antes de qualquer outra coisa`);
+  }
+  assert.ok(ui.includes("if (act === 'short-offer') return void run(async () => { if (await mustUpdate()) return; await shortOffer(); });"));
+});
+
+test('Netflix: o aviso "seek-unavailable" tem texto na sala', () => {
+  const ui = readFileSync(new URL('../server/online-ui.js', import.meta.url), 'utf8');
+  assert.ok(ui.includes("desktopNetflixState?.status === 'seek-unavailable'"));
+  assert.ok(ui.includes('Play e pausa seguem sincronizados'));
+});

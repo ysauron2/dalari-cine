@@ -2,7 +2,7 @@
 // Ponte mínima do player: observa apenas o <video> visível em /watch/<id>.
 // Não lê cookies, credenciais, rede, faixas de áudio ou legendas. O volume do <video> só é ajustado pelo ducking
 // (abaixar enquanto alguém fala na conversa e devolver ao valor que a pessoa tinha).
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, webFrame } = require('electron');
 
 const WATCH = /^\/watch\/([0-9]{1,12})\/?$/;
 let room = null;
@@ -52,6 +52,17 @@ function report(type, video, status) {
   if (!id) return;
   const positionSec = video && Number.isFinite(video.currentTime) ? video.currentTime : 0;
   ipcRenderer.send('duotela:netflix-report', { type, watchId: id, positionSec, playing: !!video && !video.paused && !video.ended, status });
+}
+// Ir a um ponto do filme: o player da Netflix dá erro (M7375) quando o <video>.currentTime é atribuído de fora, então a busca
+// é pedida ao player interno do próprio site (o mesmo que a barra de progresso usa). Roda no mundo da página; só passa um número.
+// Sem esse player não se força nada: play e pausa continuam, e a posição fica por conta de cada um (aviso "seek-unavailable").
+async function seekViaNetflix(sec) {
+  if (!webFrame || typeof webFrame.executeJavaScript !== 'function' || !Number.isFinite(sec)) return false;
+  const ms = Math.round(Math.max(0, Math.min(86400, sec)) * 1000);
+  const code = '(() => { try { const vp = window.netflix && window.netflix.appContext && window.netflix.appContext.state.playerApp.getAPI().videoPlayer;'
+    + ' if (!vp) return false; const ids = vp.getAllPlayerSessionIds(); if (!ids || !ids.length) return false;'
+    + ' const p = vp.getVideoPlayerBySessionId(ids[ids.length - 1]); if (!p || typeof p.seek !== "function") return false; p.seek(' + ms + '); return true; } catch (e) { return false; } })()';
+  try { return (await webFrame.executeJavaScript(code)) === true; } catch { return false; }
 }
 function localEvent(type) {
   const video = player();
@@ -105,11 +116,12 @@ async function applyRoom() {
     remote = { at: Date.now(), target, playing: pb.state === 'playing' };
     // "Sincronizar agora": na primeira vez que vê uma nova sincronização, vai exatamente ao ponto combinado (sem a folga de 2,5 s)
     const freshSync = Number(pb.syncId) > 0 && pb.syncId !== lastSyncId;
-    if (Number.isFinite(video.currentTime) && (freshSync || Math.abs(video.currentTime - target) > 2.5)) video.currentTime = target;
+    let seekFailed = false;
+    if (Number.isFinite(video.currentTime) && (freshSync || Math.abs(video.currentTime - target) > 2.5)) seekFailed = !(await seekViaNetflix(target));
     if (pb.state === 'playing' && video.paused) await video.play();
     if (pb.state === 'paused' && !video.paused) video.pause();
     if (room === state) { lastVersion = pb.version; if (freshSync) lastSyncId = pb.syncId; }
-    report('status', video, 'applied');
+    report('status', video, seekFailed ? 'seek-unavailable' : 'applied');
   } catch (error) {
     if (room === state) lastVersion = state.playback.version;
     report('status', video, error?.name === 'NotAllowedError' ? 'autoplay-blocked' : 'player-failed');

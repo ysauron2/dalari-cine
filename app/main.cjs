@@ -352,6 +352,7 @@ function createWindow(duoUrl) {
   ipcMain.handle('duotela:update-get', event => (fromDuo(event) && updater ? updater.getState() : null));
   ipcMain.handle('duotela:update-check', event => (fromDuo(event) && updater ? updater.check({ manual: true }) : null));
   ipcMain.handle('duotela:update-install', event => (fromDuo(event) && updater ? updater.install() : null));
+  ipcMain.handle('duotela:update-requirement', event => (fromDuo(event) && updater ? updater.requirement() : null));
   ipcMain.handle('duotela:update-auto', (event, on) => { if (!fromDuo(event) || !updater) return null; updater.setAuto(on === true); return updater.getState(); });
   // Com a Netflix em foco as teclas não chegam à interface: repassa só a tecla de falar escolhida (apertar/soltar).
   netflixView.webContents.on('before-input-event', (_event, input) => {
@@ -441,7 +442,7 @@ function createWindow(duoUrl) {
     ipcMain.removeListener('duotela:netflix-search', acceptNetflixSearch);
     ipcMain.removeListener('duotela:settings-load', settingsLoad);
     ipcMain.removeListener('duotela:settings-save', settingsSave);
-    for (const channel of ['duotela:update-get', 'duotela:update-check', 'duotela:update-install', 'duotela:update-auto']) ipcMain.removeHandler(channel);
+    for (const channel of ['duotela:update-get', 'duotela:update-check', 'duotela:update-install', 'duotela:update-requirement', 'duotela:update-auto']) ipcMain.removeHandler(channel);
     ipcMain.removeListener('duotela:netflix-room-state', acceptNetflixRoomState);
     ipcMain.removeListener('duotela:netflix-report', relayNetflixEvent);
     if (!duoView.webContents.isDestroyed()) duoView.webContents.close();

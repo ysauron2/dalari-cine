@@ -11,8 +11,12 @@ function harness() {
   const listeners = new Map();
   let tick;
   let now = 100000;
+  let position = 10, directWrites = 0, apiMissing = false;
+  const calls = [];
   const video = {
-    paused: true, ended: false, currentTime: 10, volume: 0.35, audioLanguage: 'pt-BR', subtitleLanguage: 'en-US',
+    paused: true, ended: false, volume: 0.35, audioLanguage: 'pt-BR', subtitleLanguage: 'en-US',
+    get currentTime() { return position; },
+    set currentTime(v) { directWrites++; position = v; },       // atribuir direto é o que a Netflix rejeita (erro M7375): a busca tem de ir pelo player dela
     getBoundingClientRect: () => ({ width: 1280, height: 720 }),
     closest: () => null,
     addEventListener(name, fn) { listeners.set(name, fn); },
@@ -21,8 +25,10 @@ function harness() {
     pause() { this.paused = true; listeners.get('pause')?.(); },
   };
   const ipcRenderer = { on: (channel, fn) => handlers.set(channel, fn), send: (channel, value) => reports.push({ channel, value }) };
+  // webFrame de mentira: "roda" o código da página e imita o player interno da Netflix (seek em milissegundos)
+  const webFrame = { executeJavaScript: async (code) => { calls.push(code); const m = /p\.seek\((\d+)\)/.exec(code); if (!m || apiMissing) return false; position = Number(m[1]) / 1000; return true; } };
   const context = {
-    require: () => ({ ipcRenderer }),
+    require: () => ({ ipcRenderer, webFrame }),
     location: { hostname: 'www.netflix.com', pathname: '/watch/123' },
     document: { querySelectorAll: () => [video] },
     setInterval: fn => { tick = fn; },
@@ -30,7 +36,7 @@ function harness() {
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'netflix-preload.cjs'), 'utf8'), context);
   const state = (version, playback = {}) => ({ code: '123456', media: { titleId: 'tmdb:movie:1', watchId: '123' }, playback: { state: 'playing', positionSec: 20, updatedAt: 99000, version, ...playback }, serverTime: 100000 });
-  return { video, reports, listeners, tick: () => tick(), send: value => handlers.get('duotela:netflix-state')(null, value), state, advance: ms => { now += ms; } };
+  return { video, reports, listeners, calls, directWrites: () => directWrites, noApi: () => { apiMissing = true; }, tick: () => tick(), send: value => handlers.get('duotela:netflix-state')(null, value), state, advance: ms => { now += ms; } };
 }
 
 test('Netflix integrada aplica play/pause/posição sem alterar áudio, legendas ou volume', async () => {
@@ -106,4 +112,38 @@ test('Sincronizar agora: a primeira vez que vê uma sincronização vai exatamen
   h.send(h.state(4, { state: 'paused', positionSec: 30, syncId: 2 }));
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(h.video.currentTime, 30, 'um syncId novo volta a forçar');
+});
+
+test('a busca no filme vai pelo player interno da Netflix e nunca atribui currentTime direto (isso causa o erro M7375)', async () => {
+  const h = harness();
+  h.tick();
+  h.send(h.state(1));
+  await new Promise(resolve => setImmediate(resolve));
+  h.send(h.state(2, { state: 'paused', positionSec: 42, syncId: 1 }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.video.currentTime, 42);
+  assert.equal(h.directWrites(), 0, 'nenhuma atribuição direta a currentTime');
+  assert.ok(h.calls.length >= 2 && h.calls.every(c => /getAPI\(\)\.videoPlayer/.test(c) && /p\.seek\(\d+\)/.test(c)));
+  assert.match(h.calls.at(-1), /p\.seek\(42000\)/, 'em milissegundos');
+  assert.equal(h.reports.at(-1).value.status, 'applied');
+});
+
+test('sem o player interno da Netflix: não força a posição, mantém play/pausa e avisa "seek-unavailable"', async () => {
+  const h = harness();
+  h.noApi();
+  h.tick();
+  h.send(h.state(1, { positionSec: 60 }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.directWrites(), 0, 'sem plano B por atribuição direta');
+  assert.equal(h.video.currentTime, 10, 'a posição não foi mexida');
+  assert.equal(h.video.paused, false, 'o play continua valendo');
+  assert.equal(h.reports.at(-1).value.status, 'seek-unavailable');
+});
+
+test('o código enviado à página leva só um número, limitado a 0..24 h', async () => {
+  const h = harness();
+  h.tick();
+  h.send(h.state(1, { positionSec: 999999 }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(h.calls.at(-1), /p\.seek\(86400000\)/);
 });

@@ -28,7 +28,7 @@ Em Perfil → Falar com o criador você pode escrever uma ideia, um problema ou 
 
 ## Atualizações do aplicativo
 
-Se você deixar ligado em Perfil → Atualizações (é o padrão), o app consulta o GitHub (github.com/…/releases) 20 segundos depois de abrir e a cada 6 horas para saber se há versão nova. O GitHub vê o endereço de rede do seu aparelho nessa consulta, como em qualquer download; nada do Dalari Cine é enviado além do pedido do arquivo. Uma versão nova só é instalada quando você clica em Atualizar agora, e o app confere uma assinatura digital antes de abrir o instalador. Você pode desligar a verificação automática em Perfil.
+Se você deixar ligado em Perfil → Atualizações (é o padrão), o app consulta o GitHub (github.com/…/releases) 20 segundos depois de abrir e a cada 6 horas para saber se há versão nova. O GitHub vê o endereço de rede do seu aparelho nessa consulta, como em qualquer download; nada do Dalari Cine é enviado além do pedido do arquivo. Uma versão nova só é instalada quando você clica em Atualizar agora, e o app confere uma assinatura digital antes de abrir o instalador. Você pode desligar a verificação automática em Perfil. Mesmo com ela desligada, ao criar ou entrar em uma sala o app faz a mesma consulta ao GitHub para saber se esta versão ainda pode conectar; se a consulta falhar, nada é bloqueado.
 
 ## Como apagar seus dados
 

@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('duoDesktop', Object.freeze({
     getState: () => ipcRenderer.invoke('duotela:update-get'),
     check: () => ipcRenderer.invoke('duotela:update-check'),
     install: () => ipcRenderer.invoke('duotela:update-install'),
+    requirement: () => ipcRenderer.invoke('duotela:update-requirement'),
     setAuto: on => ipcRenderer.invoke('duotela:update-auto', on === true),
     onState: callback => {
       if (typeof callback !== 'function') return () => {};

@@ -12,6 +12,10 @@
   const BASELINE = '0.3.1';          // quem nunca viu a janela é tratado como estando nesta versão
   // [ícone, título, texto curto]. Do mais novo para o mais antigo dentro de cada versão.
   const NEWS = {
+    '0.4.3': [
+      ['\u{1F39E}️', 'Netflix: ponto do filme sincronizado', 'A sala agora move o filme pelo próprio player da Netflix, o que evita o erro ao alinhar todo mundo no mesmo ponto.'],
+      ['\u{1F504}', 'Atualização obrigatória quando necessário', 'Se uma versão deixar de conectar, o app avisa e pede para atualizar antes de criar ou entrar em salas. O resto continua funcionando.'],
+    ],
     '0.4.2': [
       ['\u{1F527}', 'Conexão da sala corrigida', 'A 0.4.1 podia falhar ao conectar até na mesma rede. Agora o convite leva os caminhos certos e o retransmissor funciona de verdade.'],
     ],

@@ -15,6 +15,13 @@
     if (!s || typeof s !== 'object') return { line: '', toast: null, canCheck: false, canInstall: false };
     const cur = s.current ? ` (versão ${s.current})` : '';
     const out = { line: '', toast: null, canCheck: !!s.enabled && !['checking', 'downloading', 'installing'].includes(s.status), canInstall: s.status === 'available' };
+    // Versão abaixo do mínimo: criar e entrar em salas fica bloqueado até atualizar (o resto do app segue funcionando)
+    if (s.required && ['available', 'idle', 'current', 'error', 'checking'].includes(s.status)) {
+      out.line = 'Atualização necessária' + (s.version ? ` para a versão ${s.version}` : '') + (s.current ? ` (você tem a ${s.current})` : '') + ': esta versão não cria nem entra em salas.';
+      out.toast = { text: 'Atualização necessária', sub: 'Esta versão do Dalari Cine não consegue mais criar nem entrar em salas. O resto do app continua funcionando.', actions: s.status === 'available' ? ['install'] : [] };
+      out.canInstall = s.status === 'available';
+      return out;
+    }
     switch (s.status) {
       case 'checking': out.line = 'Verificando…'; break;
       case 'current': out.line = 'Você está na versão mais recente' + cur + '.'; break;

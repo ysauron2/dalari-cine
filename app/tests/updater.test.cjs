@@ -187,7 +187,54 @@ test('auto desligado: o relógio não consulta; estado só expõe campos simples
     await timers[0][0]();
     assert.deepEqual(calls, [], 'com a opção desligada, nenhuma consulta é feita');
     assert.equal(timers.length, 2, 'agenda a próxima verificação');
-    assert.deepEqual(Object.keys(u2.getState()).sort(), ['auto', 'current', 'enabled', 'manual', 'message', 'progress', 'status', 'version']);
+    assert.deepEqual(Object.keys(u2.getState()).sort(), ['auto', 'current', 'enabled', 'manual', 'message', 'progress', 'required', 'status', 'version']);
     void fired;
   } finally { t.done(); }
+});
+
+// ---- versão mínima ----
+const manifestMin = (version, min) => Buffer.from(JSON.stringify({ version, minVersion: min, assets: { 'win-x64': { name: `DalariCine-Setup-${version}-x64.exe`, sha256: sha(INSTALLER), size: INSTALLER.length } } }));
+
+test('versão mínima: abaixo dela vira "obrigatória"; na versão certa ou acima não; sem o campo, nunca', async () => {
+  const routes = (min, version = '0.2.0') => releaseRoutes(version, { manifest: manifestMin(version, min), sig: sign(manifestMin(version, min)) });
+  assert.equal((await U.checkForUpdate({ ...base, current: '0.1.0', fetch: fakeFetch(routes('0.2.0')) })).required, true);
+  assert.equal((await U.checkForUpdate({ ...base, current: '0.2.0', fetch: fakeFetch(routes('0.2.0')) })).required, false);
+  assert.equal((await U.checkForUpdate({ ...base, current: '0.3.0', fetch: fakeFetch(routes('0.2.0')) })).required, false);
+  assert.equal((await U.checkForUpdate({ ...base, current: '0.1.0', fetch: fakeFetch(releaseRoutes('0.2.0')) })).required, false, 'manifesto sem o campo');
+});
+
+test('versão mínima: o app consulta mesmo com a atualização automática desligada, e sem rede nunca bloqueia', async () => {
+  const man = manifestMin('0.2.0', '0.2.0');
+  const t = rig({ store: { get: () => false, set() {} }, fetch: fakeFetch(releaseRoutes('0.2.0', { manifest: man, sig: sign(man) })) });
+  try {
+    const r = await t.u.requirement();
+    assert.equal(r.required, true);
+    assert.equal(t.u.getState().required, true);
+    assert.equal(t.u.getState().status, 'available', 'obrigatória: oferece instalar mesmo com a automática desligada');
+  } finally { t.done(); }
+  const ok = rig({ current: '0.2.0', fetch: fakeFetch(releaseRoutes('0.2.0', { manifest: man, sig: sign(man) })) });
+  try { assert.equal((await ok.u.requirement()).required, false); } finally { ok.done(); }
+  const offline = rig({ fetch: async () => { throw new Error('ENOTFOUND github.com'); } });
+  try { assert.equal((await offline.u.requirement()).required, false, 'sem internet: não tranca o app'); } finally { offline.done(); }
+  const off = rig({ config: null });
+  try { assert.equal((await off.u.requirement()).required, false); } finally { off.done(); }
+  // a automática desligada com versão mínima já atendida: não aparece aviso de nova versão
+  const quiet = rig({ current: '0.2.0', store: { get: () => false, set() {} }, fetch: fakeFetch(releaseRoutes('0.3.0', { manifest: manifestMin('0.3.0', '0.2.0'), sig: sign(manifestMin('0.3.0', '0.2.0')) })) });
+  try { await quiet.u.requirement(); assert.notEqual(quiet.u.getState().status, 'available'); } finally { quiet.done(); }
+});
+
+test('versão mínima: com a automática ligada o relógio já marca a versão obrigatória; desligada, só a consulta explícita (criar/entrar em sala) vai à rede', async () => {
+  const man = manifestMin('0.2.0', '0.2.0');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dalari-upd-'));
+  try {
+    const make = (autoOn, calls) => { const timers = []; const u = U.createUpdater({ ...base, fetch: fakeFetch(releaseRoutes('0.2.0', { manifest: man, sig: sign(man) }), calls), tmpDir: dir, launchInstaller: async () => ({}), quit() {}, emit() {}, store: { get: () => autoOn, set() {} }, setTimer: (fn, ms) => { timers.push([fn, ms]); return { unref() {} }; }, clearTimer() {} }); u.start(); return { u, timers }; };
+    const onCalls = [], on = make(true, onCalls);
+    await on.timers[0][0]();
+    assert.ok(onCalls.length >= 1); assert.equal(on.u.getState().required, true);
+    const offCalls = [], off = make(false, offCalls);
+    await off.timers[0][0]();
+    assert.deepEqual(offCalls, [], 'automática desligada: o relógio não consulta');
+    await off.u.requirement();
+    assert.ok(offCalls.length >= 1, 'a consulta explícita consulta'); assert.equal(off.u.getState().required, true);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
