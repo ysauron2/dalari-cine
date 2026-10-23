@@ -25,6 +25,8 @@ const DEFAULT_CAPACITY = 2;     // compatível com o fluxo de dupla; a interface
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
 const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const NETFLIX_WATCH_ID_RE = /^[0-9]{1,12}$/;
+// Título livre da Netflix (sem votação): o título da sala é o próprio /watch, no formato "netflix:<id>"
+const isFreeNetflixTitle = (p) => typeof p.watchId === 'string' && p.titleId === 'netflix:' + p.watchId;
 const VOICE_SDP_LIMIT = 24000;
 const FORBIDDEN_KEYS = ['role', 'from', 'sender', 'identity', 'who', 'user', 'host', 'guest', 'token', 'credential', 'participant'];
 
@@ -532,7 +534,7 @@ function createRoomService(userOpts = {}) {
   };
 
   function applyAction(room, role, type, p) {
-    if (has(p, 'titleId') && !titleIds.has(p.titleId) && !(type === 'playback' && p.titleId === `youtube:${p.videoId}`)) throw new HttpError(400, 'unknown_title');
+    if (has(p, 'titleId') && !titleIds.has(p.titleId) && !(type === 'playback' && p.titleId === `youtube:${p.videoId}`) && !((type === 'media.netflix' || type === 'playback.netflix') && isFreeNetflixTitle(p))) throw new HttpError(400, 'unknown_title');
     const eng = TO_ENGINE[role];
     // Durante a contagem, pausas e posições vindas dos players (efeito de pausar/ajustar para todos) são ignoradas;
     // dar play à mão cancela a contagem; trocar de vídeo ou de plataforma também.
@@ -586,16 +588,20 @@ function createRoomService(userOpts = {}) {
         break;
       }
       case 'media.netflix': {
-        const result = MatchEngine.resolveRound(room.round);
-        if (result.status !== 'match' || result.matchId !== p.titleId) throw new HttpError(409, 'no_match');
+        if (!isFreeNetflixTitle(p)) {
+          const result = MatchEngine.resolveRound(room.round);
+          if (result.status !== 'match' || result.matchId !== p.titleId) throw new HttpError(409, 'no_match');
+        }
         if (room.platform !== 'netflix') throw new HttpError(409, 'wrong_platform');
         room.media = { provider: 'netflix', titleId: p.titleId, watchId: p.watchId };
         room.playback = { titleId: p.titleId, watchId: p.watchId, state: 'playing', positionSec: 0, updatedBy: role, updatedAt: now(), version: (room.playback?.version || 0) + 1 };
         break;
       }
       case 'playback.netflix': {
-        const res = MatchEngine.resolveRound(room.round);
-        if (res.status !== 'match' || res.matchId !== p.titleId) throw new HttpError(409, 'no_match');
+        if (!isFreeNetflixTitle(p)) {
+          const res = MatchEngine.resolveRound(room.round);
+          if (res.status !== 'match' || res.matchId !== p.titleId) throw new HttpError(409, 'no_match');
+        }
         if (room.platform !== 'netflix') throw new HttpError(409, 'wrong_platform');
         if (room.media?.provider !== 'netflix' || room.media.titleId !== p.titleId || room.media.watchId !== p.watchId) throw new HttpError(409, 'media_not_selected');
         const state = p.action === 'play' ? 'playing' : p.action === 'pause' ? 'paused' : (room.playback ? room.playback.state : 'paused');

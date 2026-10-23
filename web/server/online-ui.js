@@ -521,16 +521,18 @@
   // Associação do título: o /watch que o Host abre e começa a tocar vira o título da sala, sem confirmação (o match já foi votado). Os outros
   // abrem o mesmo link sozinhos. Se o Host abrir outro título depois, o painel oferece "Usar este título na sala".
   const nfAutoTried = new Set();
+  // Título da sala na Netflix: o do match, se houve votação; senão o próprio /watch ("netflix:<id>"), que o serviço aceita sem match
+  const netflixTitleId = (watchId) => snapshot?.selectedMatch || `netflix:${watchId}`;
   async function associateNetflix(titleId, watchId, st) {
     await client.selectNetflixTitle(titleId, watchId);
     if (Number.isFinite(st?.positionSec)) await client.playbackNetflix(titleId, watchId, st.playing ? 'play' : 'pause', st.positionSec);
     apply(client.snapshot);
   }
   async function autoAssociateNetflix(event) {
-    if (!window.duoDesktop || !client || client.role !== 'host' || snapshot?.status !== 'active' || snapshot.platform !== 'netflix' || snapshot.media || !snapshot.selectedMatch) return;
+    if (!window.duoDesktop || !client || client.role !== 'host' || snapshot?.status !== 'active' || snapshot.platform !== 'netflix' || snapshot.media) return;
     if (!/^[0-9]{1,12}$/.test(String(event?.watchId)) || event.playing !== true || nfAutoTried.has(event.watchId)) return;
     nfAutoTried.add(event.watchId);
-    try { await associateNetflix(snapshot.selectedMatch, event.watchId, event); say('Título associado automaticamente: os outros abrem o mesmo filme sozinhos. Se não for o filme certo, abra o correto e use "Usar este título na sala".'); }
+    try { await associateNetflix(netflixTitleId(event.watchId), event.watchId, event); say('Título associado automaticamente: os outros abrem o mesmo filme sozinhos. Se não for o filme certo, abra o correto e use "Usar este título na sala".'); }
     catch { nfAutoTried.delete(event.watchId); say('Não foi possível associar o título automaticamente. Use "Associar à sala" no painel da Netflix.'); }
   }
   window.duoDesktop?.onNetflixEvent?.((event) => {
@@ -1411,16 +1413,14 @@
     if (window.duoDesktop) {
       el.append(make('h4', 'Netflix no Dalari Cine'), make('p', 'Cada pessoa usa sua própria conta nesta janela. Áudio, legendas e volume do filme são escolhas individuais. A voz da sala tem seu próprio controle.'));
       if (netflixLockReason()) { el.append(make('p', netflixLockReason(), { class: 'online-msg', role: 'alert' })); if (!nfOpened) return; }
-      if (!matched) { el.append(make('p', 'Votem em um título na aba Match. A Netflix pode ficar aberta enquanto vocês decidem.')); return; }
-      el.append(make('p', `Escolha da sala: ${matched.title}.`));
+      if (matched) el.append(make('p', `Escolha da sala: ${matched.title}.`));
       if (!s.media) {
-        el.append(make('p', 'Abra o filme ou episódio exato na Netflix desta janela. Depois, confirme uma vez que é a escolha da sala.'));
+        // Sem votação: o título que o Host abre na Netflix e começa a tocar vira o da sala (a votação do Match é opcional)
+        el.append(make('p', client.role === 'host' ? 'Abra o filme ou episódio na Netflix desta janela e dê play: a sala adota esse título e os outros abrem o mesmo.' : `${nameFor('host')} abre o título na Netflix; ele abre aqui sozinho.`));
         const found = desktopNetflixState?.watchId;
-        if (found) {
-          const confirm = make('label', undefined, { class: 'nf-confirm' });
-          confirm.append(make('input', undefined, { type: 'checkbox', id: 'nf-desktop-confirm' }), document.createTextNode(` Confirmo que /watch/${found} é “${matched.title}”`));
-          el.append(confirm, button('Associar à sala', 'nf-desktop-associate', { class: 'rb-main', 'data-watch': found }));
-        } else el.append(make('p', 'Aguardando a Netflix abrir um título em /watch/…', { class: 'rv3-hint' }));
+        if (found && client.role === 'host') {
+          el.append(make('p', `Título aberto: /watch/${found}. Dê play para a sala adotá-lo, ou use o botão.`, { class: 'rv3-hint' }), button('Usar este título na sala', 'nf-desktop-swap', { class: 'rb-main', 'data-watch': found }));
+        } else if (client.role === 'host') el.append(make('p', 'Aguardando a Netflix abrir um título em /watch/…', { class: 'rv3-hint' }));
       } else {
         el.append(make('p', `Título associado: /watch/${s.media.watchId}. O Dalari Cine abre esse link para os demais e compartilha play, pausa e posição.`));
         const other = desktopNetflixState?.watchId;
@@ -2025,8 +2025,8 @@
     });
     if (act === 'nf-desktop-swap') return void run(async () => {
       const watchId = b.dataset.watch;
-      if (!window.duoDesktop || client?.role !== 'host' || !snapshot?.selectedMatch || !/^[0-9]{1,12}$/.test(watchId) || desktopNetflixState?.watchId !== watchId) return;
-      await associateNetflix(snapshot.selectedMatch, watchId, desktopNetflixState);
+      if (!window.duoDesktop || client?.role !== 'host' || !/^[0-9]{1,12}$/.test(watchId) || desktopNetflixState?.watchId !== watchId) return;
+      await associateNetflix(netflixTitleId(watchId), watchId, desktopNetflixState);
       say('Título trocado. Os outros abrem o novo filme sozinhos.');
     });
     if (act === 'nf-sync') { try { nfLink.sync(Number(b.dataset.tab), b.dataset.watch); say('Sincronizando esta aba da Netflix.'); } catch { say('Essa aba não é o título da sala.'); } return; }

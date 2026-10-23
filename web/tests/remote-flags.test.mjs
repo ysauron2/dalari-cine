@@ -85,7 +85,7 @@ test('Netflix: o título que o Host começa a tocar vira o da sala sozinho, e d�
   assert.ok(ui.includes('void autoAssociateNetflix(event);'));
   const at = ui.indexOf('async function autoAssociateNetflix(event)');
   const body = ui.slice(at, at + 900);
-  for (const must of ["client.role !== 'host'", "snapshot.platform !== 'netflix'", 'snapshot.media', '!snapshot.selectedMatch', 'event.playing !== true', 'nfAutoTried.has(event.watchId)']) assert.ok(body.includes(must), must);
+  for (const must of ["client.role !== 'host'", "snapshot.platform !== 'netflix'", 'snapshot.media', 'event.playing !== true', 'nfAutoTried.has(event.watchId)']) assert.ok(body.includes(must), must);
   assert.ok(ui.includes("'nf-desktop-swap'") && ui.includes("act === 'nf-desktop-swap'"));
   assert.ok(ui.includes('nfAutoTried.clear()'), 'ao sair da sala, recomeça');
   // o botão antigo de associar à mão continua como plano B

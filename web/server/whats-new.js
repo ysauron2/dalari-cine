@@ -12,6 +12,9 @@
   const BASELINE = '0.3.1';          // quem nunca viu a janela é tratado como estando nesta versão
   // [ícone, título, texto curto]. Do mais novo para o mais antigo dentro de cada versão.
   const NEWS = {
+    '0.4.5': [
+      ['\u{1F3AC}', 'Netflix sem votação', 'Para assistir na Netflix não precisa mais votar no Match: o Host abre o título, dá play, e a sala adota esse título. O convidado abre o mesmo filme sozinho.'],
+    ],
     '0.4.4': [
       ['\u{1F3AC}', 'Netflix mais direta', 'O título que o Host começa a assistir vira o da sala sozinho, e os outros abrem o mesmo filme. Play, pausa e posição passam pelo player da própria Netflix.'],
       ['\u{1F6E1}️', 'Netflix com proteção', 'Se o player da Netflix parar de responder, a opção de Netflix na sala é travada com um aviso, em vez de dar erro no meio do filme.'],

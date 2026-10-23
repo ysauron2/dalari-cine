@@ -366,7 +366,7 @@ function createWindow(duoUrl) {
     if (state === null) { netflixRoomState = null; netflixView.webContents.send('duotela:netflix-state', null); return; }
     if (!state || typeof state !== 'object' || Array.isArray(state) || state.platform !== 'netflix' || state.status !== 'active' || !/^\d{6}$/.test(state.code) || !['host', 'guest', 'guest2', 'guest3'].includes(state.you) || !Number.isSafeInteger(state.revision) || state.revision < 0) return;
     const media = state.media;
-    if (media !== null && (typeof media !== 'object' || media.provider !== 'netflix' || media.titleId !== state.selectedMatch || !/^[0-9]{1,12}$/.test(media.watchId))) return;
+    if (media !== null && (typeof media !== 'object' || media.provider !== 'netflix' || !/^[0-9]{1,12}$/.test(media.watchId) || (media.titleId !== state.selectedMatch && media.titleId !== 'netflix:' + media.watchId))) return;
     const playback = state.playback;
     if (media && (typeof playback !== 'object' || playback.titleId !== media.titleId || playback.watchId !== media.watchId || !['playing', 'paused'].includes(playback.state) || !Number.isFinite(playback.positionSec) || playback.positionSec < 0 || playback.positionSec > 86400 || !Number.isSafeInteger(playback.version) || playback.version < 1 || !Number.isFinite(playback.updatedAt) || !Number.isFinite(state.serverTime))) return;
     const prior = netflixRoomState;
